@@ -1,0 +1,159 @@
+@startuml
+skinparam style strictuml
+skinparam shadowing false
+skinparam rectangle {
+  BackgroundColor #F8F9FA
+  BorderColor #2C3E50
+}
+skinparam package {
+  BackgroundColor #FFFFFF
+  BorderColor #34495E
+}
+skinparam database {
+  BackgroundColor #FCF3CF
+}
+skinparam actorStyle awesome
+
+title NGO Administrative Donation Platform – Information Flow
+
+' =========================
+' ACTORS
+' =========================
+actor "Donor" as Donor
+actor "School" as School
+actor "NGO Staff" as Staff
+actor "NGO Admin" as Admin
+
+' =========================
+' PUBLIC DASHBOARD
+' =========================
+rectangle "Public Informational Dashboard (Read-Only)" as Public {
+
+  package "School Catalog" {
+    component "Search & Filter\n(by Region, Category)" as Filter
+    component "School Detail View" as SchoolView
+    component "Progress Bar\n(DB-calculated)" as ProgressBar
+  }
+
+}
+
+' =========================
+' ADMIN SYSTEM
+' =========================
+rectangle "NGO Management System (Administrative)" as System {
+
+  package "Authentication & RBAC" as Auth {
+    component "Login"
+    component "JWT Validation"
+    component "Role Control\n(Admin / Staff)"
+  }
+
+  package "School Management" as SchoolMgmt {
+    component "Create / Update / Archive School"
+    component "Prevent Duplicate Schools"
+  }
+
+  package "Donor Management" as DonorMgmt {
+    component "Create / Update Donor"
+    component "Donation History View"
+    component "Prevent Duplicate Donors"
+  }
+
+  package "Donation Management" as DonationMgmt {
+    component "Create Donation Record"
+    component "Link Donor ↔ School"
+    component "Select Type\n(Material / Monetary)"
+    component "Define Delivery Mode\n(3 Exclusive Options)"
+    component "Register Amount / Estimated Value"
+  }
+
+  package "Workflow Engine (Finite State Control)" as Workflow {
+    component "States:\nRegistered\nApproved\nIn Delivery\nDelivered\nCompleted\nCancelled"
+    component "Validated State Transitions"
+  }
+
+  package "Reporting Module" as Reports {
+    component "Donations per School"
+    component "Donations per Donor"
+    component "Pending Deliveries"
+    component "Completed Processes"
+  }
+
+  database "PostgreSQL Database" as DB {
+    component "Users"
+    component "Schools"
+    component "Donors"
+    component "Donations"
+    component "Delivery Config"
+  }
+
+}
+
+' =========================
+' EXTERNAL INTERACTIONS
+' =========================
+
+Donor --> Filter : Browse schools
+Filter --> SchoolView
+SchoolView --> ProgressBar
+
+Donor --> Staff : Contacts NGO (offline)
+School --> Staff : Requests support (offline)
+
+' =========================
+' AUTHENTICATION FLOW
+' =========================
+
+Staff --> Login
+Admin --> Login
+
+Login --> "JWT Validation"
+"JWT Validation" --> "Role Control\n(Admin / Staff)"
+
+' =========================
+' SCHOOL REGISTRATION FLOW
+' =========================
+
+Staff --> "Create / Update / Archive School"
+"Create / Update / Archive School" --> "Prevent Duplicate Schools"
+"Prevent Duplicate Schools" --> DB
+
+' =========================
+' DONOR REGISTRATION FLOW
+' =========================
+
+Staff --> "Create / Update Donor"
+"Create / Update Donor" --> "Prevent Duplicate Donors"
+"Prevent Duplicate Donors" --> DB
+
+' =========================
+' DONATION CREATION FLOW
+' =========================
+
+Staff --> "Create Donation Record"
+"Create Donation Record" --> "Link Donor ↔ School"
+"Link Donor ↔ School" --> DB
+
+"Create Donation Record" --> "Select Type\n(Material / Monetary)"
+"Select Type\n(Material / Monetary)" --> "Register Amount / Estimated Value"
+
+"Create Donation Record" --> "Define Delivery Mode\n(3 Exclusive Options)"
+"Define Delivery Mode\n(3 Exclusive Options)" --> DB
+
+"Create Donation Record" --> Workflow
+Workflow --> DB
+
+' =========================
+' PROGRESS BAR LOGIC
+' =========================
+
+DB --> ProgressBar : Funding progress\n= confirmed value / goal
+
+' =========================
+' REPORTING FLOW
+' =========================
+
+Staff --> Reports
+Reports --> DB
+
+@enduml

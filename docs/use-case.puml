@@ -1,0 +1,66 @@
+@startuml
+skinparam actor {
+    BackgroundColor White
+    BorderColor Navy
+    FontName "Verdana"
+    FontSize 14
+}
+
+skinparam usecase {
+    BackgroundColor LightSteelBlue
+    BorderColor Navy
+    FontName "Verdana"
+    FontSize 13
+}
+
+skinparam arrow {
+    Color Navy
+    FontName "Verdana"
+    FontSize 11
+}
+
+skinparam package {
+    BackgroundColor AliceBlue
+    BorderColor Navy
+    FontName "Verdana"
+    FontSize 15
+}
+
+left to right direction
+
+actor "NGO Staff" as Staff
+actor "NGO Admin" as Admin
+
+Admin --|> Staff
+
+rectangle "NGO Management System" {
+    package "Core Management" {
+        usecase "Manage Schools" as UC_Schools
+        usecase "Manage Donors" as UC_Donors
+        usecase "Process Donation" as UC_Donation
+    }
+
+    package "Logistics" {
+        usecase "Track Delivery Workflow" as UC_Workflow
+        usecase "Handle Material Shipment" as UC_Shipment
+    }
+
+    package "Reporting" {
+        usecase "Generate Progress Bar" as UC_Progress
+        usecase "Generate Admin Reports" as UC_Reports
+        usecase "Export Data" as UC_Export
+    }
+}
+
+Staff --> UC_Schools
+Staff --> UC_Donors
+Staff --> UC_Donation
+Staff --> UC_Progress
+
+Staff --> UC_Workflow : for monetary/material
+UC_Donation <.. UC_Shipment : for material donations <<extend>>
+
+Admin --> UC_Reports
+UC_Reports <.. UC_Export : <<extend>>
+
+@enduml
