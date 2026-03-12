@@ -1,15 +1,5 @@
 # **Activity: Mockup**
 
-Andrés Augusto Gómez Moreno \- A01647264  
-José Antonio De la Madrid Sánchez \- A01640791  
-Juan Pablo Chávez Riggen \- A01646107  
-Tania Vázquez Navarro \- A01646350  
-Samuel Rodríguez Torres \- A01637408
-
-Software Construction and Decision Making  
-Grupo 401
-
-27 de febrero del 2025  
 **a) Project name**
 
 **ImpulsaEdu**
