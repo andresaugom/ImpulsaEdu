@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestión de Escuelas - ImpulsaEdu</title>
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body class="admin-layout">
+  <!-- Barra Lateral -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <img src="../../public/ImpulsaEdu.svg" alt="Logo de ImpulsaEdu">
+    </div>
+    <nav class="sidebar-nav">
+      <ul>
+        <li><a href="dashboard.html">Panel</a></li>
+        <li><a href="schools.html" class="active">Gestión de Escuelas</a></li>
+        <li><a href="donors.html">Gestión de Donantes</a></li>
+        <li><a href="donations.html">Gestión de Donaciones</a></li>
+        <li><a href="preferences.html">Preferencias</a></li>
+      </ul>
+    </nav>
+  </aside>
+
+  <!-- Contenedor Principal -->
+  <div class="main-container">
+    <!-- Encabezado -->
+    <header class="header">
+      <div class="header-left">
+        <h1 class="header-title">Gestión de Escuelas</h1>
+      </div>
+      <div class="header-right">
+        <span class="notification-icon">🔔</span>
+        <div class="user-profile">
+          <div class="user-avatar">JM</div>
+          <div>
+            <div class="user-name">Juan Mockup</div>
+            <div class="user-role">Personal</div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Contenido -->
+    <div class="content">
+      <div class="section-header">
+        <h1 class="section-title" style="margin: 0;">Registro de Escuelas</h1>
+        <div class="section-actions">
+          <a href="schools-form.html" class="btn btn-primary">+ Agregar Escuela</a>
+        </div>
+      </div>
+
+      <!-- Búsqueda y Filtro -->
+      <div class="search-filter">
+        <div class="search-grid">
+          <div class="form-group" style="margin: 0;">
+            <label for="school-search">Nombre de la Escuela</label>
+            <input 
+              type="text" 
+              id="school-search" 
+              placeholder="Buscar escuelas..." 
+            >
+          </div>
+          <div class="form-group" style="margin: 0;">
+            <label for="region-filter">Región</label>
+            <select id="region-filter">
+              <option value="">Todas las Regiones</option>
+              <option value="guadalajara">Guadalajara</option>
+              <option value="puerto_vallarta">Puerto Vallarta</option>
+              <option value="zapopan">Zapopan</option>
+              <option value="tlaquepaque">Tlaquepaque</option>
+              <option value="tonala">Tonalá</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin: 0;">
+            <label for="status-filter">Estado</label>
+            <select id="status-filter">
+              <option value="">Todos los Estados</option>
+              <option value="active">Activa</option>
+              <option value="completed">Completada</option>
+              <option value="archived">Archivada</option>
+            </select>
+          </div>
+        </div>
+        <div class="search-buttons">
+          <button class="btn btn-primary">Buscar</button>
+          <button class="btn btn-secondary">Limpiar Filtros</button>
+        </div>
+      </div>
+
+      <!-- Tabla de Escuelas -->
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Nombre de la Escuela</th>
+              <th>Región</th>
+              <th>Categoría</th>
+              <th>Estado</th>
+              <th>Meta de Financiamiento</th>
+              <th>Financiamiento Actual</th>
+              <th>Progreso</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Escuela Primaria A</strong></td>
+              <td class="text-secondary">Guadalajara</td>
+              <td class="text-secondary">Infraestructura</td>
+              <td><span class="status-badge status-approved">Activa</span></td>
+              <td>$10,000</td>
+              <td>$6,500</td>
+              <td>
+                <div class="progress-section" style="margin: 0; width: 120px;">
+                  <div class="progress-bar">
+                    <div class="progress-fill" style="width: 65%;"></div>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <a href="schools-form.html" class="btn btn-small btn-secondary" style="margin-right: 5px;">Editar</a>
+                <a href="#" class="btn btn-small btn-danger">Eliminar</a>
+              </td>
+            </tr>
+            <tr>
+              <td><strong>Escuela Secundaria B</strong></td>
+              <td class="text-secondary">Puerto Vallarta</td>
+              <td class="text-secondary">Materiales Educativos</td>
+              <td><span class="status-badge status-in-delivery">En Progreso</span></td>
+              <td>$15,000</td>
+              <td>$7,200</td>
+              <td>
+                <div class="progress-section" style="margin: 0; width: 120px;">
+                  <div class="progress-bar">
+                    <div class="progress-fill warning" style="width: 48%;"></div>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <a href="schools-form.html" class="btn btn-small btn-secondary" style="margin-right: 5px;">Editar</a>
+                <a href="#" class="btn btn-small btn-danger">Eliminar</a>
+              </td>
+            </tr>
+            <tr>
+              <td><strong>Escuela Pública C</strong></td>
+              <td class="text-secondary">Zapopan</td>
+              <td class="text-secondary">Tecnología</td>
+              <td><span class="status-badge status-completed">Completada</span></td>
+              <td>$8,000</td>
+              <td>$8,000</td>
+              <td>
+                <div class="progress-section" style="margin: 0; width: 120px;">
+                  <div class="progress-bar">
+                    <div class="progress-fill" style="width: 100%;"></div>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <a href="schools-form.html" class="btn btn-small btn-secondary" style="margin-right: 5px;">Editar</a>
+                <a href="#" class="btn btn-small btn-danger">Eliminar</a>
+              </td>
+            </tr>
+            <tr>
+              <td><strong>Academia Privada D</strong></td>
+              <td class="text-secondary">Tlaquepaque</td>
+              <td class="text-secondary">Instalaciones Deportivas</td>
+              <td><span class="status-badge status-approved">Activa</span></td>
+              <td>$20,000</td>
+              <td>$4,000</td>
+              <td>
+                <div class="progress-section" style="margin: 0; width: 120px;">
+                  <div class="progress-bar">
+                    <div class="progress-fill warning" style="width: 20%;"></div>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <a href="schools-form.html" class="btn btn-small btn-secondary" style="margin-right: 5px;">Editar</a>
+                <a href="#" class="btn btn-small btn-danger">Eliminar</a>
+              </td>
+            </tr>
+            <tr>
+              <td><strong>Escuela Rural E</strong></td>
+              <td class="text-secondary">Tonalá</td>
+              <td class="text-secondary">Infraestructura</td>
+              <td><span class="status-badge status-in-delivery">En Progreso</span></td>
+              <td>$5,000</td>
+              <td>$3,500</td>
+              <td>
+                <div class="progress-section" style="margin: 0; width: 120px;">
+                  <div class="progress-bar">
+                    <div class="progress-fill" style="width: 70%;"></div>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <a href="schools-form.html" class="btn btn-small btn-secondary" style="margin-right: 5px;">Editar</a>
+                <a href="#" class="btn btn-small btn-danger">Eliminar</a>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Paginación -->
+      <div style="display: flex; justify-content: center; gap: 10px; margin-top: 30px;">
+        <button class="btn btn-secondary">← Anterior</button>
+        <button class="btn btn-primary">1</button>
+        <button class="btn btn-secondary">2</button>
+        <button class="btn btn-secondary">3</button>
+        <button class="btn btn-secondary">Siguiente →</button>
+      </div>
+    </div>
+
+    <!-- Pie de Página -->
+    <footer class="footer">
+      <p>&copy; 2026 ImpulsaEdu. Todos los derechos reservados.</p>
+    </footer>
+  </div>
+</body>
+</html>

@@ -1,0 +1,193 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Donation Management - ImpulsaEdu</title>
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body class="admin-layout">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <img src="../../public/ImpulsaEdu.svg" alt="ImpulsaEdu Logo">
+    </div>
+    <nav class="sidebar-nav">
+      <ul>
+        <li><a href="dashboard.html">Dashboard</a></li>
+        <li><a href="schools.html">School Management</a></li>
+        <li><a href="donors.html">Donor Management</a></li>
+        <li><a href="donations.html" class="active">Donation Management</a></li>
+        <li><a href="preferences.html">Preferences</a></li>
+      </ul>
+    </nav>
+  </aside>
+
+  <!-- Main Container -->
+  <div class="main-container">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-left">
+        <h1 class="header-title">Donation Management</h1>
+      </div>
+      <div class="header-right">
+        <span class="notification-icon">🔔</span>
+        <div class="user-profile">
+          <div class="user-avatar">JD</div>
+          <div>
+            <div class="user-name">John Davis</div>
+            <div class="user-role">Staff</div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Content -->
+    <div class="content">
+      <div class="section-header">
+        <h1 class="section-title" style="margin: 0;">Donations Registry</h1>
+        <div class="section-actions">
+          <a href="donations-form.html" class="btn btn-primary">+ Add Donation</a>
+        </div>
+      </div>
+
+      <!-- Search & Filter -->
+      <div class="search-filter">
+        <div class="search-grid">
+          <div class="form-group" style="margin: 0;">
+            <label for="donation-search">Donation ID / Donor</label>
+            <input 
+              type="text" 
+              id="donation-search" 
+              placeholder="Search donations..." 
+            >
+          </div>
+          <div class="form-group" style="margin: 0;">
+            <label for="donation-type-filter">Donation Type</label>
+            <select id="donation-type-filter">
+              <option value="">All Types</option>
+              <option value="material">Material</option>
+              <option value="monetary">Monetary</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin: 0;">
+            <label for="donation-status-filter">Status</label>
+            <select id="donation-status-filter">
+              <option value="">All Status</option>
+              <option value="registered">Registered</option>
+              <option value="approved">Approved</option>
+              <option value="in_delivery">In Delivery</option>
+              <option value="delivered">Delivered</option>
+              <option value="completed">Completed</option>
+              <option value="cancelled">Cancelled</option>
+            </select>
+          </div>
+        </div>
+        <div class="search-buttons">
+          <button class="btn btn-primary">Search</button>
+          <button class="btn btn-secondary">Clear Filters</button>
+        </div>
+      </div>
+
+      <!-- Donations Table -->
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Donation ID</th>
+              <th>Donor</th>
+              <th>School</th>
+              <th>Type</th>
+              <th>Value</th>
+              <th>Delivery Mode</th>
+              <th>Status</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>#DON-001</strong></td>
+              <td class="text-secondary">Jane Smith</td>
+              <td class="text-secondary">Primary School A</td>
+              <td><span class="status-badge badge-info">Material</span></td>
+              <td>$1,500</td>
+              <td class="text-secondary">Direct to School</td>
+              <td><span class="status-badge status-in-delivery">In Delivery</span></td>
+              <td>
+                <a href="donations-form.html" class="btn btn-small btn-secondary" style="margin-right: 5px;">Edit</a>
+                <a href="#" class="btn btn-small btn-danger">Cancel</a>
+              </td>
+            </tr>
+            <tr>
+              <td><strong>#DON-002</strong></td>
+              <td class="text-secondary">Tech Donations Inc</td>
+              <td class="text-secondary">Secondary School B</td>
+              <td><span class="status-badge badge-success">Monetary</span></td>
+              <td>$5,000</td>
+              <td class="text-secondary">N/A</td>
+              <td><span class="status-badge status-approved">Approved</span></td>
+              <td>
+                <a href="donations-form.html" class="btn btn-small btn-secondary" style="margin-right: 5px;">Edit</a>
+                <a href="#" class="btn btn-small btn-danger">Cancel</a>
+              </td>
+            </tr>
+            <tr>
+              <td><strong>#DON-003</strong></td>
+              <td class="text-secondary">Community Fund</td>
+              <td class="text-secondary">Public School C</td>
+              <td><span class="status-badge badge-info">Material</span></td>
+              <td>$800</td>
+              <td class="text-secondary">NGO Delivers</td>
+              <td><span class="status-badge status-completed">Delivered</span></td>
+              <td>
+                <a href="donations-form.html" class="btn btn-small btn-secondary" style="margin-right: 5px;">Edit</a>
+                <a href="#" class="btn btn-small btn-danger">Cancel</a>
+              </td>
+            </tr>
+            <tr>
+              <td><strong>#DON-004</strong></td>
+              <td class="text-secondary">Michael Johnson</td>
+              <td class="text-secondary">Private Academy D</td>
+              <td><span class="status-badge badge-success">Monetary</span></td>
+              <td>$2,000</td>
+              <td class="text-secondary">N/A</td>
+              <td><span class="status-badge status-registered">Registered</span></td>
+              <td>
+                <a href="donations-form.html" class="btn btn-small btn-secondary" style="margin-right: 5px;">Edit</a>
+                <a href="#" class="btn btn-small btn-danger">Cancel</a>
+              </td>
+            </tr>
+            <tr>
+              <td><strong>#DON-005</strong></td>
+              <td class="text-secondary">Green Education Foundation</td>
+              <td class="text-secondary">Rural School E</td>
+              <td><span class="status-badge badge-info">Material</span></td>
+              <td>$3,500</td>
+              <td class="text-secondary">To NGO Storage</td>
+              <td><span class="status-badge status-in-delivery">In Delivery</span></td>
+              <td>
+                <a href="donations-form.html" class="btn btn-small btn-secondary" style="margin-right: 5px;">Edit</a>
+                <a href="#" class="btn btn-small btn-danger">Cancel</a>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      <div style="display: flex; justify-content: center; gap: 10px; margin-top: 30px;">
+        <button class="btn btn-secondary">← Previous</button>
+        <button class="btn btn-primary">1</button>
+        <button class="btn btn-secondary">2</button>
+        <button class="btn btn-secondary">3</button>
+        <button class="btn btn-secondary">Next →</button>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <p>&copy; 2026 ImpulsaEdu. All rights reserved.</p>
+    </footer>
+  </div>
+</body>
+</html>

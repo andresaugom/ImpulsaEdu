@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Login - ImpulsaEdu</title>
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <div class="login-container">
+    <div class="login-card">
+      <div class="login-logo">
+        <img src="../../public/ImpulsaEdu.svg" alt="ImpulsaEdu Logo">
+      </div>
+      
+      <form>
+        <div class="form-group">
+          <label for="email">Email Address</label>
+          <input 
+            type="email" 
+            id="email" 
+            name="email" 
+            placeholder="you@example.com" 
+            required
+          >
+        </div>
+
+        <div class="form-group">
+          <label for="password">Password</label>
+          <input 
+            type="password" 
+            id="password" 
+            name="password" 
+            placeholder="Enter your password" 
+            required
+          >
+        </div>
+
+        <div class="form-group">
+          <label>
+            <input type="checkbox" name="remember"> Remember me
+          </label>
+        </div>
+
+        <button type="submit" class="btn btn-primary btn-full">Sign In</button>
+      </form>
+
+      <div style="text-align: center; margin-top: 20px; color: var(--text-secondary); font-size: 14px;">
+        Don't have an account? <a href="#" style="color: var(--primary-color); text-decoration: none; font-weight: 600;">Contact your administrator</a>
+      </div>
+    </div>
+  </div>
+</body>
+</html>

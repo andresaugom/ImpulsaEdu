@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agregar Donante - ImpulsaEdu</title>
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body class="admin-layout">
+  <!-- Barra Lateral -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <img src="../../public/ImpulsaEdu.svg" alt="Logo de ImpulsaEdu">
+    </div>
+    <nav class="sidebar-nav">
+      <ul>
+        <li><a href="dashboard.html">Panel</a></li>
+        <li><a href="schools.html">Gestión de Escuelas</a></li>
+        <li><a href="donors.html" class="active">Gestión de Donantes</a></li>
+        <li><a href="donations.html">Gestión de Donaciones</a></li>
+        <li><a href="preferences.html">Preferencias</a></li>
+      </ul>
+    </nav>
+  </aside>
+
+  <!-- Contenedor Principal -->
+  <div class="main-container">
+    <!-- Encabezado -->
+    <header class="header">
+      <div class="header-left">
+        <h1 class="header-title">Gestión de Donantes</h1>
+      </div>
+      <div class="header-right">
+        <span class="notification-icon">🔔</span>
+        <div class="user-profile">
+          <div class="user-avatar">JM</div>
+          <div>
+            <div class="user-name">Juan Mockup</div>
+            <div class="user-role">Personal</div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Contenido -->
+    <div class="content">
+      <div class="section-header">
+        <h1 class="section-title" style="margin: 0;">Agregar Nuevo Donante</h1>
+        <div style="font-size: 14px; color: var(--text-secondary);">Registra un nuevo donante en el sistema</div>
+      </div>
+
+      <!-- Formulario -->
+      <div class="form-layout">
+        <form>
+          <!-- Información Básica -->
+          <div class="form-section">
+            <h3 class="form-section-title">Información Básica</h3>
+            
+            <div class="form-group">
+              <label for="donor-type">Tipo de Donante *</label>
+              <select id="donor-type" name="donor_type" required>
+                <option value="">Selecciona un tipo</option>
+                <option value="individual">Persona Física</option>
+                <option value="corporate">Persona Moral</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="donor-name">Nombre Completo / Nombre de la Organización *</label>
+              <input 
+                type="text" 
+                id="donor-name" 
+                name="donor_name" 
+                placeholder="Ingresa el nombre completo u organización" 
+                required
+              >
+            </div>
+
+            <div class="form-group">
+              <label for="notes">Notas</label>
+              <textarea 
+                id="notes" 
+                name="notes" 
+                placeholder="Agrega notas sobre este donante..."
+              ></textarea>
+            </div>
+          </div>
+
+          <!-- Información de Contacto -->
+          <div class="form-section">
+            <h3 class="form-section-title">Información de Contacto</h3>
+            
+            <div class="form-group">
+              <label for="email">Correo Electrónico *</label>
+              <input 
+                type="email" 
+                id="email" 
+                name="email" 
+                placeholder="donante@ejemplo.com" 
+                required
+              >
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="phone">Número de Teléfono</label>
+                <input 
+                  type="tel" 
+                  id="phone" 
+                  name="phone" 
+                  placeholder="+52 (33) 1234-5678"
+                >
+              </div>
+              <div class="form-group">
+                <label for="country">País</label>
+                <input 
+                  type="text" 
+                  id="country" 
+                  name="country" 
+                  placeholder="México"
+                >
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="address">Domicilio</label>
+              <input 
+                type="text" 
+                id="address" 
+                name="address" 
+                placeholder="Calle Principal 123"
+              >
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="city">Ciudad</label>
+                <input 
+                  type="text" 
+                  id="city" 
+                  name="city" 
+                  placeholder="Guadalajara"
+                >
+              </div>
+              <div class="form-group">
+                <label for="state">Estado / Provincia</label>
+                <input 
+                  type="text" 
+                  id="state" 
+                  name="state" 
+                  placeholder="Jalisco"
+                >
+              </div>
+              <div class="form-group">
+                <label for="zip">Código Postal</label>
+                <input 
+                  type="text" 
+                  id="zip" 
+                  name="zip" 
+                  placeholder="44100"
+                >
+              </div>
+            </div>
+          </div>
+
+          <!-- Información Adicional -->
+          <div class="form-section">
+            <h3 class="form-section-title">Información Adicional</h3>
+            
+            <div class="form-group">
+              <label for="company-name">Nombre de la Empresa (para personas morales)</label>
+              <input 
+                type="text" 
+                id="company-name" 
+                name="company_name" 
+                placeholder="Soluciones Tecnológicas México"
+              >
+            </div>
+
+            <div class="form-group">
+              <label for="status">Estado *</label>
+              <select id="status" name="status" required>
+                <option value="">Selecciona un estado</option>
+                <option value="active">Activo</option>
+                <option value="inactive">Inactivo</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Acciones del Formulario -->
+          <div class="button-group">
+            <a href="donors.html" class="btn btn-secondary">Cancelar</a>
+            <button type="reset" class="btn btn-secondary">Limpiar Formulario</button>
+            <button type="submit" class="btn btn-primary">Guardar Donante</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Pie de Página -->
+    <footer class="footer">
+      <p>&copy; 2026 ImpulsaEdu. Todos los derechos reservados.</p>
+    </footer>
+  </div>
+</body>
+</html>

@@ -1,0 +1,347 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Support Our Schools - ImpulsaEdu</title>
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body>
+  <!-- Public Header -->
+  <div class="public-header">
+    <div class="public-logo">
+      <img src="../../public/ImpulsaEdu.svg" alt="ImpulsaEdu Logo">
+    </div>
+    <div class="public-nav">
+      <a href="#schools">Schools</a>
+      <a href="#about">About</a>
+      <a href="#contact">Contact</a>
+    </div>
+  </div>
+
+  <!-- Public Container -->
+  <div class="public-container">
+    <!-- Hero Section -->
+    <div style="background: linear-gradient(135deg, var(--primary-color), var(--secondary-color)); color: white; padding: 60px 30px; text-align: center;">
+      <h1 style="font-size: 36px; margin-bottom: 15px; font-weight: 700;">Support Education. Support Communities.</h1>
+      <p style="font-size: 18px; margin-bottom: 30px; opacity: 0.95;">Browse schools in need of support and make a difference in their futures</p>
+    </div>
+
+    <!-- Content -->
+    <div class="public-content">
+      <!-- Search & Filter Section -->
+      <div style="max-width: 1200px; margin: 0 auto;">
+        <div class="section-header" style="margin-top: 0;">
+          <h2 class="section-title" style="font-size: 28px; margin: 0;">Available Schools</h2>
+          <span style="font-size: 14px; color: var(--text-secondary);">12 schools listed</span>
+        </div>
+
+        <div class="search-filter" style="background-color: white; margin-bottom: 30px;">
+          <div class="search-grid">
+            <div class="form-group" style="margin: 0;">
+              <label for="public-search">Search Schools</label>
+              <input 
+                type="text" 
+                id="public-search" 
+                placeholder="Find schools by name..." 
+              >
+            </div>
+            <div class="form-group" style="margin: 0;">
+              <label for="public-region">Region</label>
+              <select id="public-region">
+                <option value="">All Regions</option>
+                <option value="north">North Region</option>
+                <option value="south">South Region</option>
+                <option value="central">Central Region</option>
+                <option value="east">East Region</option>
+                <option value="west">West Region</option>
+              </select>
+            </div>
+            <div class="form-group" style="margin: 0;">
+              <label for="public-category">Category</label>
+              <select id="public-category">
+                <option value="">All Categories</option>
+                <option value="infrastructure">Infrastructure</option>
+                <option value="education_materials">Education Materials</option>
+                <option value="technology">Technology</option>
+                <option value="sports_facilities">Sports Facilities</option>
+                <option value="nutrition_program">Nutrition Program</option>
+              </select>
+            </div>
+          </div>
+          <div class="search-buttons">
+            <button class="btn btn-primary">Filter Results</button>
+          </div>
+        </div>
+
+        <!-- Schools Grid -->
+        <div class="dashboard-grid" style="grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));">
+          <!-- School 1 -->
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">Primary School A</div>
+                <div style="font-size: 12px; color: var(--text-secondary); margin-top: 5px;">North Region</div>
+              </div>
+              <span class="card-badge badge-info">Infrastructure</span>
+            </div>
+            <div class="card-body">
+              <p style="color: var(--text-secondary); margin-bottom: 15px; font-size: 13px;">Needs funding for classroom renovation and new school materials.</p>
+              
+              <div class="progress-section">
+                <div class="progress-label">
+                  <span style="font-weight: 600;">Funding Progress</span>
+                  <span>65%</span>
+                </div>
+                <div class="progress-bar">
+                  <div class="progress-fill" style="width: 65%;"></div>
+                </div>
+              </div>
+              
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border-color);">
+                <div>
+                  <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 5px;">Funding Goal</div>
+                  <div style="font-weight: 700; color: var(--primary-color);">$10,000</div>
+                </div>
+                <div>
+                  <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 5px;">Current</div>
+                  <div style="font-weight: 700; color: var(--secondary-color);">$6,500</div>
+                </div>
+              </div>
+            </div>
+            <div class="card-footer">
+              <button class="btn btn-primary btn-small">Learn More</button>
+            </div>
+          </div>
+
+          <!-- School 2 -->
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">Secondary School B</div>
+                <div style="font-size: 12px; color: var(--text-secondary); margin-top: 5px;">South Region</div>
+              </div>
+              <span class="card-badge badge-success">Education Materials</span>
+            </div>
+            <div class="card-body">
+              <p style="color: var(--text-secondary); margin-bottom: 15px; font-size: 13px;">Seeking support for new textbooks and learning resources.</p>
+              
+              <div class="progress-section">
+                <div class="progress-label">
+                  <span style="font-weight: 600;">Funding Progress</span>
+                  <span>48%</span>
+                </div>
+                <div class="progress-bar">
+                  <div class="progress-fill warning" style="width: 48%;"></div>
+                </div>
+              </div>
+              
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border-color);">
+                <div>
+                  <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 5px;">Funding Goal</div>
+                  <div style="font-weight: 700; color: var(--primary-color);">$15,000</div>
+                </div>
+                <div>
+                  <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 5px;">Current</div>
+                  <div style="font-weight: 700; color: var(--secondary-color);">$7,200</div>
+                </div>
+              </div>
+            </div>
+            <div class="card-footer">
+              <button class="btn btn-primary btn-small">Learn More</button>
+            </div>
+          </div>
+
+          <!-- School 3 -->
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">Public School C</div>
+                <div style="font-size: 12px; color: var(--text-secondary); margin-top: 5px;">Central Region</div>
+              </div>
+              <span class="card-badge" style="background-color: #d1fae5; color: #065f46;">Technology</span>
+            </div>
+            <div class="card-body">
+              <p style="color: var(--text-secondary); margin-bottom: 15px; font-size: 13px;">Help us build our computer lab for digital learning.</p>
+              
+              <div class="progress-section">
+                <div class="progress-label">
+                  <span style="font-weight: 600;">Funding Progress</span>
+                  <span>100%</span>
+                </div>
+                <div class="progress-bar">
+                  <div class="progress-fill" style="width: 100%;"></div>
+                </div>
+              </div>
+              
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border-color);">
+                <div>
+                  <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 5px;">Funding Goal</div>
+                  <div style="font-weight: 700; color: var(--primary-color);">$8,000</div>
+                </div>
+                <div>
+                  <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 5px;">Current</div>
+                  <div style="font-weight: 700; color: var(--secondary-color);">$8,000</div>
+                </div>
+              </div>
+            </div>
+            <div class="card-footer">
+              <span style="color: var(--secondary-color); font-weight: 600; font-size: 12px;">✓ Fully Funded</span>
+            </div>
+          </div>
+
+          <!-- School 4 -->
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">Private Academy D</div>
+                <div style="font-size: 12px; color: var(--text-secondary); margin-top: 5px;">East Region</div>
+              </div>
+              <span class="card-badge" style="background-color: #fecaca; color: #7f1d1d;">Sports Facilities</span>
+            </div>
+            <div class="card-body">
+              <p style="color: var(--text-secondary); margin-bottom: 15px; font-size: 13px;">Support our sports and recreation programs for students.</p>
+              
+              <div class="progress-section">
+                <div class="progress-label">
+                  <span style="font-weight: 600;">Funding Progress</span>
+                  <span>20%</span>
+                </div>
+                <div class="progress-bar">
+                  <div class="progress-fill warning" style="width: 20%;"></div>
+                </div>
+              </div>
+              
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border-color);">
+                <div>
+                  <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 5px;">Funding Goal</div>
+                  <div style="font-weight: 700; color: var(--primary-color);">$20,000</div>
+                </div>
+                <div>
+                  <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 5px;">Current</div>
+                  <div style="font-weight: 700; color: var(--secondary-color);">$4,000</div>
+                </div>
+              </div>
+            </div>
+            <div class="card-footer">
+              <button class="btn btn-primary btn-small">Learn More</button>
+            </div>
+          </div>
+
+          <!-- School 5 -->
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">Rural School E</div>
+                <div style="font-size: 12px; color: var(--text-secondary); margin-top: 5px;">West Region</div>
+              </div>
+              <span class="card-badge badge-info">Infrastructure</span>
+            </div>
+            <div class="card-body">
+              <p style="color: var(--text-secondary); margin-bottom: 15px; font-size: 13px;">Help us rebuild our school facilities after recent damage.</p>
+              
+              <div class="progress-section">
+                <div class="progress-label">
+                  <span style="font-weight: 600;">Funding Progress</span>
+                  <span>70%</span>
+                </div>
+                <div class="progress-bar">
+                  <div class="progress-fill" style="width: 70%;"></div>
+                </div>
+              </div>
+              
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border-color);">
+                <div>
+                  <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 5px;">Funding Goal</div>
+                  <div style="font-weight: 700; color: var(--primary-color);">$5,000</div>
+                </div>
+                <div>
+                  <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 5px;">Current</div>
+                  <div style="font-weight: 700; color: var(--secondary-color);">$3,500</div>
+                </div>
+              </div>
+            </div>
+            <div class="card-footer">
+              <button class="btn btn-primary btn-small">Learn More</button>
+            </div>
+          </div>
+
+          <!-- School 6 -->
+          <div class="card">
+            <div class="card-header">
+              <div>
+                <div class="card-title">Community School F</div>
+                <div style="font-size: 12px; color: var(--text-secondary); margin-top: 5px;">North Region</div>
+              </div>
+              <span class="card-badge" style="background-color: #c7d2fe; color: #3730a3;">Nutrition Program</span>
+            </div>
+            <div class="card-body">
+              <p style="color: var(--text-secondary); margin-bottom: 15px; font-size: 13px;">Support our nutrition program to ensure students are well-fed.</p>
+              
+              <div class="progress-section">
+                <div class="progress-label">
+                  <span style="font-weight: 600;">Funding Progress</span>
+                  <span>55%</span>
+                </div>
+                <div class="progress-bar">
+                  <div class="progress-fill" style="width: 55%;"></div>
+                </div>
+              </div>
+              
+              <div style="display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-top: 15px; padding-top: 15px; border-top: 1px solid var(--border-color);">
+                <div>
+                  <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 5px;">Funding Goal</div>
+                  <div style="font-weight: 700; color: var(--primary-color);">$12,000</div>
+                </div>
+                <div>
+                  <div style="font-size: 12px; color: var(--text-secondary); margin-bottom: 5px;">Current</div>
+                  <div style="font-weight: 700; color: var(--secondary-color);">$6,600</div>
+                </div>
+              </div>
+            </div>
+            <div class="card-footer">
+              <button class="btn btn-primary btn-small">Learn More</button>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- How It Works Section -->
+      <div style="max-width: 1200px; margin: 60px auto; padding: 40px; background-color: white; border-radius: 8px; border: 1px solid var(--border-color);">
+        <h2 style="text-align: center; margin-bottom: 40px; font-size: 24px; font-weight: 700;">How to Support a School</h2>
+        
+        <div style="display: grid; grid-template-columns: repeat(auto-fit, minmax(200px, 1fr)); gap: 30px;">
+          <div style="text-align: center;">
+            <div style="font-size: 32px; margin-bottom: 15px;">1️⃣</div>
+            <h3 style="margin-bottom: 10px; color: var(--text-primary);">Browse Schools</h3>
+            <p style="color: var(--text-secondary); font-size: 14px;">Explore schools that need your support and learn about their specific needs.</p>
+          </div>
+
+          <div style="text-align: center;">
+            <div style="font-size: 32px; margin-bottom: 15px;">2️⃣</div>
+            <h3 style="margin-bottom: 10px; color: var(--text-primary);">Choose How to Help</h3>
+            <p style="color: var(--text-secondary); font-size: 14px;">Decide if you want to provide material goods or monetary donations.</p>
+          </div>
+
+          <div style="text-align: center;">
+            <div style="font-size: 32px; margin-bottom: 15px;">3️⃣</div>
+            <h3 style="margin-bottom: 10px; color: var(--text-primary);">Contact ImpulsaEdu</h3>
+            <p style="color: var(--text-secondary); font-size: 14px;">Reach out to our team to discuss your donation and arrange logistics.</p>
+          </div>
+
+          <div style="text-align: center;">
+            <div style="font-size: 32px; margin-bottom: 15px;">4️⃣</div>
+            <h3 style="margin-bottom: 10px; color: var(--text-primary);">Make Impact</h3>
+            <p style="color: var(--text-secondary); font-size: 14px;">See how your contribution helps students achieve their educational goals.</p>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer" style="border-top: 1px solid var(--border-color); margin-top: 60px;">
+      <p>&copy; 2026 ImpulsaEdu. All rights reserved. | <a href="#" style="color: var(--primary-color); text-decoration: none;">Privacy Policy</a> | <a href="#" style="color: var(--primary-color); text-decoration: none;">Terms of Service</a></p>
+    </footer>
+  </div>
+</body>
+</html>

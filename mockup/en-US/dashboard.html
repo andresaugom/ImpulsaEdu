@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Dashboard - ImpulsaEdu</title>
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body class="admin-layout">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <img src="../../public/ImpulsaEdu.svg" alt="ImpulsaEdu Logo">
+    </div>
+    <nav class="sidebar-nav">
+      <ul>
+        <li><a href="dashboard.html" class="active">Dashboard</a></li>
+        <li><a href="schools.html">School Management</a></li>
+        <li><a href="donors.html">Donor Management</a></li>
+        <li><a href="donations.html">Donation Management</a></li>
+        <li><a href="preferences.html">Preferences</a></li>
+      </ul>
+    </nav>
+  </aside>
+
+  <!-- Main Container -->
+  <div class="main-container">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-left">
+        <h1 class="header-title">Dashboard</h1>
+      </div>
+      <div class="header-right">
+        <span class="notification-icon">🔔</span>
+        <div class="user-profile">
+          <div class="user-avatar">JD</div>
+          <div>
+            <div class="user-name">John Davis</div>
+            <div class="user-role">Staff</div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Content -->
+    <div class="content">
+      <div class="section-header">
+        <div>
+          <h1 class="section-title" style="margin: 0;">Welcome, John</h1>
+          <p style="color: var(--text-secondary); margin: 5px 0 0 0;">Here's an overview of your donations and schools</p>
+        </div>
+      </div>
+
+      <!-- Quick Stats -->
+      <div class="dashboard-grid">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Active Schools</div>
+            <span class="card-badge badge-info">In Progress</span>
+          </div>
+          <div class="card-body">
+            <div class="card-stat">
+              <span class="card-stat-label">Total Schools</span>
+              <span class="card-stat-value">12</span>
+            </div>
+            <div class="card-stat">
+              <span class="card-stat-label">Funded This Month</span>
+              <span class="card-stat-value">3</span>
+            </div>
+          </div>
+          <div class="card-footer">
+            <a href="schools.html">Manage Schools →</a>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Active Donors</div>
+            <span class="card-badge badge-success">Active</span>
+          </div>
+          <div class="card-body">
+            <div class="card-stat">
+              <span class="card-stat-label">Total Donors</span>
+              <span class="card-stat-value">28</span>
+            </div>
+            <div class="card-stat">
+              <span class="card-stat-label">New This Month</span>
+              <span class="card-stat-value">5</span>
+            </div>
+          </div>
+          <div class="card-footer">
+            <a href="donors.html">Manage Donors →</a>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Active Donations</div>
+            <span class="card-badge badge-warning">In Progress</span>
+          </div>
+          <div class="card-body">
+            <div class="card-stat">
+              <span class="card-stat-label">Total Donations</span>
+              <span class="card-stat-value">45</span>
+            </div>
+            <div class="card-stat">
+              <span class="card-stat-label">Awaiting Delivery</span>
+              <span class="card-stat-value">8</span>
+            </div>
+          </div>
+          <div class="card-footer">
+            <a href="donations.html">Manage Donations →</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Recent Schools -->
+      <div style="margin-top: 40px;">
+        <div class="section-header">
+          <h2 class="section-title" style="font-size: 20px; margin: 0;">Recent Schools</h2>
+          <div class="section-actions">
+            <a href="schools.html" class="btn btn-primary">View All</a>
+          </div>
+        </div>
+
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>School Name</th>
+                <th>Region</th>
+                <th>Status</th>
+                <th>Funding Progress</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Primary School A</strong></td>
+                <td class="text-secondary">North Region</td>
+                <td><span class="status-badge status-approved">Active</span></td>
+                <td>
+                  <div class="progress-section" style="margin: 0; width: 150px;">
+                    <div class="progress-bar">
+                      <div class="progress-fill" style="width: 65%;"></div>
+                    </div>
+                  </div>
+                </td>
+                <td><a href="#" style="color: var(--primary-color); text-decoration: none; font-weight: 600; font-size: 12px;">View →</a></td>
+              </tr>
+              <tr>
+                <td><strong>Secondary School B</strong></td>
+                <td class="text-secondary">South Region</td>
+                <td><span class="status-badge status-in-delivery">In Progress</span></td>
+                <td>
+                  <div class="progress-section" style="margin: 0; width: 150px;">
+                    <div class="progress-bar">
+                      <div class="progress-fill" style="width: 45%;"></div>
+                    </div>
+                  </div>
+                </td>
+                <td><a href="#" style="color: var(--primary-color); text-decoration: none; font-weight: 600; font-size: 12px;">View →</a></td>
+              </tr>
+              <tr>
+                <td><strong>Public School C</strong></td>
+                <td class="text-secondary">Central Region</td>
+                <td><span class="status-badge status-completed">Completed</span></td>
+                <td>
+                  <div class="progress-section" style="margin: 0; width: 150px;">
+                    <div class="progress-bar">
+                      <div class="progress-fill" style="width: 100%;"></div>
+                    </div>
+                  </div>
+                </td>
+                <td><a href="#" style="color: var(--primary-color); text-decoration: none; font-weight: 600; font-size: 12px;">View →</a></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Recent Donations -->
+      <div style="margin-top: 40px;">
+        <div class="section-header">
+          <h2 class="section-title" style="font-size: 20px; margin: 0;">Recent Donations</h2>
+          <div class="section-actions">
+            <a href="donations.html" class="btn btn-primary">View All</a>
+          </div>
+        </div>
+
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Donation ID</th>
+                <th>Donor</th>
+                <th>School</th>
+                <th>Type</th>
+                <th>Status</th>
+                <th>Value</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>#DON-001</strong></td>
+                <td class="text-secondary">Jane Smith Corp</td>
+                <td class="text-secondary">Primary School A</td>
+                <td><span class="status-badge badge-info">Material</span></td>
+                <td><span class="status-badge status-in-delivery">In Delivery</span></td>
+                <td>$1,500</td>
+              </tr>
+              <tr>
+                <td><strong>#DON-002</strong></td>
+                <td class="text-secondary">Tech Donations Inc</td>
+                <td class="text-secondary">Secondary School B</td>
+                <td><span class="status-badge badge-success">Monetary</span></td>
+                <td><span class="status-badge status-approved">Approved</span></td>
+                <td>$5,000</td>
+              </tr>
+              <tr>
+                <td><strong>#DON-003</strong></td>
+                <td class="text-secondary">Community Fund</td>
+                <td class="text-secondary">Public School C</td>
+                <td><span class="status-badge badge-info">Material</span></td>
+                <td><span class="status-badge status-completed">Delivered</span></td>
+                <td>$800</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <p>&copy; 2026 ImpulsaEdu. All rights reserved.</p>
+    </footer>
+  </div>
+</body>
+</html>

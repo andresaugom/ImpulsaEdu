@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Add Donation - ImpulsaEdu</title>
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body class="admin-layout">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <img src="../../public/ImpulsaEdu.svg" alt="ImpulsaEdu Logo">
+    </div>
+    <nav class="sidebar-nav">
+      <ul>
+        <li><a href="dashboard.html">Dashboard</a></li>
+        <li><a href="schools.html">School Management</a></li>
+        <li><a href="donors.html">Donor Management</a></li>
+        <li><a href="donations.html" class="active">Donation Management</a></li>
+        <li><a href="preferences.html">Preferences</a></li>
+      </ul>
+    </nav>
+  </aside>
+
+  <!-- Main Container -->
+  <div class="main-container">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-left">
+        <h1 class="header-title">Donation Management</h1>
+      </div>
+      <div class="header-right">
+        <span class="notification-icon">🔔</span>
+        <div class="user-profile">
+          <div class="user-avatar">JD</div>
+          <div>
+            <div class="user-name">John Davis</div>
+            <div class="user-role">Staff</div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Content -->
+    <div class="content">
+      <div class="section-header">
+        <h1 class="section-title" style="margin: 0;">Add New Donation</h1>
+        <div style="font-size: 14px; color: var(--text-secondary);">Register a new donation in the system</div>
+      </div>
+
+      <!-- Form -->
+      <div class="form-layout">
+        <form>
+          <!-- Donation Links -->
+          <div class="form-section">
+            <h3 class="form-section-title">Link Donor & School</h3>
+            
+            <div class="form-row">
+              <div class="form-group form-row-full">
+                <label for="donor-id">Select Donor *</label>
+                <select id="donor-id" name="donor_id" required>
+                  <option value="">Choose a donor</option>
+                  <option value="1">Jane Smith</option>
+                  <option value="2">Tech Donations Inc</option>
+                  <option value="3">Community Fund</option>
+                  <option value="4">Michael Johnson</option>
+                  <option value="5">Green Education Foundation</option>
+                </select>
+              </div>
+              <div class="form-group form-row-full">
+                <label for="school-id">Select School *</label>
+                <select id="school-id" name="school_id" required>
+                  <option value="">Choose a school</option>
+                  <option value="1">Primary School A</option>
+                  <option value="2">Secondary School B</option>
+                  <option value="3">Public School C</option>
+                  <option value="4">Private Academy D</option>
+                  <option value="5">Rural School E</option>
+                </select>
+              </div>
+            </div>
+          </div>
+
+          <!-- Donation Type & Details -->
+          <div class="form-section">
+            <h3 class="form-section-title">Donation Type & Description</h3>
+            
+            <div class="form-group">
+              <label for="donation-type">Donation Type *</label>
+              <select id="donation-type" name="donation_type" required>
+                <option value="">Select a type</option>
+                <option value="material">Material</option>
+                <option value="monetary">Monetary</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="description">Description *</label>
+              <textarea 
+                id="description" 
+                name="description" 
+                placeholder="Describe what is being donated..."
+                required
+              ></textarea>
+            </div>
+          </div>
+
+          <!-- Donation Value -->
+          <div class="form-section">
+            <h3 class="form-section-title">Donation Value</h3>
+            
+            <div class="form-row">
+              <div class="form-group form-row-full">
+                <label for="value">Amount / Estimated Value (USD) *</label>
+                <input 
+                  type="number" 
+                  id="value" 
+                  name="value" 
+                  placeholder="e.g., 1500" 
+                  min="0" 
+                  step="0.01"
+                  required
+                >
+              </div>
+            </div>
+          </div>
+
+          <!-- Delivery Information (Material donations only) -->
+          <div class="form-section">
+            <h3 class="form-section-title">Delivery Configuration</h3>
+            
+            <div class="form-group">
+              <label for="delivery-mode">Delivery Mode *</label>
+              <select id="delivery-mode" name="delivery_mode" required>
+                <option value="">Select a delivery mode</option>
+                <option value="direct_to_school">Donor ships directly to school</option>
+                <option value="to_ngo">Donor ships to NGO (NGO stores temporarily)</option>
+                <option value="ngo_delivers">NGO picks up and delivers to school</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="estimated-delivery">Estimated Delivery Date</label>
+              <input 
+                type="date" 
+                id="estimated-delivery" 
+                name="estimated_delivery"
+              >
+            </div>
+          </div>
+
+          <!-- Workflow State -->
+          <div class="form-section">
+            <h3 class="form-section-title">Workflow Status</h3>
+            
+            <div class="form-group">
+              <label for="status">Current Status *</label>
+              <select id="status" name="status" required>
+                <option value="">Select a status</option>
+                <option value="registered">Registered</option>
+                <option value="approved">Approved</option>
+                <option value="in_delivery">In Delivery</option>
+                <option value="delivered">Delivered</option>
+                <option value="completed">Completed</option>
+                <option value="cancelled">Cancelled</option>
+              </select>
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="date-registered">Date Registered</label>
+                <input 
+                  type="date" 
+                  id="date-registered" 
+                  name="date_registered"
+                >
+              </div>
+              <div class="form-group">
+                <label for="date-delivered">Date Delivered</label>
+                <input 
+                  type="date" 
+                  id="date-delivered" 
+                  name="date_delivered"
+                >
+              </div>
+            </div>
+          </div>
+
+          <!-- Additional Information -->
+          <div class="form-section">
+            <h3 class="form-section-title">Additional Information</h3>
+            
+            <div class="form-group">
+              <label for="observations">Observations / Notes</label>
+              <textarea 
+                id="observations" 
+                name="observations" 
+                placeholder="Add any observations about this donation..."
+              ></textarea>
+            </div>
+          </div>
+
+          <!-- Form Actions -->
+          <div class="button-group">
+            <a href="donations.html" class="btn btn-secondary">Cancel</a>
+            <button type="reset" class="btn btn-secondary">Clear Form</button>
+            <button type="submit" class="btn btn-primary">Save Donation</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <p>&copy; 2026 ImpulsaEdu. All rights reserved.</p>
+    </footer>
+  </div>
+</body>
+</html>

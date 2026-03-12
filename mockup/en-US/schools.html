@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>School Management - ImpulsaEdu</title>
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body class="admin-layout">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <img src="../../public/ImpulsaEdu.svg" alt="ImpulsaEdu Logo">
+    </div>
+    <nav class="sidebar-nav">
+      <ul>
+        <li><a href="dashboard.html">Dashboard</a></li>
+        <li><a href="schools.html" class="active">School Management</a></li>
+        <li><a href="donors.html">Donor Management</a></li>
+        <li><a href="donations.html">Donation Management</a></li>
+        <li><a href="preferences.html">Preferences</a></li>
+      </ul>
+    </nav>
+  </aside>
+
+  <!-- Main Container -->
+  <div class="main-container">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-left">
+        <h1 class="header-title">School Management</h1>
+      </div>
+      <div class="header-right">
+        <span class="notification-icon">🔔</span>
+        <div class="user-profile">
+          <div class="user-avatar">JD</div>
+          <div>
+            <div class="user-name">John Davis</div>
+            <div class="user-role">Staff</div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Content -->
+    <div class="content">
+      <div class="section-header">
+        <h1 class="section-title" style="margin: 0;">Schools Registry</h1>
+        <div class="section-actions">
+          <a href="schools-form.html" class="btn btn-primary">+ Add School</a>
+        </div>
+      </div>
+
+      <!-- Search & Filter -->
+      <div class="search-filter">
+        <div class="search-grid">
+          <div class="form-group" style="margin: 0;">
+            <label for="school-search">School Name</label>
+            <input 
+              type="text" 
+              id="school-search" 
+              placeholder="Search schools..." 
+            >
+          </div>
+          <div class="form-group" style="margin: 0;">
+            <label for="region-filter">Region</label>
+            <select id="region-filter">
+              <option value="">All Regions</option>
+              <option value="north">North Region</option>
+              <option value="south">South Region</option>
+              <option value="central">Central Region</option>
+              <option value="east">East Region</option>
+              <option value="west">West Region</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin: 0;">
+            <label for="status-filter">Status</label>
+            <select id="status-filter">
+              <option value="">All Status</option>
+              <option value="active">Active</option>
+              <option value="completed">Completed</option>
+              <option value="archived">Archived</option>
+            </select>
+          </div>
+        </div>
+        <div class="search-buttons">
+          <button class="btn btn-primary">Search</button>
+          <button class="btn btn-secondary">Clear Filters</button>
+        </div>
+      </div>
+
+      <!-- Schools Table -->
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>School Name</th>
+              <th>Region</th>
+              <th>Category</th>
+              <th>Status</th>
+              <th>Funding Goal</th>
+              <th>Current Funding</th>
+              <th>Progress</th>
+              <th>Actions</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>Primary School A</strong></td>
+              <td class="text-secondary">North Region</td>
+              <td class="text-secondary">Infrastructure</td>
+              <td><span class="status-badge status-approved">Active</span></td>
+              <td>$10,000</td>
+              <td>$6,500</td>
+              <td>
+                <div class="progress-section" style="margin: 0; width: 120px;">
+                  <div class="progress-bar">
+                    <div class="progress-fill" style="width: 65%;"></div>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <a href="schools-form.html" class="btn btn-small btn-secondary" style="margin-right: 5px;">Edit</a>
+                <a href="#" class="btn btn-small btn-danger">Delete</a>
+              </td>
+            </tr>
+            <tr>
+              <td><strong>Secondary School B</strong></td>
+              <td class="text-secondary">South Region</td>
+              <td class="text-secondary">Education Materials</td>
+              <td><span class="status-badge status-in-delivery">In Progress</span></td>
+              <td>$15,000</td>
+              <td>$7,200</td>
+              <td>
+                <div class="progress-section" style="margin: 0; width: 120px;">
+                  <div class="progress-bar">
+                    <div class="progress-fill warning" style="width: 48%;"></div>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <a href="schools-form.html" class="btn btn-small btn-secondary" style="margin-right: 5px;">Edit</a>
+                <a href="#" class="btn btn-small btn-danger">Delete</a>
+              </td>
+            </tr>
+            <tr>
+              <td><strong>Public School C</strong></td>
+              <td class="text-secondary">Central Region</td>
+              <td class="text-secondary">Technology</td>
+              <td><span class="status-badge status-completed">Completed</span></td>
+              <td>$8,000</td>
+              <td>$8,000</td>
+              <td>
+                <div class="progress-section" style="margin: 0; width: 120px;">
+                  <div class="progress-bar">
+                    <div class="progress-fill" style="width: 100%;"></div>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <a href="schools-form.html" class="btn btn-small btn-secondary" style="margin-right: 5px;">Edit</a>
+                <a href="#" class="btn btn-small btn-danger">Delete</a>
+              </td>
+            </tr>
+            <tr>
+              <td><strong>Private Academy D</strong></td>
+              <td class="text-secondary">East Region</td>
+              <td class="text-secondary">Sports Facilities</td>
+              <td><span class="status-badge status-approved">Active</span></td>
+              <td>$20,000</td>
+              <td>$4,000</td>
+              <td>
+                <div class="progress-section" style="margin: 0; width: 120px;">
+                  <div class="progress-bar">
+                    <div class="progress-fill warning" style="width: 20%;"></div>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <a href="schools-form.html" class="btn btn-small btn-secondary" style="margin-right: 5px;">Edit</a>
+                <a href="#" class="btn btn-small btn-danger">Delete</a>
+              </td>
+            </tr>
+            <tr>
+              <td><strong>Rural School E</strong></td>
+              <td class="text-secondary">West Region</td>
+              <td class="text-secondary">Infrastructure</td>
+              <td><span class="status-badge status-in-delivery">In Progress</span></td>
+              <td>$5,000</td>
+              <td>$3,500</td>
+              <td>
+                <div class="progress-section" style="margin: 0; width: 120px;">
+                  <div class="progress-bar">
+                    <div class="progress-fill" style="width: 70%;"></div>
+                  </div>
+                </div>
+              </td>
+              <td>
+                <a href="schools-form.html" class="btn btn-small btn-secondary" style="margin-right: 5px;">Edit</a>
+                <a href="#" class="btn btn-small btn-danger">Delete</a>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Pagination -->
+      <div style="display: flex; justify-content: center; gap: 10px; margin-top: 30px;">
+        <button class="btn btn-secondary">← Previous</button>
+        <button class="btn btn-primary">1</button>
+        <button class="btn btn-secondary">2</button>
+        <button class="btn btn-secondary">3</button>
+        <button class="btn btn-secondary">Next →</button>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <p>&copy; 2026 ImpulsaEdu. All rights reserved.</p>
+    </footer>
+  </div>
+</body>
+</html>

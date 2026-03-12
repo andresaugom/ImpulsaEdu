@@ -1,0 +1,206 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Add Donor - ImpulsaEdu</title>
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body class="admin-layout">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <img src="../../public/ImpulsaEdu.svg" alt="ImpulsaEdu Logo">
+    </div>
+    <nav class="sidebar-nav">
+      <ul>
+        <li><a href="dashboard.html">Dashboard</a></li>
+        <li><a href="schools.html">School Management</a></li>
+        <li><a href="donors.html" class="active">Donor Management</a></li>
+        <li><a href="donations.html">Donation Management</a></li>
+        <li><a href="preferences.html">Preferences</a></li>
+      </ul>
+    </nav>
+  </aside>
+
+  <!-- Main Container -->
+  <div class="main-container">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-left">
+        <h1 class="header-title">Donor Management</h1>
+      </div>
+      <div class="header-right">
+        <span class="notification-icon">🔔</span>
+        <div class="user-profile">
+          <div class="user-avatar">JD</div>
+          <div>
+            <div class="user-name">John Davis</div>
+            <div class="user-role">Staff</div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Content -->
+    <div class="content">
+      <div class="section-header">
+        <h1 class="section-title" style="margin: 0;">Add New Donor</h1>
+        <div style="font-size: 14px; color: var(--text-secondary);">Register a new donor in the system</div>
+      </div>
+
+      <!-- Form -->
+      <div class="form-layout">
+        <form>
+          <!-- Basic Information -->
+          <div class="form-section">
+            <h3 class="form-section-title">Basic Information</h3>
+            
+            <div class="form-group">
+              <label for="donor-type">Donor Type *</label>
+              <select id="donor-type" name="donor_type" required>
+                <option value="">Select a type</option>
+                <option value="individual">Individual</option>
+                <option value="corporate">Corporate</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="donor-name">Full Name / Organization Name *</label>
+              <input 
+                type="text" 
+                id="donor-name" 
+                name="donor_name" 
+                placeholder="Enter full name or organization name" 
+                required
+              >
+            </div>
+
+            <div class="form-group">
+              <label for="notes">Notes</label>
+              <textarea 
+                id="notes" 
+                name="notes" 
+                placeholder="Add any notes about this donor..."
+              ></textarea>
+            </div>
+          </div>
+
+          <!-- Contact Information -->
+          <div class="form-section">
+            <h3 class="form-section-title">Contact Information</h3>
+            
+            <div class="form-group">
+              <label for="email">Email Address *</label>
+              <input 
+                type="email" 
+                id="email" 
+                name="email" 
+                placeholder="donor@example.com" 
+                required
+              >
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="phone">Phone Number</label>
+                <input 
+                  type="tel" 
+                  id="phone" 
+                  name="phone" 
+                  placeholder="+1 (555) 000-0000"
+                >
+              </div>
+              <div class="form-group">
+                <label for="country">Country</label>
+                <input 
+                  type="text" 
+                  id="country" 
+                  name="country" 
+                  placeholder="United States"
+                >
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="address">Street Address</label>
+              <input 
+                type="text" 
+                id="address" 
+                name="address" 
+                placeholder="123 Main Street"
+              >
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="city">City</label>
+                <input 
+                  type="text" 
+                  id="city" 
+                  name="city" 
+                  placeholder="New York"
+                >
+              </div>
+              <div class="form-group">
+                <label for="state">State / Province</label>
+                <input 
+                  type="text" 
+                  id="state" 
+                  name="state" 
+                  placeholder="NY"
+                >
+              </div>
+              <div class="form-group">
+                <label for="zip">ZIP / Postal Code</label>
+                <input 
+                  type="text" 
+                  id="zip" 
+                  name="zip" 
+                  placeholder="10001"
+                >
+              </div>
+            </div>
+          </div>
+
+          <!-- Additional Information -->
+          <div class="form-section">
+            <h3 class="form-section-title">Additional Information</h3>
+            
+            <div class="form-group">
+              <label for="company-name">Company Name (for corporate donors)</label>
+              <input 
+                type="text" 
+                id="company-name" 
+                name="company_name" 
+                placeholder="Tech Solutions Inc"
+              >
+            </div>
+
+            <div class="form-group">
+              <label for="status">Status *</label>
+              <select id="status" name="status" required>
+                <option value="">Select a status</option>
+                <option value="active">Active</option>
+                <option value="inactive">Inactive</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Form Actions -->
+          <div class="button-group">
+            <a href="donors.html" class="btn btn-secondary">Cancel</a>
+            <button type="reset" class="btn btn-secondary">Clear Form</button>
+            <button type="submit" class="btn btn-primary">Save Donor</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <p>&copy; 2026 ImpulsaEdu. All rights reserved.</p>
+    </footer>
+  </div>
+</body>
+</html>

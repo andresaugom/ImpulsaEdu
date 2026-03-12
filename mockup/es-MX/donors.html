@@ -1,0 +1,182 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestión de Donantes - ImpulsaEdu</title>
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body class="admin-layout">
+  <!-- Barra Lateral -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <img src="../../public/ImpulsaEdu.svg" alt="Logo de ImpulsaEdu">
+    </div>
+    <nav class="sidebar-nav">
+      <ul>
+        <li><a href="dashboard.html">Panel</a></li>
+        <li><a href="schools.html">Gestión de Escuelas</a></li>
+        <li><a href="donors.html" class="active">Gestión de Donantes</a></li>
+        <li><a href="donations.html">Gestión de Donaciones</a></li>
+        <li><a href="preferences.html">Preferencias</a></li>
+      </ul>
+    </nav>
+  </aside>
+
+  <!-- Contenedor Principal -->
+  <div class="main-container">
+    <!-- Encabezado -->
+    <header class="header">
+      <div class="header-left">
+        <h1 class="header-title">Gestión de Donantes</h1>
+      </div>
+      <div class="header-right">
+        <span class="notification-icon">🔔</span>
+        <div class="user-profile">
+          <div class="user-avatar">JM</div>
+          <div>
+            <div class="user-name">Juan Mockup</div>
+            <div class="user-role">Personal</div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Contenido -->
+    <div class="content">
+      <div class="section-header">
+        <h1 class="section-title" style="margin: 0;">Registro de Donantes</h1>
+        <div class="section-actions">
+          <a href="donors-form.html" class="btn btn-primary">+ Agregar Donante</a>
+        </div>
+      </div>
+
+      <!-- Búsqueda y Filtro -->
+      <div class="search-filter">
+        <div class="search-grid">
+          <div class="form-group" style="margin: 0;">
+            <label for="donor-search">Nombre del Donante</label>
+            <input 
+              type="text" 
+              id="donor-search" 
+              placeholder="Buscar donantes..." 
+            >
+          </div>
+          <div class="form-group" style="margin: 0;">
+            <label for="donor-type-filter">Tipo de Donante</label>
+            <select id="donor-type-filter">
+              <option value="">Todos los Tipos</option>
+              <option value="individual">Persona Física</option>
+              <option value="corporate">Persona Moral</option>
+            </select>
+          </div>
+          <div class="form-group" style="margin: 0;">
+            <label for="donor-status-filter">Estado</label>
+            <select id="donor-status-filter">
+              <option value="">Todos los Estados</option>
+              <option value="active">Activo</option>
+              <option value="inactive">Inactivo</option>
+            </select>
+          </div>
+        </div>
+        <div class="search-buttons">
+          <button class="btn btn-primary">Buscar</button>
+          <button class="btn btn-secondary">Limpiar Filtros</button>
+        </div>
+      </div>
+
+      <!-- Tabla de Donantes -->
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>Nombre del Donante</th>
+              <th>Tipo</th>
+              <th>Correo de Contacto</th>
+              <th>Teléfono</th>
+              <th>Donaciones Totales</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td><strong>María García López</strong></td>
+              <td class="text-secondary">Persona Física</td>
+              <td class="text-secondary">maria.garcia@correo.com</td>
+              <td class="text-secondary">(33) 1234-5678</td>
+              <td>5 donaciones</td>
+              <td><span class="status-badge status-approved">Activo</span></td>
+              <td>
+                <a href="donors-form.html" class="btn btn-small btn-secondary" style="margin-right: 5px;">Editar</a>
+                <a href="#" class="btn btn-small btn-danger">Eliminar</a>
+              </td>
+            </tr>
+            <tr>
+              <td><strong>Fundación México Solidario S.C.</strong></td>
+              <td class="text-secondary">Persona Moral</td>
+              <td class="text-secondary">donaciones@mexicosolidario.org</td>
+              <td class="text-secondary">(33) 5678-9012</td>
+              <td>12 donaciones</td>
+              <td><span class="status-badge status-approved">Activo</span></td>
+              <td>
+                <a href="donors-form.html" class="btn btn-small btn-secondary" style="margin-right: 5px;">Editar</a>
+                <a href="#" class="btn btn-small btn-danger">Eliminar</a>
+              </td>
+            </tr>
+            <tr>
+              <td><strong>Corporativo Educativo Jalisco</strong></td>
+              <td class="text-secondary">Persona Moral</td>
+              <td class="text-secondary">contacto@educativo-jalisco.com.mx</td>
+              <td class="text-secondary">(33) 9012-3456</td>
+              <td>8 donaciones</td>
+              <td><span class="status-badge status-approved">Activo</span></td>
+              <td>
+                <a href="donors-form.html" class="btn btn-small btn-secondary" style="margin-right: 5px;">Editar</a>
+                <a href="#" class="btn btn-small btn-danger">Eliminar</a>
+              </td>
+            </tr>
+            <tr>
+              <td><strong>Carlos Hernández Rodríguez</strong></td>
+              <td class="text-secondary">Persona Física</td>
+              <td class="text-secondary">carlos.h@correo.com</td>
+              <td class="text-secondary">(33) 3456-7890</td>
+              <td>2 donaciones</td>
+              <td><span class="status-badge status-registered">Inactivo</span></td>
+              <td>
+                <a href="donors-form.html" class="btn btn-small btn-secondary" style="margin-right: 5px;">Editar</a>
+                <a href="#" class="btn btn-small btn-danger">Eliminar</a>
+              </td>
+            </tr>
+            <tr>
+              <td><strong>Asociación Civil Educadores Unidos</strong></td>
+              <td class="text-secondary">Persona Moral</td>
+              <td class="text-secondary">info@educadores-unidos.org</td>
+              <td class="text-secondary">(33) 7890-1234</td>
+              <td>15 donaciones</td>
+              <td><span class="status-badge status-approved">Activo</span></td>
+              <td>
+                <a href="donors-form.html" class="btn btn-small btn-secondary" style="margin-right: 5px;">Editar</a>
+                <a href="#" class="btn btn-small btn-danger">Eliminar</a>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Paginación -->
+      <div style="display: flex; justify-content: center; gap: 10px; margin-top: 30px;">
+        <button class="btn btn-secondary">← Anterior</button>
+        <button class="btn btn-primary">1</button>
+        <button class="btn btn-secondary">2</button>
+        <button class="btn btn-secondary">Siguiente →</button>
+      </div>
+    </div>
+
+    <!-- Pie de Página -->
+    <footer class="footer">
+      <p>&copy; 2026 ImpulsaEdu. Todos los derechos reservados.</p>
+    </footer>
+  </div>
+</body>
+</html>

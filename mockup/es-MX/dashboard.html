@@ -1,0 +1,240 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Panel - ImpulsaEdu</title>
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body class="admin-layout">
+  <!-- Barra Lateral -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <img src="../../public/ImpulsaEdu.svg" alt="Logo de ImpulsaEdu">
+    </div>
+    <nav class="sidebar-nav">
+      <ul>
+        <li><a href="dashboard.html" class="active">Panel</a></li>
+        <li><a href="schools.html">Gestión de Escuelas</a></li>
+        <li><a href="donors.html">Gestión de Donantes</a></li>
+        <li><a href="donations.html">Gestión de Donaciones</a></li>
+        <li><a href="preferences.html">Preferencias</a></li>
+      </ul>
+    </nav>
+  </aside>
+
+  <!-- Contenedor Principal -->
+  <div class="main-container">
+    <!-- Encabezado -->
+    <header class="header">
+      <div class="header-left">
+        <h1 class="header-title">Panel</h1>
+      </div>
+      <div class="header-right">
+        <span class="notification-icon">🔔</span>
+        <div class="user-profile">
+          <div class="user-avatar">JM</div>
+          <div>
+            <div class="user-name">Juan Mockup</div>
+            <div class="user-role">Personal</div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Contenido -->
+    <div class="content">
+      <div class="section-header">
+        <div>
+          <h1 class="section-title" style="margin: 0;">Bienvenido, Juan</h1>
+          <p style="color: var(--text-secondary); margin: 5px 0 0 0;">Aquí tienes una descripción general de tus donaciones y escuelas</p>
+        </div>
+      </div>
+
+      <!-- Estadísticas Rápidas -->
+      <div class="dashboard-grid">
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Escuelas Activas</div>
+            <span class="card-badge badge-info">En Progreso</span>
+          </div>
+          <div class="card-body">
+            <div class="card-stat">
+              <span class="card-stat-label">Escuelas Totales</span>
+              <span class="card-stat-value">12</span>
+            </div>
+            <div class="card-stat">
+              <span class="card-stat-label">Financiadas Este Mes</span>
+              <span class="card-stat-value">3</span>
+            </div>
+          </div>
+          <div class="card-footer">
+            <a href="schools.html">Gestionar Escuelas →</a>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Donantes Activos</div>
+            <span class="card-badge badge-success">Activo</span>
+          </div>
+          <div class="card-body">
+            <div class="card-stat">
+              <span class="card-stat-label">Donantes Totales</span>
+              <span class="card-stat-value">28</span>
+            </div>
+            <div class="card-stat">
+              <span class="card-stat-label">Nuevos Este Mes</span>
+              <span class="card-stat-value">5</span>
+            </div>
+          </div>
+          <div class="card-footer">
+            <a href="donors.html">Gestionar Donantes →</a>
+          </div>
+        </div>
+
+        <div class="card">
+          <div class="card-header">
+            <div class="card-title">Donaciones Activas</div>
+            <span class="card-badge badge-warning">En Progreso</span>
+          </div>
+          <div class="card-body">
+            <div class="card-stat">
+              <span class="card-stat-label">Donaciones Totales</span>
+              <span class="card-stat-value">45</span>
+            </div>
+            <div class="card-stat">
+              <span class="card-stat-label">Pendientes de Entrega</span>
+              <span class="card-stat-value">8</span>
+            </div>
+          </div>
+          <div class="card-footer">
+            <a href="donations.html">Gestionar Donaciones →</a>
+          </div>
+        </div>
+      </div>
+
+      <!-- Escuelas Recientes -->
+      <div style="margin-top: 40px;">
+        <div class="section-header">
+          <h2 class="section-title" style="font-size: 20px; margin: 0;">Escuelas Recientes</h2>
+          <div class="section-actions">
+            <a href="schools.html" class="btn btn-primary">Ver Todo</a>
+          </div>
+        </div>
+
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>Nombre de la Escuela</th>
+                <th>Región</th>
+                <th>Estado</th>
+                <th>Progreso de Financiamiento</th>
+                <th></th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>Escuela Primaria A</strong></td>
+                <td class="text-secondary">Guadalajara</td>
+                <td><span class="status-badge status-approved">Activa</span></td>
+                <td>
+                  <div class="progress-section" style="margin: 0; width: 150px;">
+                    <div class="progress-bar">
+                      <div class="progress-fill" style="width: 65%;"></div>
+                    </div>
+                  </div>
+                </td>
+                <td><a href="#" style="color: var(--primary-color); text-decoration: none; font-weight: 600; font-size: 12px;">Ver →</a></td>
+              </tr>
+              <tr>
+                <td><strong>Escuela Secundaria B</strong></td>
+                <td class="text-secondary">Zapopan</td>
+                <td><span class="status-badge status-in-delivery">En Progreso</span></td>
+                <td>
+                  <div class="progress-section" style="margin: 0; width: 150px;">
+                    <div class="progress-bar">
+                      <div class="progress-fill" style="width: 45%;"></div>
+                    </div>
+                  </div>
+                </td>
+                <td><a href="#" style="color: var(--primary-color); text-decoration: none; font-weight: 600; font-size: 12px;">Ver →</a></td>
+              </tr>
+              <tr>
+                <td><strong>Escuela Pública C</strong></td>
+                <td class="text-secondary">Tlaquepaque</td>
+                <td><span class="status-badge status-completed">Completada</span></td>
+                <td>
+                  <div class="progress-section" style="margin: 0; width: 150px;">
+                    <div class="progress-bar">
+                      <div class="progress-fill" style="width: 100%;"></div>
+                    </div>
+                  </div>
+                </td>
+                <td><a href="#" style="color: var(--primary-color); text-decoration: none; font-weight: 600; font-size: 12px;">Ver →</a></td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+
+      <!-- Donaciones Recientes -->
+      <div style="margin-top: 40px;">
+        <div class="section-header">
+          <h2 class="section-title" style="font-size: 20px; margin: 0;">Donaciones Recientes</h2>
+          <div class="section-actions">
+            <a href="donations.html" class="btn btn-primary">Ver Todo</a>
+          </div>
+        </div>
+
+        <div class="table-container">
+          <table>
+            <thead>
+              <tr>
+                <th>ID de Donación</th>
+                <th>Donante</th>
+                <th>Escuela</th>
+                <th>Tipo</th>
+                <th>Estado</th>
+                <th>Valor</th>
+              </tr>
+            </thead>
+            <tbody>
+              <tr>
+                <td><strong>#DON-001</strong></td>
+                <td class="text-secondary">Corporativo Educativo Jalisco</td>
+                <td class="text-secondary">Escuela Primaria A</td>
+                <td><span class="status-badge badge-info">Material</span></td>
+                <td><span class="status-badge status-in-delivery">En Transporte</span></td>
+                <td>$1,500</td>
+              </tr>
+              <tr>
+                <td><strong>#DON-002</strong></td>
+                <td class="text-secondary">Fundación México Solidario</td>
+                <td class="text-secondary">Escuela Secundaria B</td>
+                <td><span class="status-badge badge-success">Monetaria</span></td>
+                <td><span class="status-badge status-approved">Aprobada</span></td>
+                <td>$5,000</td>
+              </tr>
+              <tr>
+                <td><strong>#DON-003</strong></td>
+                <td class="text-secondary">Asociación Educadores Unidos</td>
+                <td class="text-secondary">Escuela Pública C</td>
+                <td><span class="status-badge badge-info">Material</span></td>
+                <td><span class="status-badge status-completed">Entregada</span></td>
+                <td>$800</td>
+              </tr>
+            </tbody>
+          </table>
+        </div>
+      </div>
+    </div>
+
+    <!-- Pie de Página -->
+    <footer class="footer">
+      <p>&copy; 2026 ImpulsaEdu. Todos los derechos reservados.</p>
+    </footer>
+  </div>
+</body>
+</html>

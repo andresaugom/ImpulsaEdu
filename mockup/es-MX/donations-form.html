@@ -1,0 +1,208 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agregar Donación - ImpulsaEdu</title>
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body class="admin-layout">
+  <!-- Barra Lateral -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <img src="../../public/ImpulsaEdu.svg" alt="Logo de ImpulsaEdu">
+    </div>
+    <nav class="sidebar-nav">
+      <ul>
+        <li><a href="dashboard.html">Panel</a></li>
+        <li><a href="schools.html">Gestión de Escuelas</a></li>
+        <li><a href="donors.html">Gestión de Donantes</a></li>
+        <li><a href="donations.html" class="active">Gestión de Donaciones</a></li>
+        <li><a href="preferences.html">Preferencias</a></li>
+      </ul>
+    </nav>
+  </aside>
+
+  <!-- Contenedor Principal -->
+  <div class="main-container">
+    <!-- Encabezado -->
+    <header class="header">
+      <div class="header-left">
+        <h1 class="header-title">Gestión de Donaciones</h1>
+      </div>
+      <div class="header-right">
+        <span class="notification-icon">🔔</span>
+        <div class="user-profile">
+          <div class="user-avatar">JM</div>
+          <div>
+            <div class="user-name">Juan Mockup</div>
+            <div class="user-role">Personal</div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Contenido -->
+    <div class="content">
+      <div class="section-header">
+        <h1 class="section-title" style="margin: 0;">Agregar Nueva Donación</h1>
+        <div style="font-size: 14px; color: var(--text-secondary);">Registra una nueva donación en el sistema</div>
+      </div>
+
+      <!-- Formulario -->
+      <div class="form-layout">
+        <form>
+          <!-- Información de Donante y Escuela -->
+          <div class="form-section">
+            <h3 class="form-section-title">Información de Donante y Escuela</h3>
+            
+            <div class="form-group">
+              <label for="donor-id">Donante *</label>
+              <select id="donor-id" name="donor_id" required>
+                <option value="">Selecciona un donante</option>
+                <option value="1">María García López</option>
+                <option value="2">Carlos Hernández Rodríguez</option>
+                <option value="3">Fundación México Solidario</option>
+                <option value="4">Corporativo Educativo Jalisco</option>
+                <option value="5">Asociación Civil Educadores Unidos</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="school-id">Escuela Destinataria *</label>
+              <select id="school-id" name="school_id" required>
+                <option value="">Selecciona una escuela</option>
+                <option value="1">Escuela Primaria San José - Guadalajara</option>
+                <option value="2">Escuela Secundaria Morelos - Zapopan</option>
+                <option value="3">Escuela Técnica Regional - Tlaquepaque</option>
+                <option value="4">Escuela Primaria Benito Juárez - Puerto Vallarta</option>
+                <option value="5">Escuela Rural Las Montañas - Tonalá</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Detalles de Donación -->
+          <div class="form-section">
+            <h3 class="form-section-title">Detalles de la Donación</h3>
+            
+            <div class="form-group">
+              <label for="donation-type">Tipo de Donación *</label>
+              <select id="donation-type" name="donation_type" required>
+                <option value="">Selecciona un tipo</option>
+                <option value="material">Material</option>
+                <option value="monetary">Monetaria</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="amount">Cantidad / Monto (USD) *</label>
+              <input 
+                type="text" 
+                id="amount" 
+                name="amount" 
+                placeholder="250.00" 
+                required
+              >
+            </div>
+
+            <div class="form-group">
+              <label for="description">Descripción de la Donación</label>
+              <textarea 
+                id="description" 
+                name="description" 
+                placeholder="Describe los detalles de la donación (material, libros, equipos, etc.)..."
+              ></textarea>
+            </div>
+          </div>
+
+          <!-- Modo de Entrega -->
+          <div class="form-section">
+            <h3 class="form-section-title">Modo de Entrega</h3>
+            
+            <div class="form-group">
+              <label for="delivery-method">Método de Entrega *</label>
+              <select id="delivery-method" name="delivery_method" required>
+                <option value="">Selecciona un método</option>
+                <option value="direct">Entrega Directa</option>
+                <option value="bank-transfer">Transferencia Bancaria</option>
+                <option value="logistics">Coordinación Logística</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="delivery-date">Fecha de Entrega Prevista *</label>
+              <input 
+                type="date" 
+                id="delivery-date" 
+                name="delivery_date" 
+                required
+              >
+            </div>
+          </div>
+
+          <!-- Flujo de Trabajo -->
+          <div class="form-section">
+            <h3 class="form-section-title">Flujo de Trabajo</h3>
+            
+            <div class="form-group">
+              <label for="workflow-status">Estado del Flujo *</label>
+              <select id="workflow-status" name="workflow_status" required>
+                <option value="">Selecciona un estado</option>
+                <option value="pending">Pendiente</option>
+                <option value="confirmed">Confirmada</option>
+                <option value="delivered">Entregada</option>
+                <option value="cancelled">Cancelada</option>
+              </select>
+            </div>
+
+            <div class="form-group">
+              <label for="notes">Notas Internas</label>
+              <textarea 
+                id="notes" 
+                name="notes" 
+                placeholder="Agrega notas internas sobre esta donación..."
+              ></textarea>
+            </div>
+          </div>
+
+          <!-- Fechas -->
+          <div class="form-section">
+            <h3 class="form-section-title">Fechas</h3>
+            
+            <div class="form-row">
+              <div class="form-group">
+                <label for="created-date">Fecha de Registro</label>
+                <input 
+                  type="date" 
+                  id="created-date" 
+                  name="created_date"
+                >
+              </div>
+              <div class="form-group">
+                <label for="actual-delivery">Fecha de Entrega Real</label>
+                <input 
+                  type="date" 
+                  id="actual-delivery" 
+                  name="actual_delivery"
+                >
+              </div>
+            </div>
+          </div>
+
+          <!-- Acciones del Formulario -->
+          <div class="button-group">
+            <a href="donations.html" class="btn btn-secondary">Cancelar</a>
+            <button type="reset" class="btn btn-secondary">Limpiar Formulario</button>
+            <button type="submit" class="btn btn-primary">Guardar Donación</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Pie de Página -->
+    <footer class="footer">
+      <p>&copy; 2026 ImpulsaEdu. Todos los derechos reservados.</p>
+    </footer>
+  </div>
+</body>
+</html>

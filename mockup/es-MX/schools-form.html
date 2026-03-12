@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Agregar Escuela - ImpulsaEdu</title>
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body class="admin-layout">
+  <!-- Barra Lateral -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <img src="../../public/ImpulsaEdu.svg" alt="Logo de ImpulsaEdu">
+    </div>
+    <nav class="sidebar-nav">
+      <ul>
+        <li><a href="dashboard.html">Panel</a></li>
+        <li><a href="schools.html" class="active">Gestión de Escuelas</a></li>
+        <li><a href="donors.html">Gestión de Donantes</a></li>
+        <li><a href="donations.html">Gestión de Donaciones</a></li>
+        <li><a href="preferences.html">Preferencias</a></li>
+      </ul>
+    </nav>
+  </aside>
+
+  <!-- Contenedor Principal -->
+  <div class="main-container">
+    <!-- Encabezado -->
+    <header class="header">
+      <div class="header-left">
+        <h1 class="header-title">Gestión de Escuelas</h1>
+      </div>
+      <div class="header-right">
+        <span class="notification-icon">🔔</span>
+        <div class="user-profile">
+          <div class="user-avatar">JM</div>
+          <div>
+            <div class="user-name">Juan Mockup</div>
+            <div class="user-role">Personal</div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Contenido -->
+    <div class="content">
+      <div class="section-header">
+        <h1 class="section-title" style="margin: 0;">Agregar Nueva Escuela</h1>
+        <div style="font-size: 14px; color: var(--text-secondary);">Crear un nuevo registro de escuela en el sistema</div>
+      </div>
+
+      <!-- Formulario -->
+      <div class="form-layout">
+        <form>
+          <!-- Información Básica -->
+          <div class="form-section">
+            <h3 class="form-section-title">Información Básica</h3>
+            
+            <div class="form-group">
+              <label for="school-name">Nombre de la Escuela *</label>
+              <input 
+                type="text" 
+                id="school-name" 
+                name="school_name" 
+                placeholder="Ingresa el nombre de la escuela" 
+                required
+              >
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="region">Región *</label>
+                <select id="region" name="region" required>
+                  <option value="">Selecciona una región</option>
+                  <option value="guadalajara">Guadalajara</option>
+                  <option value="puerto_vallarta">Puerto Vallarta</option>
+                  <option value="zapopan">Zapopan</option>
+                  <option value="tlaquepaque">Tlaquepaque</option>
+                  <option value="tonala">Tonalá</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="category">Categoría de Necesidad *</label>
+                <select id="category" name="category" required>
+                  <option value="">Selecciona una categoría</option>
+                  <option value="infrastructure">Infraestructura</option>
+                  <option value="education_materials">Materiales Educativos</option>
+                  <option value="technology">Tecnología</option>
+                  <option value="sports_facilities">Instalaciones Deportivas</option>
+                  <option value="nutrition_program">Programa de Nutrición</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="description">Descripción</label>
+              <textarea 
+                id="description" 
+                name="description" 
+                placeholder="Cuéntanos sobre la escuela y sus necesidades..."
+              ></textarea>
+            </div>
+          </div>
+
+          <!-- Información de Financiamiento -->
+          <div class="form-section">
+            <h3 class="form-section-title">Información de Financiamiento</h3>
+            
+            <div class="form-row">
+              <div class="form-group">
+                <label for="funding-goal">Meta de Financiamiento (USD) *</label>
+                <input 
+                  type="number" 
+                  id="funding-goal" 
+                  name="funding_goal" 
+                  placeholder="ej., 10000" 
+                  min="0" 
+                  step="0.01"
+                  required
+                >
+              </div>
+              <div class="form-group">
+                <label for="current-funding">Financiamiento Actual (USD) *</label>
+                <input 
+                  type="number" 
+                  id="current-funding" 
+                  name="current_funding" 
+                  placeholder="ej., 5000" 
+                  min="0" 
+                  step="0.01"
+                  required
+                >
+              </div>
+            </div>
+          </div>
+
+          <!-- Información de Contacto -->
+          <div class="form-section">
+            <h3 class="form-section-title">Información de Contacto</h3>
+            
+            <div class="form-row">
+              <div class="form-group">
+                <label for="contact-name">Nombre de Contacto</label>
+                <input 
+                  type="text" 
+                  id="contact-name" 
+                  name="contact_name" 
+                  placeholder="Ingresa el nombre de contacto"
+                >
+              </div>
+              <div class="form-group">
+                <label for="contact-email">Correo de Contacto</label>
+                <input 
+                  type="email" 
+                  id="contact-email" 
+                  name="contact_email" 
+                  placeholder="contacto@escuela.edu"
+                >
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="contact-phone">Teléfono de Contacto</label>
+              <input 
+                type="tel" 
+                id="contact-phone" 
+                name="contact_phone" 
+                placeholder="+52 (33) 1234-5678"
+              >
+            </div>
+
+            <div class="form-group">
+              <label for="address">Domicilio</label>
+              <input 
+                type="text" 
+                id="address" 
+                name="address" 
+                placeholder="Calle Principal 123"
+              >
+            </div>
+          </div>
+
+          <!-- Estado -->
+          <div class="form-section">
+            <h3 class="form-section-title">Estado</h3>
+            
+            <div class="form-group">
+              <label for="status">Estado *</label>
+              <select id="status" name="status" required>
+                <option value="">Selecciona un estado</option>
+                <option value="active">Activa</option>
+                <option value="completed">Completada</option>
+                <option value="archived">Archivada</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Acciones del Formulario -->
+          <div class="button-group">
+            <a href="schools.html" class="btn btn-secondary">Cancelar</a>
+            <button type="reset" class="btn btn-secondary">Limpiar Formulario</button>
+            <button type="submit" class="btn btn-primary">Guardar Escuela</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Pie de Página -->
+    <footer class="footer">
+      <p>&copy; 2026 ImpulsaEdu. Todos los derechos reservados.</p>
+    </footer>
+  </div>
+</body>
+</html>

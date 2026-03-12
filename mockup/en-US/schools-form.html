@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Add School - ImpulsaEdu</title>
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body class="admin-layout">
+  <!-- Sidebar -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <img src="../../public/ImpulsaEdu.svg" alt="ImpulsaEdu Logo">
+    </div>
+    <nav class="sidebar-nav">
+      <ul>
+        <li><a href="dashboard.html">Dashboard</a></li>
+        <li><a href="schools.html" class="active">School Management</a></li>
+        <li><a href="donors.html">Donor Management</a></li>
+        <li><a href="donations.html">Donation Management</a></li>
+        <li><a href="preferences.html">Preferences</a></li>
+      </ul>
+    </nav>
+  </aside>
+
+  <!-- Main Container -->
+  <div class="main-container">
+    <!-- Header -->
+    <header class="header">
+      <div class="header-left">
+        <h1 class="header-title">School Management</h1>
+      </div>
+      <div class="header-right">
+        <span class="notification-icon">🔔</span>
+        <div class="user-profile">
+          <div class="user-avatar">JD</div>
+          <div>
+            <div class="user-name">John Davis</div>
+            <div class="user-role">Staff</div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Content -->
+    <div class="content">
+      <div class="section-header">
+        <h1 class="section-title" style="margin: 0;">Add New School</h1>
+        <div style="font-size: 14px; color: var(--text-secondary);">Create a new school entry in the system</div>
+      </div>
+
+      <!-- Form -->
+      <div class="form-layout">
+        <form>
+          <!-- Basic Information -->
+          <div class="form-section">
+            <h3 class="form-section-title">Basic Information</h3>
+            
+            <div class="form-group">
+              <label for="school-name">School Name *</label>
+              <input 
+                type="text" 
+                id="school-name" 
+                name="school_name" 
+                placeholder="Enter school name" 
+                required
+              >
+            </div>
+
+            <div class="form-row">
+              <div class="form-group">
+                <label for="region">Region *</label>
+                <select id="region" name="region" required>
+                  <option value="">Select a region</option>
+                  <option value="north">North Region</option>
+                  <option value="south">South Region</option>
+                  <option value="central">Central Region</option>
+                  <option value="east">East Region</option>
+                  <option value="west">West Region</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="category">Category of Need *</label>
+                <select id="category" name="category" required>
+                  <option value="">Select a category</option>
+                  <option value="infrastructure">Infrastructure</option>
+                  <option value="education_materials">Education Materials</option>
+                  <option value="technology">Technology</option>
+                  <option value="sports_facilities">Sports Facilities</option>
+                  <option value="nutrition_program">Nutrition Program</option>
+                </select>
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="description">Description</label>
+              <textarea 
+                id="description" 
+                name="description" 
+                placeholder="Tell us about the school and the needs..."
+              ></textarea>
+            </div>
+          </div>
+
+          <!-- Funding Information -->
+          <div class="form-section">
+            <h3 class="form-section-title">Funding Information</h3>
+            
+            <div class="form-row">
+              <div class="form-group">
+                <label for="funding-goal">Funding Goal (USD) *</label>
+                <input 
+                  type="number" 
+                  id="funding-goal" 
+                  name="funding_goal" 
+                  placeholder="e.g., 10000" 
+                  min="0" 
+                  step="0.01"
+                  required
+                >
+              </div>
+              <div class="form-group">
+                <label for="current-funding">Current Funding (USD) *</label>
+                <input 
+                  type="number" 
+                  id="current-funding" 
+                  name="current_funding" 
+                  placeholder="e.g., 5000" 
+                  min="0" 
+                  step="0.01"
+                  required
+                >
+              </div>
+            </div>
+          </div>
+
+          <!-- Contact Information -->
+          <div class="form-section">
+            <h3 class="form-section-title">Contact Information</h3>
+            
+            <div class="form-row">
+              <div class="form-group">
+                <label for="contact-name">Contact Person Name</label>
+                <input 
+                  type="text" 
+                  id="contact-name" 
+                  name="contact_name" 
+                  placeholder="Enter contact name"
+                >
+              </div>
+              <div class="form-group">
+                <label for="contact-email">Contact Email</label>
+                <input 
+                  type="email" 
+                  id="contact-email" 
+                  name="contact_email" 
+                  placeholder="contact@school.edu"
+                >
+              </div>
+            </div>
+
+            <div class="form-group">
+              <label for="contact-phone">Contact Phone</label>
+              <input 
+                type="tel" 
+                id="contact-phone" 
+                name="contact_phone" 
+                placeholder="+1 (555) 000-0000"
+              >
+            </div>
+
+            <div class="form-group">
+              <label for="address">Street Address</label>
+              <input 
+                type="text" 
+                id="address" 
+                name="address" 
+                placeholder="123 Main Street"
+              >
+            </div>
+          </div>
+
+          <!-- Status -->
+          <div class="form-section">
+            <h3 class="form-section-title">Status</h3>
+            
+            <div class="form-group">
+              <label for="status">Status *</label>
+              <select id="status" name="status" required>
+                <option value="">Select a status</option>
+                <option value="active">Active</option>
+                <option value="completed">Completed</option>
+                <option value="archived">Archived</option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Form Actions -->
+          <div class="button-group">
+            <a href="schools.html" class="btn btn-secondary">Cancel</a>
+            <button type="reset" class="btn btn-secondary">Clear Form</button>
+            <button type="submit" class="btn btn-primary">Save School</button>
+          </div>
+        </form>
+      </div>
+    </div>
+
+    <!-- Footer -->
+    <footer class="footer">
+      <p>&copy; 2026 ImpulsaEdu. All rights reserved.</p>
+    </footer>
+  </div>
+</body>
+</html>

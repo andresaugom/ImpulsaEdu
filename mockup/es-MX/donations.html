@@ -1,0 +1,159 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Gestión de Donaciones - ImpulsaEdu</title>
+  <link rel="stylesheet" href="../style.css">
+</head>
+<body class="admin-layout">
+  <!-- Barra Lateral -->
+  <aside class="sidebar">
+    <div class="sidebar-logo">
+      <img src="../../public/ImpulsaEdu.svg" alt="Logo de ImpulsaEdu">
+    </div>
+    <nav class="sidebar-nav">
+      <ul>
+        <li><a href="dashboard.html">Panel</a></li>
+        <li><a href="schools.html">Gestión de Escuelas</a></li>
+        <li><a href="donors.html">Gestión de Donantes</a></li>
+        <li><a href="donations.html" class="active">Gestión de Donaciones</a></li>
+        <li><a href="preferences.html">Preferencias</a></li>
+      </ul>
+    </nav>
+  </aside>
+
+  <!-- Contenedor Principal -->
+  <div class="main-container">
+    <!-- Encabezado -->
+    <header class="header">
+      <div class="header-left">
+        <h1 class="header-title">Gestión de Donaciones</h1>
+      </div>
+      <div class="header-right">
+        <span class="notification-icon">🔔</span>
+        <div class="user-profile">
+          <div class="user-avatar">JM</div>
+          <div>
+            <div class="user-name">Juan Mockup</div>
+            <div class="user-role">Personal</div>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- Contenido -->
+    <div class="content">
+      <div class="section-header">
+        <h1 class="section-title">Donaciones</h1>
+        <div style="display: flex; gap: 10px; flex-wrap: wrap;">
+          <a href="donations-form.html" class="btn btn-primary">+ Nueva Donación</a>
+          <input 
+            type="search" 
+            placeholder="Buscar donaciones..." 
+            class="search-input"
+            style="flex: 1; min-width: 200px;"
+          >
+          <select style="padding: 8px 12px; border: 1px solid var(--border-color); border-radius: 4px; background: white;">
+            <option>Filtrar por Estado</option>
+            <option>Pendiente</option>
+            <option>Entregada</option>
+            <option>Cancelada</option>
+          </select>
+        </div>
+      </div>
+
+      <!-- Tabla de Donaciones -->
+      <div class="table-container">
+        <table>
+          <thead>
+            <tr>
+              <th>ID de Donación</th>
+              <th>Donante</th>
+              <th>Escuela</th>
+              <th>Tipo</th>
+              <th>Modo de Entrega</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr>
+              <td>#DN001</td>
+              <td>María García López</td>
+              <td>Escuela Primaria San José</td>
+              <td><span class="badge badge-info">Material</span></td>
+              <td>Entrega Directa</td>
+              <td><span class="badge badge-success">Entregada</span></td>
+              <td style="text-align: center;">
+                <a href="donations-form.html" style="color: var(--primary-color); text-decoration: none; margin-right: 10px;">Editar</a>
+                <a href="#" style="color: var(--error-color); text-decoration: none;">Eliminar</a>
+              </td>
+            </tr>
+            <tr>
+              <td>#DN002</td>
+              <td>Carlos Hernández Rodríguez</td>
+              <td>Escuela Secundaria Morelos</td>
+              <td><span class="badge badge-warning">Monetaria</span></td>
+              <td>Transferencia Bancaria</td>
+              <td><span class="badge badge-warning">Pendiente</span></td>
+              <td style="text-align: center;">
+                <a href="donations-form.html" style="color: var(--primary-color); text-decoration: none; margin-right: 10px;">Editar</a>
+                <a href="#" style="color: var(--error-color); text-decoration: none;">Eliminar</a>
+              </td>
+            </tr>
+            <tr>
+              <td>#DN003</td>
+              <td>Fundación México Solidario</td>
+              <td>Escuela Técnica Regional</td>
+              <td><span class="badge badge-info">Material</span></td>
+              <td>Coordinación Logística</td>
+              <td><span class="badge badge-success">Entregada</span></td>
+              <td style="text-align: center;">
+                <a href="donations-form.html" style="color: var(--primary-color); text-decoration: none; margin-right: 10px;">Editar</a>
+                <a href="#" style="color: var(--error-color); text-decoration: none;">Eliminar</a>
+              </td>
+            </tr>
+            <tr>
+              <td>#DN004</td>
+              <td>Corporativo Educativo Jalisco</td>
+              <td>Escuela Primaria Benito Juárez</td>
+              <td><span class="badge badge-warning">Monetaria</span></td>
+              <td>Depósito en Cuenta</td>
+              <td><span class="badge badge-danger">Cancelada</span></td>
+              <td style="text-align: center;">
+                <a href="donations-form.html" style="color: var(--primary-color); text-decoration: none; margin-right: 10px;">Editar</a>
+                <a href="#" style="color: var(--error-color); text-decoration: none;">Eliminar</a>
+              </td>
+            </tr>
+            <tr>
+              <td>#DN005</td>
+              <td>Asociación Civil Educadores Unidos</td>
+              <td>Escuela Rural Las Montañas</td>
+              <td><span class="badge badge-info">Material</span></td>
+              <td>Entrega Directa</td>
+              <td><span class="badge badge-warning">Pendiente</span></td>
+              <td style="text-align: center;">
+                <a href="donations-form.html" style="color: var(--primary-color); text-decoration: none; margin-right: 10px;">Editar</a>
+                <a href="#" style="color: var(--error-color); text-decoration: none;">Eliminar</a>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+
+      <!-- Control de Paginación -->
+      <div class="pagination" style="margin-top: 20px;">
+        <button class="pagination-btn" disabled>&larr; Anterior</button>
+        <span style="padding: 0 15px;">Página 1 de 5</span>
+        <button class="pagination-btn">Siguiente &rarr;</button>
+      </div>
+    </div>
+
+    <!-- Pie de Página -->
+    <footer class="footer">
+      <p>&copy; 2026 ImpulsaEdu. Todos los derechos reservados.</p>
+    </footer>
+  </div>
+</body>
+</html>
