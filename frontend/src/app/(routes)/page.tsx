@@ -1,68 +1,585 @@
 'use client';
-import React, { useState } from 'react';
-import { useRouter } from 'next/navigation';
-import { Button, Typography, Box, Card, CardContent } from '@mui/material';
 
-import MainDashboard from "@/components/main/MainDashboard";
+import {
+  Box,
+  Container,
+  Typography,
+  Grid,
+  Card,
+  CardContent,
+  CardActions,
+  Button,
+  Table,
+  TableBody,
+  TableCell,
+  TableContainer,
+  TableHead,
+  TableRow,
+  Paper,
+  Chip,
+  LinearProgress,
+  useTheme,
+  useMediaQuery,
+} from '@mui/material';
+import Link from 'next/link';
 
-export default function UserPage() {
-  const router = useRouter();
-  const [user, setUser] = useState("yes");
+// Mock data for schools
+const mockSchools = [
+  {
+    id: 1,
+    name: 'Escuela Primaria A',
+    region: 'Guadalajara',
+    status: 'Activa',
+    progress: 65,
+    statusColor: 'success',
+  },
+  {
+    id: 2,
+    name: 'Escuela Secundaria B',
+    region: 'Zapopan',
+    status: 'En Progreso',
+    progress: 45,
+    statusColor: 'warning',
+  },
+  {
+    id: 3,
+    name: 'Escuela Pública C',
+    region: 'Tlaquepaque',
+    status: 'Completada',
+    progress: 100,
+    statusColor: 'success',
+  },
+];
+
+// Mock data for donations
+const mockDonations = [
+  {
+    id: '#DON-001',
+    donor: 'Corporativo Educativo Jalisco',
+    school: 'Escuela Primaria A',
+    type: 'Material',
+    status: 'En Transporte',
+    value: '$1,500',
+  },
+  {
+    id: '#DON-002',
+    donor: 'Fundación México Solidario',
+    school: 'Escuela Secundaria B',
+    type: 'Monetaria',
+    status: 'Aprobada',
+    value: '$5,000',
+  },
+  {
+    id: '#DON-003',
+    donor: 'Asociación Educadores Unidos',
+    school: 'Escuela Pública C',
+    type: 'Material',
+    status: 'Entregada',
+    value: '$800',
+  },
+];
+
+const getStatusColor = (status: string) => {
+  switch (status) {
+    case 'Activa':
+    case 'Aprobada':
+    case 'Entregada':
+      return '#d1fae5';
+    case 'En Progreso':
+    case 'En Transporte':
+      return '#fef3c7';
+    case 'Completada':
+      return '#d1fae5';
+    default:
+      return '#dbeafe';
+  }
+};
+
+const getStatusTextColor = (status: string) => {
+  switch (status) {
+    case 'Activa':
+    case 'Aprobada':
+    case 'Entregada':
+      return '#065f46';
+    case 'En Progreso':
+    case 'En Transporte':
+      return '#92400e';
+    case 'Completada':
+      return '#065f46';
+    default:
+      return '#0c2d6b';
+  }
+};
+
+export default function DashboardPage() {
+  const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
 
   return (
-    <Box gap={2} sx={{mt:4}} >
-        <MainDashboard />
+    <Box>
+      {/* Welcome Section */}
+      <Box sx={{ marginBottom: 4 }}>
+        <Typography
+          variant="h4"
+          sx={{
+            fontWeight: 700,
+            marginBottom: 1,
+            color: '#1f2937',
+          }}
+        >
+          Bienvenido, Juan
+        </Typography>
+        <Typography sx={{ color: '#6b7280' }}>
+          Aquí tienes una descripción general de tus donaciones y escuelas
+        </Typography>
+      </Box>
+
+      {/* Stats Cards */}
+      <Grid
+        container
+        spacing={3}
+        sx={{
+          marginBottom: 4,
+        }}
+      >
+        {/* Schools Card */}
+        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+          <Card
+            sx={{
+              boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
+              '&:hover': {
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+              },
+              transition: 'all 0.2s ease',
+            }}
+          >
+            <CardContent>
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'flex-start',
+                  marginBottom: 2,
+                }}
+              >
+                <Typography
+                  sx={{
+                    fontSize: '16px',
+                    fontWeight: 600,
+                    color: '#1f2937',
+                  }}
+                >
+                  Escuelas Activas
+                </Typography>
+                <Chip
+                  label="En Progreso"
+                  size="small"
+                  sx={{
+                    backgroundColor: '#dbeafe',
+                    color: '#0c2d6b',
+                    fontWeight: 600,
+                    fontSize: '12px',
+                  }}
+                />
+              </Box>
+              <Box>
+                <Box sx={{ marginBottom: 1.5 }}>
+                  <Typography sx={{ fontSize: '12px', color: '#6b7280' }}>
+                    Escuelas Totales
+                  </Typography>
+                  <Typography
+                    sx={{ fontSize: '18px', fontWeight: 700, color: theme.palette.primary.main }}
+                  >
+                    12
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography sx={{ fontSize: '12px', color: '#6b7280' }}>
+                    Financiadas Este Mes
+                  </Typography>
+                  <Typography
+                    sx={{ fontSize: '18px', fontWeight: 700, color: theme.palette.primary.main }}
+                  >
+                    3
+                  </Typography>
+                </Box>
+              </Box>
+            </CardContent>
+            <CardActions>
+              <Link href="/escuelas" style={{ textDecoration: 'none', width: '100%' }}>
+                <Button
+                  size="small"
+                  sx={{
+                    color: theme.palette.primary.main,
+                    textTransform: 'none',
+                    fontWeight: 600,
+                    fontSize: '12px',
+                  }}
+                >
+                  Gestionar Escuelas →
+                </Button>
+              </Link>
+            </CardActions>
+          </Card>
+        </Grid>
+
+        {/* Donors Card */}
+        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+          <Card
+            sx={{
+              boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
+              '&:hover': {
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+              },
+              transition: 'all 0.2s ease',
+            }}
+          >
+            <CardContent>
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'flex-start',
+                  marginBottom: 2,
+                }}
+              >
+                <Typography
+                  sx={{
+                    fontSize: '16px',
+                    fontWeight: 600,
+                    color: '#1f2937',
+                  }}
+                >
+                  Donantes Activos
+                </Typography>
+                <Chip
+                  label="Activo"
+                  size="small"
+                  sx={{
+                    backgroundColor: '#d1fae5',
+                    color: '#065f46',
+                    fontWeight: 600,
+                    fontSize: '12px',
+                  }}
+                />
+              </Box>
+              <Box>
+                <Box sx={{ marginBottom: 1.5 }}>
+                  <Typography sx={{ fontSize: '12px', color: '#6b7280' }}>
+                    Donantes Totales
+                  </Typography>
+                  <Typography
+                    sx={{ fontSize: '18px', fontWeight: 700, color: theme.palette.primary.main }}
+                  >
+                    28
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography sx={{ fontSize: '12px', color: '#6b7280' }}>
+                    Nuevos Este Mes
+                  </Typography>
+                  <Typography
+                    sx={{ fontSize: '18px', fontWeight: 700, color: theme.palette.primary.main }}
+                  >
+                    5
+                  </Typography>
+                </Box>
+              </Box>
+            </CardContent>
+            <CardActions>
+              <Link href="/donantes" style={{ textDecoration: 'none', width: '100%' }}>
+                <Button
+                  size="small"
+                  sx={{
+                    color: theme.palette.primary.main,
+                    textTransform: 'none',
+                    fontWeight: 600,
+                    fontSize: '12px',
+                  }}
+                >
+                  Gestionar Donantes →
+                </Button>
+              </Link>
+            </CardActions>
+          </Card>
+        </Grid>
+
+        {/* Donations Card */}
+        <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+          <Card
+            sx={{
+              boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
+              '&:hover': {
+                boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)',
+              },
+              transition: 'all 0.2s ease',
+            }}
+          >
+            <CardContent>
+              <Box
+                sx={{
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'flex-start',
+                  marginBottom: 2,
+                }}
+              >
+                <Typography
+                  sx={{
+                    fontSize: '16px',
+                    fontWeight: 600,
+                    color: '#1f2937',
+                  }}
+                >
+                  Donaciones Activas
+                </Typography>
+                <Chip
+                  label="En Progreso"
+                  size="small"
+                  sx={{
+                    backgroundColor: '#fef3c7',
+                    color: '#92400e',
+                    fontWeight: 600,
+                    fontSize: '12px',
+                  }}
+                />
+              </Box>
+              <Box>
+                <Box sx={{ marginBottom: 1.5 }}>
+                  <Typography sx={{ fontSize: '12px', color: '#6b7280' }}>
+                    Donaciones Totales
+                  </Typography>
+                  <Typography
+                    sx={{ fontSize: '18px', fontWeight: 700, color: theme.palette.primary.main }}
+                  >
+                    45
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography sx={{ fontSize: '12px', color: '#6b7280' }}>
+                    Pendientes de Entrega
+                  </Typography>
+                  <Typography
+                    sx={{ fontSize: '18px', fontWeight: 700, color: theme.palette.primary.main }}
+                  >
+                    8
+                  </Typography>
+                </Box>
+              </Box>
+            </CardContent>
+            <CardActions>
+              <Link href="/donaciones" style={{ textDecoration: 'none', width: '100%' }}>
+                <Button
+                  size="small"
+                  sx={{
+                    color: theme.palette.primary.main,
+                    textTransform: 'none',
+                    fontWeight: 600,
+                    fontSize: '12px',
+                  }}
+                >
+                  Gestionar Donaciones →
+                </Button>
+              </Link>
+            </CardActions>
+          </Card>
+        </Grid>
+      </Grid>
+
+      {/* Recent Schools Section */}
+      <Box sx={{ marginBottom: 4 }}>
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: 2,
+          }}
+        >
+          <Typography
+            variant="h6"
+            sx={{
+              fontWeight: 700,
+              color: '#1f2937',
+            }}
+          >
+            Escuelas Recientes
+          </Typography>
+          <Link href="/escuelas" style={{ textDecoration: 'none' }}>
+            <Button variant="contained" color="primary" size="small">
+              Ver Todo
+            </Button>
+          </Link>
+        </Box>
+
+        <TableContainer component={Paper} sx={{ boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)' }}>
+          <Table>
+            <TableHead sx={{ backgroundColor: '#f9fafb' }}>
+              <TableRow>
+                <TableCell sx={{ fontWeight: 700, textTransform: 'uppercase', fontSize: '13px' }}>
+                  Nombre de la Escuela
+                </TableCell>
+                <TableCell sx={{ fontWeight: 700, textTransform: 'uppercase', fontSize: '13px' }}>
+                  Región
+                </TableCell>
+                <TableCell sx={{ fontWeight: 700, textTransform: 'uppercase', fontSize: '13px' }}>
+                  Estado
+                </TableCell>
+                <TableCell sx={{ fontWeight: 700, textTransform: 'uppercase', fontSize: '13px' }}>
+                  Progreso
+                </TableCell>
+                <TableCell></TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {mockSchools.map((school) => (
+                <TableRow
+                  key={school.id}
+                  sx={{
+                    '&:hover': {
+                      backgroundColor: '#f9fafb',
+                    },
+                  }}
+                >
+                  <TableCell sx={{ fontWeight: 600 }}>{school.name}</TableCell>
+                  <TableCell sx={{ color: '#6b7280', fontSize: '14px' }}>{school.region}</TableCell>
+                  <TableCell>
+                    <Chip
+                      label={school.status}
+                      size="small"
+                      sx={{
+                        backgroundColor: getStatusColor(school.status),
+                        color: getStatusTextColor(school.status),
+                        fontWeight: 600,
+                        fontSize: '12px',
+                      }}
+                    />
+                  </TableCell>
+                  <TableCell sx={{ width: '150px' }}>
+                    <LinearProgress
+                      variant="determinate"
+                      value={school.progress}
+                      sx={{
+                        height: 8,
+                        borderRadius: 4,
+                        backgroundColor: '#e5e7eb',
+                        '& .MuiLinearProgress-bar': {
+                          backgroundColor: '#10b981',
+                          borderRadius: 4,
+                        },
+                      }}
+                    />
+                  </TableCell>
+                  <TableCell sx={{ color: theme.palette.primary.main, fontSize: '12px' }}>
+                    <Link href="#" style={{ textDecoration: 'none', color: 'inherit' }}>
+                      Ver →
+                    </Link>
+                  </TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Box>
+
+      {/* Recent Donations Section */}
+      <Box>
+        <Box
+          sx={{
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
+            marginBottom: 2,
+          }}
+        >
+          <Typography
+            variant="h6"
+            sx={{
+              fontWeight: 700,
+              color: '#1f2937',
+            }}
+          >
+            Donaciones Recientes
+          </Typography>
+          <Link href="/donaciones" style={{ textDecoration: 'none' }}>
+            <Button variant="contained" color="primary" size="small">
+              Ver Todo
+            </Button>
+          </Link>
+        </Box>
+
+        <TableContainer component={Paper} sx={{ boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)' }}>
+          <Table>
+            <TableHead sx={{ backgroundColor: '#f9fafb' }}>
+              <TableRow>
+                <TableCell sx={{ fontWeight: 700, textTransform: 'uppercase', fontSize: '13px' }}>
+                  ID de Donación
+                </TableCell>
+                <TableCell sx={{ fontWeight: 700, textTransform: 'uppercase', fontSize: '13px' }}>
+                  Donante
+                </TableCell>
+                <TableCell sx={{ fontWeight: 700, textTransform: 'uppercase', fontSize: '13px' }}>
+                  Escuela
+                </TableCell>
+                <TableCell sx={{ fontWeight: 700, textTransform: 'uppercase', fontSize: '13px' }}>
+                  Tipo
+                </TableCell>
+                <TableCell sx={{ fontWeight: 700, textTransform: 'uppercase', fontSize: '13px' }}>
+                  Estado
+                </TableCell>
+                <TableCell sx={{ fontWeight: 700, textTransform: 'uppercase', fontSize: '13px' }}>
+                  Valor
+                </TableCell>
+              </TableRow>
+            </TableHead>
+            <TableBody>
+              {mockDonations.map((donation) => (
+                <TableRow
+                  key={donation.id}
+                  sx={{
+                    '&:hover': {
+                      backgroundColor: '#f9fafb',
+                    },
+                  }}
+                >
+                  <TableCell sx={{ fontWeight: 600 }}>{donation.id}</TableCell>
+                  <TableCell sx={{ color: '#6b7280', fontSize: '14px' }}>
+                    {donation.donor}
+                  </TableCell>
+                  <TableCell sx={{ color: '#6b7280', fontSize: '14px' }}>
+                    {donation.school}
+                  </TableCell>
+                  <TableCell>
+                    <Chip
+                      label={donation.type}
+                      size="small"
+                      sx={{
+                        backgroundColor: '#dbeafe',
+                        color: '#0c2d6b',
+                        fontWeight: 600,
+                        fontSize: '12px',
+                      }}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Chip
+                      label={donation.status}
+                      size="small"
+                      sx={{
+                        backgroundColor: getStatusColor(donation.status),
+                        color: getStatusTextColor(donation.status),
+                        fontWeight: 600,
+                        fontSize: '12px',
+                      }}
+                    />
+                  </TableCell>
+                  <TableCell>{donation.value}</TableCell>
+                </TableRow>
+              ))}
+            </TableBody>
+          </Table>
+        </TableContainer>
+      </Box>
     </Box>
   );
-
-  /*
-
-  if (user === undefined) {
-    return (
-      <Box gap={2} sx={{mt:4}} >
-          <MainDashboard />
-      </Box>
-    );
-  }
-
-  return (
-        <Box
-      sx={{
-        position: "relative",
-        display: "flex",
-        justifyContent: "center",
-        alignItems: "center",
-        height: "100vh",
-        background: "radial-gradient(#d2f1df, #d3d7fa, #bad8f4)",
-        backgroundSize: "400% 400%",
-        animation: "gradient 15s ease infinite",
-      }}
-    >
-      <Card
-        elevation={9} // Matches the login card elevation
-        sx={{ p: 4, zIndex: 1, width: "100%", maxWidth: "500px", textAlign: "center" }}
-      >
-        <CardContent>
-          <Typography variant="h2" fontWeight={700} mb={1}>
-            Bienvenido a
-          </Typography>
-          <Typography variant="h2" textAlign="center" color="textSecondary" mb={3}>
-            Nulen POS Administrativo
-          </Typography>
-          <Typography variant="body1" paragraph color="textSecondary">
-            Acceda su cuenta para continuar.
-          </Typography>
-          <Button
-            variant="contained"
-            color="primary"
-            fullWidth
-            sx={{ mt: 2, width: "80%" }}
-            onClick={() => router.push("/authentication")}
-          >
-            Ir a la página de inicio de sesión
-          </Button>
-        </CardContent>
-      </Card>
-    </Box>
-  ); */
 }

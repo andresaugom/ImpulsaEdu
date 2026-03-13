@@ -35,7 +35,7 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           >
             <main
               style={{
-                paddingTop: '80px', 
+                paddingTop: '110px', 
                 paddingLeft: '32px',
                 paddingRight: '32px',
                 paddingBottom: '32px',
