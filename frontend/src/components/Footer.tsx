@@ -10,22 +10,22 @@ const Footer: React.FC = () => {
             <div className="footer-content">
                 <Box sx={{ display: 'flex', justifyContent: 'center', gap: 4, mb: 2 }}>
                     <Link href="/" passHref>
-                        <Typography variant="body2" color="text.secondary" sx={{ cursor: 'pointer' }}>
+                        <Typography variant="body2" sx={{ cursor: 'pointer', color: '#1c3661', '&:hover': { color: '#009933' } }}>
                         Inicio
                         </Typography>
                     </Link>
                     <Link href="/terminos" passHref>
-                        <Typography variant="body2" color="text.secondary" sx={{ cursor: 'pointer' }}>
+                        <Typography variant="body2" sx={{ cursor: 'pointer', color: '#1c3661', '&:hover': { color: '#009933' } }}>
                             Terminos de servicio
                         </Typography>
                     </Link>
                     <Link href="/privacidad" passHref>
-                        <Typography variant="body2" color="text.secondary" sx={{ cursor: 'pointer' }}>
+                        <Typography variant="body2" sx={{ cursor: 'pointer', color: '#1c3661', '&:hover': { color: '#009933' } }}>
                             Aviso de privacidad
                         </Typography>
                     </Link>
                     <Link href="/contacto" passHref>
-                        <Typography variant="body2" color="text.secondary" sx={{ cursor: 'pointer' }}>
+                        <Typography variant="body2" sx={{ cursor: 'pointer', color: '#1c3661', '&:hover': { color: '#009933' } }}>
                             Contacto
                         </Typography>
                     </Link>

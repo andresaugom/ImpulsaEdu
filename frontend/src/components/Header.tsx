@@ -23,8 +23,8 @@ const Header = () => {
     <AppBar
       position="fixed"
       sx={{
-        backgroundColor: '#f0f4f8',
-        boxShadow: '0 4px 12px rgba(0, 0, 0, 0.1)', 
+        backgroundColor: '#ffffff',
+        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)', 
         zIndex: (theme) => theme.zIndex.drawer + 1,
       }}
     >
@@ -62,7 +62,7 @@ const Header = () => {
             fontWeight: 600,
             fontSize: { xs: '1.75rem', sm: '2rem', md: '2.25rem' },
             textAlign: 'center',
-            color: '#1E293B',
+            color: '#009933',
           }}
         >
           ImpulsaEdu
@@ -88,11 +88,11 @@ const Header = () => {
                 fontSize: '0.875rem',
                 paddingX: 2,
                 paddingY: 1,
-                backgroundColor: '#1E293B',
+                backgroundColor: '#009933',
                 color: 'white',
                 boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)',
                 '&:hover': {
-                  backgroundColor: '#374151',
+                  backgroundColor: '#006622',
                   boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
                 },
               }}
@@ -104,7 +104,7 @@ const Header = () => {
               aria-label="Profile"
               onClick={goSettings}
               sx={{
-                color: '#1E293B',
+                color: '#009933',
                 padding: 0.5,
                 '&:hover': {
                   backgroundColor: 'transparent',

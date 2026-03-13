@@ -1,13 +1,42 @@
 @import "tailwindcss";
 
 :root {
+  /* Primary Brand Colors */
+  --color-primary-main: #009933;
+  --color-primary-light: #33b366;
+  --color-primary-lighter: #66cc99;
+  --color-primary-dark: #006622;
+  --color-primary-darker: #004411;
+
+  /* Secondary Colors */
+  --color-secondary-orange: #ec671b;
+  --color-secondary-orange-light: #f08844;
+  --color-secondary-orange-lighter: #f4a969;
+  --color-secondary-orange-dark: #c45110;
+  --color-secondary-orange-darker: #9c3a0b;
+
+  --color-secondary-yellow: #f4981c;
+  --color-secondary-yellow-light: #f7ac47;
+  --color-secondary-yellow-lighter: #fac070;
+  --color-secondary-yellow-dark: #d17a14;
+  --color-secondary-yellow-darker: #a85d0f;
+
+  /* Detail Colors */
+  --color-detail-dark-blue: #1c3661;
+  --color-detail-blue-light: #4a5f8f;
+  --color-detail-blue-lighter: #a0afc9;
+
+  /* Backgrounds */
   --background: #ffffff;
-  --foreground: #171717;
+  --foreground: #1c3661;
+  --background-paper: #f8fafb;
 }
 
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-primary: var(--color-primary-main);
+  --color-secondary: var(--color-secondary-orange);
   --font-sans: var(--font-geist-sans);
   --font-mono: var(--font-geist-mono);
 }
@@ -15,7 +44,8 @@
 @media (prefers-color-scheme: dark) {
   :root {
     --background: #0a0a0a;
-    --foreground: #ededed;
+    --foreground: #ffffff;
+    --background-paper: #1a1a1a;
   }
 }
 

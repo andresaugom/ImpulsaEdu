@@ -39,7 +39,7 @@ import {
         sx={{
           width: 240,
           height: '100vh',
-          backgroundColor: '#1E293B',
+          backgroundColor: '#0c3011',
           color: '#F8FAFC',
           display: 'flex',
           flexDirection: 'column',
@@ -78,9 +78,9 @@ import {
                     borderRadius: 1,
                     paddingY: 1.2,
                     color: '#F8FAFC',
-                    backgroundColor: '#0B4595', 
+                    backgroundColor: '#009933', 
                     '&:hover': {
-                      backgroundColor: '#334155',
+                      backgroundColor: '#006622',
                     },
                   }} 
                 >
@@ -89,7 +89,7 @@ import {
                   </ListItemIcon>
                   <ListItemText
                     primary={text}
-                    primaryTypographyProps={{ fontSize: 15, fontWeight: 500 }}
+                    primaryTypographyProps={{ fontSize: 15, fontWeight: 500, color: '#F8FAFC' }}
                   />
                 </ListItemButton>
               </Link>

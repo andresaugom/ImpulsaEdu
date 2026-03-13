@@ -258,7 +258,7 @@ export default function DonantesPage() {
       {/* Donors Table */}
       <TableContainer component={Paper} sx={{ boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)' }}>
         <Table>
-          <TableHead sx={{ backgroundColor: '#f9fafb' }}>
+          <TableHead sx={{ backgroundColor: '#f8fafb' }}>
             <TableRow>
               <TableCell sx={{ fontWeight: 700, textTransform: 'uppercase', fontSize: '13px' }}>
                 Nombre del Donante
@@ -291,14 +291,14 @@ export default function DonantesPage() {
                   key={donor.id}
                   sx={{
                     '&:hover': {
-                      backgroundColor: '#f9fafb',
+                      backgroundColor: '#f8fafb',
                     },
                   }}
                 >
                   <TableCell sx={{ fontWeight: 600 }}>{donor.name}</TableCell>
-                  <TableCell sx={{ color: '#6b7280' }}>{getTypeLabel(donor.type)}</TableCell>
-                  <TableCell sx={{ color: '#6b7280' }}>{donor.email}</TableCell>
-                  <TableCell sx={{ color: '#6b7280' }}>{donor.phone}</TableCell>
+                  <TableCell sx={{ color: '#4a5f8f' }}>{getTypeLabel(donor.type)}</TableCell>
+                  <TableCell sx={{ color: '#4a5f8f' }}>{donor.email}</TableCell>
+                  <TableCell sx={{ color: '#4a5f8f' }}>{donor.phone}</TableCell>
                   <TableCell>${donor.totalDonations.toLocaleString()}</TableCell>
                   <TableCell>
                     <Chip

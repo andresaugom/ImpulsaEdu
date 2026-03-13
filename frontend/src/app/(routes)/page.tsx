@@ -84,14 +84,14 @@ const getStatusColor = (status: string) => {
     case 'Activa':
     case 'Aprobada':
     case 'Entregada':
-      return '#d1fae5';
+      return '#d1fae5'; // Light green
     case 'En Progreso':
     case 'En Transporte':
-      return '#fef3c7';
+      return '#ffe4cc'; // Light orange
     case 'Completada':
-      return '#d1fae5';
+      return '#d1fae5'; // Light green
     default:
-      return '#dbeafe';
+      return '#dbeafe'; // Light blue
   }
 };
 
@@ -100,14 +100,14 @@ const getStatusTextColor = (status: string) => {
     case 'Activa':
     case 'Aprobada':
     case 'Entregada':
-      return '#065f46';
+      return '#004411'; // Dark green
     case 'En Progreso':
     case 'En Transporte':
-      return '#92400e';
+      return '#9c3a0b'; // Dark orange
     case 'Completada':
-      return '#065f46';
+      return '#004411'; // Dark green
     default:
-      return '#0c2d6b';
+      return '#0c2d6b'; // Dark blue
   }
 };
 
@@ -124,12 +124,12 @@ export default function DashboardPage() {
           sx={{
             fontWeight: 700,
             marginBottom: 1,
-            color: '#1f2937',
+            color: '#1c3661',
           }}
         >
           Bienvenido, Juan
         </Typography>
-        <Typography sx={{ color: '#6b7280' }}>
+        <Typography sx={{ color: '#4a5f8f' }}>
           Aquí tienes una descripción general de tus donaciones y escuelas
         </Typography>
       </Box>
@@ -166,7 +166,7 @@ export default function DashboardPage() {
                   sx={{
                     fontSize: '16px',
                     fontWeight: 600,
-                    color: '#1f2937',
+                    color: '#1c3661',
                   }}
                 >
                   Escuelas Activas
@@ -175,8 +175,8 @@ export default function DashboardPage() {
                   label="En Progreso"
                   size="small"
                   sx={{
-                    backgroundColor: '#dbeafe',
-                    color: '#0c2d6b',
+                    backgroundColor: '#66cc99',
+                    color: '#004411',
                     fontWeight: 600,
                     fontSize: '12px',
                   }}
@@ -184,7 +184,7 @@ export default function DashboardPage() {
               </Box>
               <Box>
                 <Box sx={{ marginBottom: 1.5 }}>
-                  <Typography sx={{ fontSize: '12px', color: '#6b7280' }}>
+                  <Typography sx={{ fontSize: '12px', color: '#4a5f8f' }}>
                     Escuelas Totales
                   </Typography>
                   <Typography
@@ -194,7 +194,7 @@ export default function DashboardPage() {
                   </Typography>
                 </Box>
                 <Box>
-                  <Typography sx={{ fontSize: '12px', color: '#6b7280' }}>
+                  <Typography sx={{ fontSize: '12px', color: '#4a5f8f' }}>
                     Financiadas Este Mes
                   </Typography>
                   <Typography
@@ -247,7 +247,7 @@ export default function DashboardPage() {
                   sx={{
                     fontSize: '16px',
                     fontWeight: 600,
-                    color: '#1f2937',
+                    color: '#1c3661',
                   }}
                 >
                   Donantes Activos
@@ -257,7 +257,7 @@ export default function DashboardPage() {
                   size="small"
                   sx={{
                     backgroundColor: '#d1fae5',
-                    color: '#065f46',
+                    color: '#004411',
                     fontWeight: 600,
                     fontSize: '12px',
                   }}
@@ -265,17 +265,17 @@ export default function DashboardPage() {
               </Box>
               <Box>
                 <Box sx={{ marginBottom: 1.5 }}>
-                  <Typography sx={{ fontSize: '12px', color: '#6b7280' }}>
-                    Donantes Totales
+                  <Typography sx={{ fontSize: '12px', color: '#4a5f8f' }}>
+                    Total de Donantes
                   </Typography>
                   <Typography
                     sx={{ fontSize: '18px', fontWeight: 700, color: theme.palette.primary.main }}
                   >
-                    28
+                    8
                   </Typography>
                 </Box>
                 <Box>
-                  <Typography sx={{ fontSize: '12px', color: '#6b7280' }}>
+                  <Typography sx={{ fontSize: '12px', color: '#4a5f8f' }}>
                     Nuevos Este Mes
                   </Typography>
                   <Typography
@@ -328,7 +328,7 @@ export default function DashboardPage() {
                   sx={{
                     fontSize: '16px',
                     fontWeight: 600,
-                    color: '#1f2937',
+                    color: '#1c3661',
                   }}
                 >
                   Donaciones Activas
@@ -337,8 +337,8 @@ export default function DashboardPage() {
                   label="En Progreso"
                   size="small"
                   sx={{
-                    backgroundColor: '#fef3c7',
-                    color: '#92400e',
+                    backgroundColor: '#f7ac47',
+                    color: '#9c3a0b',
                     fontWeight: 600,
                     fontSize: '12px',
                   }}
@@ -346,7 +346,7 @@ export default function DashboardPage() {
               </Box>
               <Box>
                 <Box sx={{ marginBottom: 1.5 }}>
-                  <Typography sx={{ fontSize: '12px', color: '#6b7280' }}>
+                  <Typography sx={{ fontSize: '12px', color: '#4a5f8f' }}>
                     Donaciones Totales
                   </Typography>
                   <Typography
@@ -356,7 +356,7 @@ export default function DashboardPage() {
                   </Typography>
                 </Box>
                 <Box>
-                  <Typography sx={{ fontSize: '12px', color: '#6b7280' }}>
+                  <Typography sx={{ fontSize: '12px', color: '#4a5f8f' }}>
                     Pendientes de Entrega
                   </Typography>
                   <Typography
@@ -400,7 +400,7 @@ export default function DashboardPage() {
             variant="h6"
             sx={{
               fontWeight: 700,
-              color: '#1f2937',
+              color: '#1c3661',
             }}
           >
             Escuelas Recientes
@@ -414,7 +414,7 @@ export default function DashboardPage() {
 
         <TableContainer component={Paper} sx={{ boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)' }}>
           <Table>
-            <TableHead sx={{ backgroundColor: '#f9fafb' }}>
+            <TableHead sx={{ backgroundColor: '#f8fafb' }}>
               <TableRow>
                 <TableCell sx={{ fontWeight: 700, textTransform: 'uppercase', fontSize: '13px' }}>
                   Nombre de la Escuela
@@ -437,12 +437,12 @@ export default function DashboardPage() {
                   key={school.id}
                   sx={{
                     '&:hover': {
-                      backgroundColor: '#f9fafb',
+                      backgroundColor: '#f8fafb',
                     },
                   }}
                 >
                   <TableCell sx={{ fontWeight: 600 }}>{school.name}</TableCell>
-                  <TableCell sx={{ color: '#6b7280', fontSize: '14px' }}>{school.region}</TableCell>
+                  <TableCell sx={{ color: '#4a5f8f', fontSize: '14px' }}>{school.region}</TableCell>
                   <TableCell>
                     <Chip
                       label={school.status}
@@ -496,7 +496,7 @@ export default function DashboardPage() {
             variant="h6"
             sx={{
               fontWeight: 700,
-              color: '#1f2937',
+              color: '#1c3661',
             }}
           >
             Donaciones Recientes
@@ -510,7 +510,7 @@ export default function DashboardPage() {
 
         <TableContainer component={Paper} sx={{ boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)' }}>
           <Table>
-            <TableHead sx={{ backgroundColor: '#f9fafb' }}>
+            <TableHead sx={{ backgroundColor: '#f8fafb' }}>
               <TableRow>
                 <TableCell sx={{ fontWeight: 700, textTransform: 'uppercase', fontSize: '13px' }}>
                   ID de Donación
@@ -538,15 +538,15 @@ export default function DashboardPage() {
                   key={donation.id}
                   sx={{
                     '&:hover': {
-                      backgroundColor: '#f9fafb',
+                      backgroundColor: '#f8fafb',
                     },
                   }}
                 >
                   <TableCell sx={{ fontWeight: 600 }}>{donation.id}</TableCell>
-                  <TableCell sx={{ color: '#6b7280', fontSize: '14px' }}>
+                  <TableCell sx={{ color: '#4a5f8f', fontSize: '14px' }}>
                     {donation.donor}
                   </TableCell>
-                  <TableCell sx={{ color: '#6b7280', fontSize: '14px' }}>
+                  <TableCell sx={{ color: '#4a5f8f', fontSize: '14px' }}>
                     {donation.school}
                   </TableCell>
                   <TableCell>

@@ -40,7 +40,7 @@ export default function PublicHeader() {
             alignItems: 'center',
             fontWeight: 700,
             fontSize: '24px',
-            color: theme.palette.primary.main,
+            color: '#009933',
             textDecoration: 'none',
             whiteSpace: 'nowrap',
             flexShrink: 0,

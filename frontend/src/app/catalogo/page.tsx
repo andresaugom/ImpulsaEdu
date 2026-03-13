@@ -99,7 +99,7 @@ export default function Catalogo() {
       {/* Hero Section */}
       <Box
         sx={{
-          background: 'linear-gradient(135deg, #2563eb 0%, #10b981 100%)',
+          background: 'linear-gradient(135deg, #009933 0%, #006622 100%)',
           color: 'white',
           textAlign: 'center',
           padding: isMobile ? '60px 20px' : '80px 30px',
@@ -107,12 +107,13 @@ export default function Catalogo() {
       >
         <Container maxWidth="md">
           <Typography
-            variant="h3"
+            variant="h1"
             component="h1"
             sx={{
               fontWeight: 700,
               marginBottom: 2,
               fontSize: isMobile ? '1.8rem' : '2.5rem',
+              color: '#F8FAFC',
             }}
           >
             Apoya a las Escuelas de Jalisco
@@ -124,6 +125,7 @@ export default function Catalogo() {
               opacity: 0.95,
               maxWidth: 600,
               margin: '0 auto',
+              color: '#F8FAFC',
             }}
           >
             Descubre cómo puedes contribuir al crecimiento educativo de nuestras comunidades

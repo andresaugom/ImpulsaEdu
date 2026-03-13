@@ -36,7 +36,7 @@ export default function LoginPage() {
         alignItems: 'center',
         minHeight: '100vh',
         width: '100%',
-        background: 'linear-gradient(135deg, #2563eb 0%, #10b981 100%)',
+        background: 'linear-gradient(135deg, #009933 0%, #006622 100%)',
         padding: '20px',
       }}
     >

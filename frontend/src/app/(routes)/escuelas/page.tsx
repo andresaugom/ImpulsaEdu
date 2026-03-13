@@ -269,7 +269,7 @@ export default function EscuelasPage() {
       {/* Schools Table */}
       <TableContainer component={Paper} sx={{ boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)' }}>
         <Table>
-          <TableHead sx={{ backgroundColor: '#f9fafb' }}>
+          <TableHead sx={{ backgroundColor: '#f8fafb' }}>
             <TableRow>
               <TableCell sx={{ fontWeight: 700, textTransform: 'uppercase', fontSize: '13px' }}>
                 Nombre de la Escuela
@@ -306,13 +306,13 @@ export default function EscuelasPage() {
                   key={school.id}
                   sx={{
                     '&:hover': {
-                      backgroundColor: '#f9fafb',
+                      backgroundColor: '#f8fafb',
                     },
                   }}
                 >
                   <TableCell sx={{ fontWeight: 600 }}>{school.name}</TableCell>
-                  <TableCell sx={{ color: '#6b7280' }}>{school.region}</TableCell>
-                  <TableCell sx={{ color: '#6b7280' }}>{school.category}</TableCell>
+                  <TableCell sx={{ color: '#4a5f8f' }}>{school.region}</TableCell>
+                  <TableCell sx={{ color: '#4a5f8f' }}>{school.category}</TableCell>
                   <TableCell>
                     <Chip
                       label={statusColor.label}
@@ -333,9 +333,9 @@ export default function EscuelasPage() {
                       sx={{
                         height: 8,
                         borderRadius: 4,
-                        backgroundColor: '#e5e7eb',
+                        backgroundColor: '#e0e7ff',
                         '& .MuiLinearProgress-bar': {
-                          backgroundColor: progress > 75 ? '#10b981' : '#f59e0b',
+                          backgroundColor: progress > 75 ? '#009933' : '#f4981c',
                           borderRadius: 4,
                         },
                       }}

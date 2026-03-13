@@ -8,25 +8,68 @@ const inter = Inter({ subsets: ['latin'], weight: ['400', '700'] });
 let MainTheme = createTheme({
   palette: {
     primary: {
-      main: '#1E3A8A', // Azul Rey
+      main: '#009933', // Brand Green
+      light: '#33b366',
+      lighter: '#66cc99',
+      dark: '#006622',
+      darker: '#004411',
     },
     secondary: {
-      main: '#f50057', // Color de acento
+      main: '#ec671b', // Orange
+      light: '#f08844',
+      lighter: '#f4a969',
+      dark: '#c45110',
+      darker: '#9c3a0b',
     },
+    info: {
+      main: '#f4981c', // Yellow
+      light: '#f7ac47',
+      lighter: '#fac070',
+      dark: '#d17a14',
+      darker: '#a85d0f',
+    },
+    warning: {
+      main: '#f4981c', // Yellow (for alerts)
+      light: '#f7ac47',
+    },
+    error: {
+      main: '#9c3a0b', // Darker orange (for errors)
+      light: '#c45110',
+    },
+    success: {
+      main: '#009933', // Green (for success)
+      light: '#33b366',
+    },
+    divider: '#1c3661', // Dark blue for dividers
     background: {
-      default: '#ffffff', // Fondo base
-      paper: '#f8f9fa', // Fondo de tarjetas o modales
+      default: '#ffffff', // Base background
+      paper: '#f8fafb', // Card/modal background
     },
     text: {
-      primary: '#111827', // Color oscuro
-      secondary: '#374151', // Color gris
+      primary: '#1c3661', // Dark blue
+      secondary: '#4a5f8f', // Medium blue-gray
+      disabled: '#a0afc9', // Light blue-gray
     },
   },
   typography: {
-    fontFamily: inter.style.fontFamily, // Usar Inter como fuente base
-    h1: { fontWeight: 700, fontSize: '2rem' },
-    h2: { fontWeight: 600, fontSize: '1.5rem' },
-    body1: { fontSize: '1rem' },
+    fontFamily: inter.style.fontFamily,
+    h1: { fontWeight: 700, fontSize: '2rem', color: '#1c3661' },
+    h2: { fontWeight: 600, fontSize: '1.5rem', color: '#1c3661' },
+    h3: { fontWeight: 600, fontSize: '1.25rem', color: '#1c3661' },
+    body1: { fontSize: '1rem', color: '#1c3661' },
+    body2: { fontSize: '0.875rem', color: '#4a5f8f' },
+  },
+  components: {
+    MuiButton: {
+      styleOverrides: {
+        contained: {
+          backgroundColor: '#009933',
+          '&:hover': {
+            backgroundColor: '#006622',
+          },
+        },
+      },
+    },
   },
 });
 

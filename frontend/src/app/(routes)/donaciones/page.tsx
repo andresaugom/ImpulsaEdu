@@ -246,7 +246,7 @@ export default function DonacionesPage() {
       {/* Donations Table */}
       <TableContainer component={Paper} sx={{ boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)' }}>
         <Table>
-          <TableHead sx={{ backgroundColor: '#f9fafb' }}>
+          <TableHead sx={{ backgroundColor: '#f8fafb' }}>
             <TableRow>
               <TableCell sx={{ fontWeight: 700, textTransform: 'uppercase', fontSize: '13px' }}>
                 ID de Donación
@@ -280,13 +280,13 @@ export default function DonacionesPage() {
                   key={donation.id}
                   sx={{
                     '&:hover': {
-                      backgroundColor: '#f9fafb',
+                      backgroundColor: '#f8fafb',
                     },
                   }}
                 >
                   <TableCell sx={{ fontWeight: 600 }}>{donation.id}</TableCell>
-                  <TableCell sx={{ color: '#6b7280' }}>{donation.donor}</TableCell>
-                  <TableCell sx={{ color: '#6b7280' }}>{donation.school}</TableCell>
+                  <TableCell sx={{ color: '#4a5f8f' }}>{donation.donor}</TableCell>
+                  <TableCell sx={{ color: '#4a5f8f' }}>{donation.school}</TableCell>
                   <TableCell>
                     <Chip
                       label={getTypeLabel(donation.type)}
@@ -298,7 +298,7 @@ export default function DonacionesPage() {
                       }}
                     />
                   </TableCell>
-                  <TableCell sx={{ color: '#6b7280' }}>{donation.deliveryMode}</TableCell>
+                  <TableCell sx={{ color: '#4a5f8f' }}>{donation.deliveryMode}</TableCell>
                   <TableCell>
                     <Chip
                       label={getStatusLabel(donation.status)}
