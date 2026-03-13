@@ -67,7 +67,7 @@ CREATE TABLE IF NOT EXISTS users (
     created_by    UUID        REFERENCES users(id),
     updated_at    TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_by    UUID        REFERENCES users(id),
-    deleted_at    TIMESTAMPTZ,
+    deleted_at    TIMESTAMPTZ	DEFAULT NULL,
     deleted_by    UUID        REFERENCES users(id)
 );
 
@@ -99,7 +99,7 @@ CREATE TABLE IF NOT EXISTS donors (
     created_by  UUID        REFERENCES users(id),
     updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_by  UUID        REFERENCES users(id),
-    deleted_at  TIMESTAMPTZ,
+    deleted_at  TIMESTAMPTZ	DEFAULT NULL,
     deleted_by  UUID        REFERENCES users(id),
 
     UNIQUE (name, region)
@@ -122,10 +122,25 @@ CREATE TABLE IF NOT EXISTS schools (
     created_by  UUID        REFERENCES users(id),
     updated_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     updated_by  UUID        REFERENCES users(id),
-    deleted_at  TIMESTAMPTZ,
+    deleted_at  TIMESTAMPTZ	DEFAULT NULL,
     deleted_by  UUID        REFERENCES users(id),
 
     UNIQUE (name, region)
+);
+
+CREATE TABLE IF NOT EXISTS schools_needs (
+    id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
+    school_id   UUID        NOT NULL REFERENCES schools(id),
+    item_name   TEXT        NOT NULL,
+    quantity    INT         NOT NULL, 
+    amount      NUMERIC(12,2) NOT NULL,
+
+    created_at    TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+    created_by    UUID            REFERENCES users(id),
+    updated_at    TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+    updated_by    UUID            REFERENCES users(id),
+    deleted_at    TIMESTAMPTZ     DEFAULT NULL,
+    deleted_by    UUID            REFERENCES users(id)
 );
 
 
@@ -146,7 +161,7 @@ CREATE TABLE IF NOT EXISTS donations (
     created_by    UUID            REFERENCES users(id),
     updated_at    TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
     updated_by    UUID            REFERENCES users(id),
-    deleted_at    TIMESTAMPTZ,
+    deleted_at    TIMESTAMPTZ	  DEFAULT NULL,
     deleted_by    UUID            REFERENCES users(id)
 );
 
@@ -155,10 +170,18 @@ CREATE TABLE IF NOT EXISTS donations (
 -- DONATION ITEMS  (line items for Material donations)
 -- ─────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS donation_items (
-    id          UUID  PRIMARY KEY DEFAULT gen_random_uuid(),
-    donation_id UUID  NOT NULL REFERENCES donations(id) ON DELETE CASCADE,
-    item_name   TEXT  NOT NULL,
-    quantity    INT   CHECK (quantity > 0)
+    id          UUID              PRIMARY KEY DEFAULT gen_random_uuid(),
+    donation_id UUID              NOT NULL REFERENCES donations(id) ON DELETE CASCADE,
+    item_name   TEXT              NOT NULL,
+    quantity    INT               CHECK (quantity > 0),
+    amount      NUMERIC(12,2)     NOT NULL,
+
+    created_at    TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+    created_by    UUID            REFERENCES users(id),
+    updated_at    TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
+    updated_by    UUID            REFERENCES users(id),
+    deleted_at    TIMESTAMPTZ	  DEFAULT NULL,
+    deleted_by    UUID            REFERENCES users(id)
 );
 
 
@@ -265,6 +288,21 @@ SET
         FROM   donations
         WHERE  school_id  = $1
           AND  status     IN ('Aprobado', 'Entregando', 'Entregado', 'Finalizado')
+          AND  deleted_at IS NULL
+    ),
+    updated_at = NOW()
+WHERE id = $1;
+```
+
+`schools.goal` is a **stored column** updated by the `api-service` whenever a new need is added to that school. This avoids a full aggregation query on every page load while keeping the value accurate.
+
+```sql
+UPDATE schools
+SET
+    goal = (
+        SELECT COALESCE(SUM(amount), 0)
+        FROM   schools_needs
+        WHERE  school_id  = $1
           AND  deleted_at IS NULL
     ),
     updated_at = NOW()
