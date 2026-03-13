@@ -1,0 +1,57 @@
+@startuml
+title ImpulsaEdu - Implementation Diagram
+
+actor Browser
+actor "Admin / Operators" as Admin
+
+node "GKE Cluster" as GKE {
+  node "Ingress (NGINX)" as Ingress
+
+  node "Frontend (Next.js)" as Frontend {
+    [frontend]
+  }
+
+  node "Auth Service (Fastify)" as Auth {
+    [auth-service]
+  }
+
+  node "API Service (Fastify)" as API {
+    [api-service]
+  }
+}
+
+database "PostgreSQL (impulsa)" as DB
+cloud "Cloud SQL (optional)" as CloudDB
+
+Browser --> Ingress : HTTP(S)
+Ingress --> Frontend : /*  (Next.js public + admin UI)
+Ingress --> Auth : /auth/*
+Ingress --> API  : /api/v1/*
+
+Frontend --> Auth : POST /auth/login (httpOnly cookie)
+Frontend --> API  : GET/POST /api/v1/* (cookie or Bearer)
+
+API ..> Auth : validates JWT locally (shared JWT_SECRET)
+
+Auth --> DB : users, refresh_tokens
+API  --> DB : donors, schools, donations, needs, items, contacts, audit_logs
+
+note right of API
+  - Updates `schools.progress` on donation state changes
+  - Updates `schools.goal` when needs change
+  - Enforces state transitions (422 on invalid)
+end note
+
+Admin --> Auth : manage users
+Admin --> API  : manage donors / schools / donations
+
+' If using managed DB, point services to Cloud SQL
+API --> CloudDB : read/write
+Auth --> CloudDB : read/write
+
+note bottom
+  Deployment: Deploy to GKE with Deployments (frontend/auth/api),
+  Ingress routes, Secrets for `JWT_SECRET`, and a managed Postgres.
+end note
+
+@enduml

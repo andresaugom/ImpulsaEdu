@@ -1,0 +1,49 @@
+@startuml
+class User {
+    name
+    role
+    email
+}
+
+class Donor {
+    name
+    region
+    type
+}
+
+class School {
+    name
+    region
+    type
+    goal
+    progress
+}
+
+class SchoolNeed {
+    item
+    quantity
+    estimated_value
+}
+
+class Donation {
+    type
+    amount
+    status
+}
+
+class DonationItem {
+    item
+    quantity
+    value
+}
+
+Donor "1" -- "many" Donation
+School "1" -- "many" Donation
+Donation "1" -- "many" DonationItem
+School "1" -- "many" SchoolNeed
+User "1" -- "many" Donation : registers
+User "1" -- "many" Donor : creates
+User "1" -- "many" School : creates
+Donor "1" -- "many" Contact
+School "1" -- "many" Contact
+@enduml
