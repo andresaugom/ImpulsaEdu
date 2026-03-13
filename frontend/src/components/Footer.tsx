@@ -30,8 +30,10 @@ const Footer: React.FC = () => {
                         </Typography>
                     </Link>
                 </Box>
+                {/*
                 <p>&copy; {new Date().getFullYear()} Nulen. Todos los derechos reservados.</p>
                 <p>nulen_soluciones@gmail.com</p>
+                */}
             </div>
         </footer>
     );
