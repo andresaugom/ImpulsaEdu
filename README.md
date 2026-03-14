@@ -7,6 +7,7 @@ First, get into `frontend/` and run the development server:
 ```bash
 cd frontend 
 
+npm install
 npm run dev
 # or
 yarn dev
