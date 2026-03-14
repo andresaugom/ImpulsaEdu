@@ -2,7 +2,6 @@
 
 import {
   Box,
-  Container,
   Typography,
   Grid,
   Button,
@@ -22,106 +21,197 @@ import {
   DialogContent,
   DialogActions,
   LinearProgress,
-  useTheme,
 } from '@mui/material';
 import { useState } from 'react';
-import Link from 'next/link';
+
+interface SchoolNeed {
+  id: number;
+  itemName: string;
+  quantity: number;
+  unit: string;
+  amount: number;
+}
 
 interface School {
   id: number;
-  name: string;
   region: string;
+  school: string;
+  name: string;
+  employees: string;
+  students: string;
+  level: string;
+  cct: string;
+  mode: string;
+  shift: string;
+  address: string;
+  location: string;
+  type: 'Publica' | 'Privada';
   category: string;
-  status: 'active' | 'completed' | 'archived';
-  fundingGoal: number;
-  fundingCurrent: number;
+  notes: string;
+  progress: number;
+  needs: SchoolNeed[];
 }
 
 const mockSchools: School[] = [
   {
     id: 1,
-    name: 'Escuela Primaria A',
     region: 'Guadalajara',
+    school: 'Primaria',
+    name: 'Benito Juárez',
+    employees: '22',
+    students: '410',
+    level: 'Primaria',
+    cct: '14EPR1234A',
+    mode: 'Escolarizada',
+    shift: 'Matutino',
+    address: 'Av. Reforma 123',
+    location: 'https://maps.google.com/?q=20.674,-103.344',
+    type: 'Publica',
     category: 'Infraestructura',
-    status: 'active',
-    fundingGoal: 10000,
-    fundingCurrent: 6500,
+    notes: 'Requiere mejora de sanitarios.',
+    progress: 6500,
+    needs: [
+      { id: 1, itemName: 'Pintura para aulas', quantity: 30, unit: 'Cubetas', amount: 3000 },
+      { id: 2, itemName: 'Reparación de baños', quantity: 1, unit: 'Servicio', amount: 7000 },
+    ],
   },
   {
     id: 2,
-    name: 'Escuela Secundaria B',
     region: 'Puerto Vallarta',
+    school: 'Secundaria',
+    name: 'Lázaro Cárdenas',
+    employees: '31',
+    students: '560',
+    level: 'Secundaria',
+    cct: '14ESN9123K',
+    mode: 'Escolarizada',
+    shift: 'Vespertino',
+    address: 'Calle Mar 45',
+    location: 'https://maps.google.com/?q=20.653,-105.225',
+    type: 'Publica',
     category: 'Materiales Educativos',
-    status: 'active',
-    fundingGoal: 15000,
-    fundingCurrent: 7200,
+    notes: 'Necesita equipamiento para laboratorio.',
+    progress: 7200,
+    needs: [
+      { id: 1, itemName: 'Microscopios', quantity: 8, unit: 'Piezas', amount: 12000 },
+      { id: 2, itemName: 'Reactivos', quantity: 1, unit: 'Lote', amount: 3000 },
+    ],
   },
   {
     id: 3,
-    name: 'Escuela Pública C',
     region: 'Zapopan',
+    school: 'Preescolar',
+    name: 'Niños Héroes',
+    employees: '14',
+    students: '180',
+    level: 'Preescolar',
+    cct: '14EJN4512P',
+    mode: 'Escolarizada',
+    shift: 'Matutino',
+    address: 'Camino Real 222',
+    location: 'https://maps.google.com/?q=20.717,-103.391',
+    type: 'Privada',
     category: 'Tecnología',
-    status: 'completed',
-    fundingGoal: 12000,
-    fundingCurrent: 12000,
+    notes: 'Proyecto completado.',
+    progress: 12000,
+    needs: [{ id: 1, itemName: 'Tabletas educativas', quantity: 20, unit: 'Piezas', amount: 12000 }],
   },
 ];
 
-const getStatusColor = (status: string) => {
-  switch (status) {
-    case 'active':
-      return { bg: '#d1fae5', text: '#065f46', label: 'Activa' };
-    case 'completed':
-      return { bg: '#d1fae5', text: '#065f46', label: 'Completada' };
-    case 'archived':
-      return { bg: '#fee2e2', text: '#7f1d1d', label: 'Archivada' };
-    default:
-      return { bg: '#dbeafe', text: '#0c2d6b', label: 'Desconocida' };
-  }
-};
-
 export default function EscuelasPage() {
-  const theme = useTheme();
   const [schools, setSchools] = useState<School[]>(mockSchools);
   const [searchQuery, setSearchQuery] = useState('');
   const [regionFilter, setRegionFilter] = useState('');
-  const [statusFilter, setStatusFilter] = useState('');
+  const [typeFilter, setTypeFilter] = useState('');
+
   const [openDialog, setOpenDialog] = useState(false);
   const [editingSchool, setEditingSchool] = useState<School | null>(null);
+
+  const [openNeedsDialog, setOpenNeedsDialog] = useState(false);
+  const [managingNeedsSchoolId, setManagingNeedsSchoolId] = useState<number | null>(null);
+
   const [formData, setFormData] = useState({
-    name: '',
     region: '',
+    school: '',
+    name: '',
+    employees: '',
+    students: '',
+    level: '',
+    cct: '',
+    mode: '',
+    shift: '',
+    address: '',
+    location: '',
+    type: 'Publica' as 'Publica' | 'Privada',
     category: '',
-    fundingGoal: '',
+    notes: '',
   });
+
+  const [needFormData, setNeedFormData] = useState({
+    itemName: '',
+    quantity: '1',
+    unit: '',
+    amount: '',
+  });
+
+  const calculateGoal = (needs: SchoolNeed[]) => needs.reduce((total, need) => total + need.amount, 0);
+
+  const progressPercentage = (progress: number, goal: number) => {
+    if (!goal) {
+      return 0;
+    }
+    return Math.min(100, Math.round((progress / goal) * 100));
+  };
 
   const filteredSchools = schools.filter((school) => {
-    const matchesSearch = school.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const normalizedQuery = searchQuery.toLowerCase();
+    const matchesSearch =
+      school.name.toLowerCase().includes(normalizedQuery) ||
+      school.school.toLowerCase().includes(normalizedQuery) ||
+      school.cct.toLowerCase().includes(normalizedQuery);
     const matchesRegion = !regionFilter || school.region === regionFilter;
-    const matchesStatus = !statusFilter || school.status === statusFilter;
-    return matchesSearch && matchesRegion && matchesStatus;
+    const matchesType = !typeFilter || school.type === typeFilter;
+    return matchesSearch && matchesRegion && matchesType;
   });
 
-  const fundingPercentage = (current: number, goal: number) => {
-    return Math.round((current / goal) * 100);
-  };
+  const schoolBeingManaged = schools.find((school) => school.id === managingNeedsSchoolId) ?? null;
 
   const handleOpenDialog = (school?: School) => {
     if (school) {
       setEditingSchool(school);
       setFormData({
-        name: school.name,
         region: school.region,
+        school: school.school,
+        name: school.name,
+        employees: school.employees,
+        students: school.students,
+        level: school.level,
+        cct: school.cct,
+        mode: school.mode,
+        shift: school.shift,
+        address: school.address,
+        location: school.location,
+        type: school.type,
         category: school.category,
-        fundingGoal: school.fundingGoal.toString(),
+        notes: school.notes,
       });
     } else {
       setEditingSchool(null);
       setFormData({
-        name: '',
         region: '',
+        school: '',
+        name: '',
+        employees: '',
+        students: '',
+        level: '',
+        cct: '',
+        mode: '',
+        shift: '',
+        address: '',
+        location: '',
+        type: 'Publica',
         category: '',
-        fundingGoal: '',
+        notes: '',
       });
     }
     setOpenDialog(true);
@@ -139,27 +229,117 @@ export default function EscuelasPage() {
           s.id === editingSchool.id
             ? {
                 ...s,
-                name: formData.name,
                 region: formData.region,
+                school: formData.school,
+                name: formData.name,
+                employees: formData.employees,
+                students: formData.students,
+                level: formData.level,
+                cct: formData.cct,
+                mode: formData.mode,
+                shift: formData.shift,
+                address: formData.address,
+                location: formData.location,
+                type: formData.type,
                 category: formData.category,
-                fundingGoal: parseInt(formData.fundingGoal),
+                notes: formData.notes,
               }
             : s
         )
       );
     } else {
       const newSchool: School = {
-        id: Math.max(...schools.map((s) => s.id)) + 1,
-        name: formData.name,
+        id: schools.length > 0 ? Math.max(...schools.map((s) => s.id)) + 1 : 1,
         region: formData.region,
+        school: formData.school,
+        name: formData.name,
+        employees: formData.employees,
+        students: formData.students,
+        level: formData.level,
+        cct: formData.cct,
+        mode: formData.mode,
+        shift: formData.shift,
+        address: formData.address,
+        location: formData.location,
+        type: formData.type,
         category: formData.category,
-        status: 'active',
-        fundingGoal: parseInt(formData.fundingGoal),
-        fundingCurrent: 0,
+        notes: formData.notes,
+        progress: 0,
+        needs: [],
       };
       setSchools([...schools, newSchool]);
     }
     handleCloseDialog();
+  };
+
+  const handleOpenNeedsDialog = (schoolId: number) => {
+    setManagingNeedsSchoolId(schoolId);
+    setNeedFormData({
+      itemName: '',
+      quantity: '1',
+      unit: '',
+      amount: '',
+    });
+    setOpenNeedsDialog(true);
+  };
+
+  const handleCloseNeedsDialog = () => {
+    setOpenNeedsDialog(false);
+    setManagingNeedsSchoolId(null);
+  };
+
+  const handleAddNeed = () => {
+    if (!managingNeedsSchoolId || !needFormData.itemName || !needFormData.amount) {
+      return;
+    }
+
+    setSchools((currentSchools) =>
+      currentSchools.map((school) => {
+        if (school.id !== managingNeedsSchoolId) {
+          return school;
+        }
+
+        const nextNeedId =
+          school.needs.length > 0 ? Math.max(...school.needs.map((need) => need.id)) + 1 : 1;
+
+        const newNeed: SchoolNeed = {
+          id: nextNeedId,
+          itemName: needFormData.itemName,
+          quantity: Number(needFormData.quantity || 0),
+          unit: needFormData.unit,
+          amount: Number(needFormData.amount),
+        };
+
+        return {
+          ...school,
+          needs: [...school.needs, newNeed],
+        };
+      })
+    );
+
+    setNeedFormData({
+      itemName: '',
+      quantity: '1',
+      unit: '',
+      amount: '',
+    });
+  };
+
+  const handleDeleteNeed = (needId: number) => {
+    if (!managingNeedsSchoolId) {
+      return;
+    }
+
+    setSchools((currentSchools) =>
+      currentSchools.map((school) =>
+        school.id === managingNeedsSchoolId
+          ? {
+              ...school,
+              needs: school.needs.filter((need) => need.id !== needId),
+            }
+          : school
+      )
+    );
   };
 
   return (
@@ -226,16 +406,15 @@ export default function EscuelasPage() {
           </Grid>
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <Select
-              value={statusFilter}
-              onChange={(e) => setStatusFilter(e.target.value)}
+              value={typeFilter}
+              onChange={(e) => setTypeFilter(e.target.value)}
               displayEmpty
               fullWidth
               size="small"
             >
-              <MenuItem value="">Todos los Estados</MenuItem>
-              <MenuItem value="active">Activa</MenuItem>
-              <MenuItem value="completed">Completada</MenuItem>
-              <MenuItem value="archived">Archivada</MenuItem>
+              <MenuItem value="">Todos los Tipos</MenuItem>
+              <MenuItem value="Publica">Pública</MenuItem>
+              <MenuItem value="Privada">Privada</MenuItem>
             </Select>
           </Grid>
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
@@ -256,7 +435,7 @@ export default function EscuelasPage() {
                 onClick={() => {
                   setSearchQuery('');
                   setRegionFilter('');
-                  setStatusFilter('');
+                  setTypeFilter('');
                 }}
               >
                 Limpiar
@@ -275,13 +454,16 @@ export default function EscuelasPage() {
                 Nombre de la Escuela
               </TableCell>
               <TableCell sx={{ fontWeight: 700, textTransform: 'uppercase', fontSize: '13px' }}>
+                CCT
+              </TableCell>
+              <TableCell sx={{ fontWeight: 700, textTransform: 'uppercase', fontSize: '13px' }}>
                 Región
               </TableCell>
               <TableCell sx={{ fontWeight: 700, textTransform: 'uppercase', fontSize: '13px' }}>
-                Categoría
+                Tipo
               </TableCell>
               <TableCell sx={{ fontWeight: 700, textTransform: 'uppercase', fontSize: '13px' }}>
-                Estado
+                Categoría
               </TableCell>
               <TableCell sx={{ fontWeight: 700, textTransform: 'uppercase', fontSize: '13px' }}>
                 Meta
@@ -299,8 +481,8 @@ export default function EscuelasPage() {
           </TableHead>
           <TableBody>
             {filteredSchools.map((school) => {
-              const progress = fundingPercentage(school.fundingCurrent, school.fundingGoal);
-              const statusColor = getStatusColor(school.status);
+              const schoolGoal = calculateGoal(school.needs);
+              const progress = progressPercentage(school.progress, schoolGoal);
               return (
                 <TableRow
                   key={school.id}
@@ -310,22 +492,17 @@ export default function EscuelasPage() {
                     },
                   }}
                 >
-                  <TableCell sx={{ fontWeight: 600 }}>{school.name}</TableCell>
-                  <TableCell sx={{ color: '#4a5f8f' }}>{school.region}</TableCell>
-                  <TableCell sx={{ color: '#4a5f8f' }}>{school.category}</TableCell>
-                  <TableCell>
-                    <Chip
-                      label={statusColor.label}
-                      size="small"
-                      sx={{
-                        backgroundColor: statusColor.bg,
-                        color: statusColor.text,
-                        fontWeight: 600,
-                      }}
-                    />
+                  <TableCell sx={{ fontWeight: 600 }}>
+                    {school.school} {school.name}
                   </TableCell>
-                  <TableCell>${school.fundingGoal.toLocaleString()}</TableCell>
-                  <TableCell>${school.fundingCurrent.toLocaleString()}</TableCell>
+                  <TableCell sx={{ color: '#4a5f8f' }}>{school.cct}</TableCell>
+                  <TableCell sx={{ color: '#4a5f8f' }}>{school.region}</TableCell>
+                  <TableCell>
+                    <Chip label={school.type} size="small" sx={{ fontWeight: 600 }} />
+                  </TableCell>
+                  <TableCell sx={{ color: '#4a5f8f' }}>{school.category}</TableCell>
+                  <TableCell>${schoolGoal.toLocaleString()}</TableCell>
+                  <TableCell>${school.progress.toLocaleString()}</TableCell>
                   <TableCell sx={{ width: '120px' }}>
                     <LinearProgress
                       variant="determinate"
@@ -343,6 +520,15 @@ export default function EscuelasPage() {
                   </TableCell>
                   <TableCell>
                     <Box sx={{ display: 'flex', gap: 1 }}>
+                      <Button
+                        size="small"
+                        variant="contained"
+                        color="secondary"
+                        onClick={() => handleOpenNeedsDialog(school.id)}
+                        sx={{ textTransform: 'none' }}
+                      >
+                        Necesidades
+                      </Button>
                       <Button
                         size="small"
                         variant="outlined"
@@ -378,13 +564,6 @@ export default function EscuelasPage() {
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             <TextField
               fullWidth
-              label="Nombre de la Escuela"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              variant="outlined"
-            />
-            <TextField
-              fullWidth
               label="Región"
               select
               value={formData.region}
@@ -398,6 +577,100 @@ export default function EscuelasPage() {
             </TextField>
             <TextField
               fullWidth
+              label="Escuela (tipo de plantel)"
+              value={formData.school}
+              onChange={(e) => setFormData({ ...formData, school: e.target.value })}
+              variant="outlined"
+            />
+            <TextField
+              fullWidth
+              label="Nombre de la Escuela"
+              value={formData.name}
+              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+              variant="outlined"
+            />
+            <TextField
+              fullWidth
+              label="CCT"
+              value={formData.cct}
+              onChange={(e) => setFormData({ ...formData, cct: e.target.value })}
+              variant="outlined"
+            />
+            <Grid container spacing={2}>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <TextField
+                  fullWidth
+                  label="Empleados"
+                  value={formData.employees}
+                  onChange={(e) => setFormData({ ...formData, employees: e.target.value })}
+                  variant="outlined"
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <TextField
+                  fullWidth
+                  label="Estudiantes"
+                  value={formData.students}
+                  onChange={(e) => setFormData({ ...formData, students: e.target.value })}
+                  variant="outlined"
+                />
+              </Grid>
+            </Grid>
+            <Grid container spacing={2}>
+              <Grid size={{ xs: 12, sm: 4 }}>
+                <TextField
+                  fullWidth
+                  label="Nivel"
+                  value={formData.level}
+                  onChange={(e) => setFormData({ ...formData, level: e.target.value })}
+                  variant="outlined"
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 4 }}>
+                <TextField
+                  fullWidth
+                  label="Modalidad"
+                  value={formData.mode}
+                  onChange={(e) => setFormData({ ...formData, mode: e.target.value })}
+                  variant="outlined"
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 4 }}>
+                <TextField
+                  fullWidth
+                  label="Turno"
+                  value={formData.shift}
+                  onChange={(e) => setFormData({ ...formData, shift: e.target.value })}
+                  variant="outlined"
+                />
+              </Grid>
+            </Grid>
+            <TextField
+              fullWidth
+              label="Dirección"
+              value={formData.address}
+              onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+              variant="outlined"
+            />
+            <TextField
+              fullWidth
+              label="Ubicación (URL de Google Maps)"
+              value={formData.location}
+              onChange={(e) => setFormData({ ...formData, location: e.target.value })}
+              variant="outlined"
+            />
+            <TextField
+              fullWidth
+              label="Tipo"
+              select
+              value={formData.type}
+              onChange={(e) => setFormData({ ...formData, type: e.target.value as 'Publica' | 'Privada' })}
+            >
+              <MenuItem value="Publica">Pública</MenuItem>
+              <MenuItem value="Privada">Privada</MenuItem>
+            </TextField>
+            <TextField
+              fullWidth
               label="Categoría"
               value={formData.category}
               onChange={(e) => setFormData({ ...formData, category: e.target.value })}
@@ -405,11 +678,12 @@ export default function EscuelasPage() {
             />
             <TextField
               fullWidth
-              label="Meta de Financiamiento"
-              type="number"
-              value={formData.fundingGoal}
-              onChange={(e) => setFormData({ ...formData, fundingGoal: e.target.value })}
+              label="Notas"
+              value={formData.notes}
+              onChange={(e) => setFormData({ ...formData, notes: e.target.value })}
               variant="outlined"
+              multiline
+              minRows={2}
             />
           </Box>
         </DialogContent>
@@ -419,6 +693,114 @@ export default function EscuelasPage() {
           </Button>
           <Button onClick={handleSaveSchool} variant="contained" color="primary">
             Guardar
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      <Dialog open={openNeedsDialog} onClose={handleCloseNeedsDialog} maxWidth="md" fullWidth>
+        <DialogTitle sx={{ fontWeight: 700, fontSize: '18px' }}>
+          Gestionar necesidades {schoolBeingManaged ? `- ${schoolBeingManaged.school} ${schoolBeingManaged.name}` : ''}
+        </DialogTitle>
+        <DialogContent sx={{ pt: 2 }}>
+          <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+            <Grid container spacing={2} alignItems="center">
+              <Grid size={{ xs: 12, md: 4 }}>
+                <TextField
+                  fullWidth
+                  label="Necesidad"
+                  value={needFormData.itemName}
+                  onChange={(e) => setNeedFormData({ ...needFormData, itemName: e.target.value })}
+                  size="small"
+                />
+              </Grid>
+              <Grid size={{ xs: 6, md: 2 }}>
+                <TextField
+                  fullWidth
+                  label="Cantidad"
+                  type="number"
+                  value={needFormData.quantity}
+                  onChange={(e) => setNeedFormData({ ...needFormData, quantity: e.target.value })}
+                  size="small"
+                />
+              </Grid>
+              <Grid size={{ xs: 6, md: 2 }}>
+                <TextField
+                  fullWidth
+                  label="Unidad"
+                  value={needFormData.unit}
+                  onChange={(e) => setNeedFormData({ ...needFormData, unit: e.target.value })}
+                  size="small"
+                />
+              </Grid>
+              <Grid size={{ xs: 8, md: 2 }}>
+                <TextField
+                  fullWidth
+                  label="Monto"
+                  type="number"
+                  value={needFormData.amount}
+                  onChange={(e) => setNeedFormData({ ...needFormData, amount: e.target.value })}
+                  size="small"
+                />
+              </Grid>
+              <Grid size={{ xs: 4, md: 2 }}>
+                <Button variant="contained" fullWidth sx={{ textTransform: 'none' }} onClick={handleAddNeed}>
+                  Agregar
+                </Button>
+              </Grid>
+            </Grid>
+
+            <TableContainer component={Paper}>
+              <Table size="small">
+                <TableHead>
+                  <TableRow>
+                    <TableCell sx={{ fontWeight: 700 }}>Necesidad</TableCell>
+                    <TableCell sx={{ fontWeight: 700 }}>Cantidad</TableCell>
+                    <TableCell sx={{ fontWeight: 700 }}>Unidad</TableCell>
+                    <TableCell sx={{ fontWeight: 700 }}>Monto</TableCell>
+                    <TableCell sx={{ fontWeight: 700, width: '120px' }}>Acciones</TableCell>
+                  </TableRow>
+                </TableHead>
+                <TableBody>
+                  {schoolBeingManaged?.needs.map((need) => (
+                    <TableRow key={need.id}>
+                      <TableCell>{need.itemName}</TableCell>
+                      <TableCell>{need.quantity}</TableCell>
+                      <TableCell>{need.unit}</TableCell>
+                      <TableCell>${need.amount.toLocaleString()}</TableCell>
+                      <TableCell>
+                        <Button
+                          color="error"
+                          variant="outlined"
+                          size="small"
+                          sx={{ textTransform: 'none' }}
+                          onClick={() => handleDeleteNeed(need.id)}
+                        >
+                          Eliminar
+                        </Button>
+                      </TableCell>
+                    </TableRow>
+                  ))}
+                  {schoolBeingManaged && schoolBeingManaged.needs.length === 0 && (
+                    <TableRow>
+                      <TableCell colSpan={5} sx={{ color: 'text.secondary' }}>
+                        No hay necesidades registradas para esta escuela.
+                      </TableCell>
+                    </TableRow>
+                  )}
+                </TableBody>
+              </Table>
+            </TableContainer>
+
+            <Box sx={{ display: 'flex', justifyContent: 'flex-end' }}>
+              <Typography variant="body2" sx={{ fontWeight: 700 }}>
+                Meta total: ${schoolBeingManaged ? calculateGoal(schoolBeingManaged.needs).toLocaleString() : '0'}
+              </Typography>
+            </Box>
+          </Box>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={handleCloseNeedsDialog} variant="contained">
+            Cerrar
           </Button>
         </DialogActions>
       </Dialog>
