@@ -42,7 +42,10 @@ CREATE TYPE user_role       AS ENUM ('staff', 'admin');
 CREATE TYPE donor_type      AS ENUM ('Fisica', 'Moral');
 CREATE TYPE donation_status AS ENUM ('Registrado', 'Aprobado', 'Entregando', 'Entregado', 'Finalizado', 'Cancelado');
 CREATE TYPE donation_type   AS ENUM ('Material', 'Monetaria');
-CREATE TYPE school_type     AS ENUM ('Publica', 'Privada');
+CREATE TYPE school_level    AS ENUM ('Preescolar', 'Primaria', 'Secundaria', 'Preparatoria', 'Universidad');
+CREATE TYPE school_mode     AS ENUM ('Presencial', 'Semi-presencial', 'En línea');
+CREATE TYPE school_shift    AS ENUM ('Matutino', 'Vespertino', 'Mixto');
+CREATE TYPE school_category AS ENUM ('Estatal', 'Federal', 'Federalizado');
 CREATE TYPE entity_type     AS ENUM ('donor', 'donation', 'school');
 CREATE TYPE audit_action    AS ENUM ('create', 'update', 'archive', 'state_change');
 
@@ -111,12 +114,22 @@ CREATE TABLE IF NOT EXISTS donors (
 -- ─────────────────────────────────────────────────────────
 CREATE TABLE IF NOT EXISTS schools (
     id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
-    name        TEXT        NOT NULL,
     region      TEXT        NOT NULL,
-    school_type school_type NOT NULL,
+    school      TEXT        NOT NULL,
+    name        TEXT        NOT NULL,
+    employees   TEXT        NOT NULL DEFAULT 0,
+    students    TEXT        NOT NULL DEFAULT 0,
+    level       school_level NOT NULL,
+    cct         TEXT        NOT NULL,
+    mode        school_mode NOT NULL,
+    shift       school_shift    NOT NULL,
+    address     TEXT            NOT NULL,
+    location    TEXT            NOT NULL, -- this is a google maps URL.
+    category    school_category NOT NULL,
     notes       TEXT,
     goal        NUMERIC(12,2) NOT NULL CHECK (goal > 0),
     progress    NUMERIC(12,2) NOT NULL DEFAULT 0 CHECK (progress >= 0),
+    imgs        TEXT[], -- array of image URLs
 
     created_at  TIMESTAMPTZ NOT NULL DEFAULT NOW(),
     created_by  UUID        REFERENCES users(id),
@@ -125,14 +138,15 @@ CREATE TABLE IF NOT EXISTS schools (
     deleted_at  TIMESTAMPTZ	DEFAULT NULL,
     deleted_by  UUID        REFERENCES users(id),
 
-    UNIQUE (name, region)
+    UNIQUE (region, school, name)
 );
 
 CREATE TABLE IF NOT EXISTS schools_needs (
     id          UUID        PRIMARY KEY DEFAULT gen_random_uuid(),
     school_id   UUID        NOT NULL REFERENCES schools(id),
     item_name   TEXT        NOT NULL,
-    quantity    INT         NOT NULL, 
+    quantity    INT,
+    unit        TEXT,
     amount      NUMERIC(12,2) NOT NULL,
 
     created_at    TIMESTAMPTZ     NOT NULL DEFAULT NOW(),
