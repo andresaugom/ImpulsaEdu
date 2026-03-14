@@ -14,25 +14,25 @@ skinparam database {
 }
 skinparam actorStyle awesome
 
-title NGO Administrative Donation Platform – Information Flow
+title ImpulsaEdu — Use Case / Información de flujo
 
 ' =========================
 ' ACTORS
 ' =========================
-actor "Donor" as Donor
-actor "School" as School
-actor "NGO Staff" as Staff
-actor "NGO Admin" as Admin
+actor "Donante" as Donor
+actor "Escuela" as School
+actor "Personal (staff)" as Staff
+actor "Administrador (admin)" as Admin
 
 ' =========================
 ' PUBLIC DASHBOARD
 ' =========================
-rectangle "Public Informational Dashboard (Read-Only)" as Public {
+rectangle "Panel público (información - solo lectura)" as Public {
 
-  package "School Catalog" {
-    component "Search & Filter\n(by Region, Category)" as Filter
-    component "School Detail View" as SchoolView
-    component "Progress Bar\n(DB-calculated)" as ProgressBar
+  package "Catálogo de escuelas" {
+    component "Buscar / Filtrar\n(región, categoría)" as Filter
+    component "Detalle de escuela" as SchoolView
+    component "Barra de progreso\n(calculada por API)" as ProgressBar
   }
 
 }
@@ -40,51 +40,51 @@ rectangle "Public Informational Dashboard (Read-Only)" as Public {
 ' =========================
 ' ADMIN SYSTEM
 ' =========================
-rectangle "NGO Management System (Administrative)" as System {
+rectangle "Sistema administrativo (NGO)" as System {
 
-  package "Authentication & RBAC" as Auth {
-    component "Login"
-    component "JWT Validation"
-    component "Role Control\n(Admin / Staff)"
+  package "Autenticación y RBAC" as Auth {
+    component "Login (POST /auth/login)"
+    component "Validación JWT"
+    component "Control de roles\n(admin / staff)"
   }
 
-  package "School Management" as SchoolMgmt {
-    component "Create / Update / Archive School"
-    component "Prevent Duplicate Schools"
+  package "Gestión de escuelas" as SchoolMgmt {
+    component "Crear / Actualizar / Archivar escuela"
+    component "Validación: no duplicados (name+region)"
   }
 
-  package "Donor Management" as DonorMgmt {
-    component "Create / Update Donor"
-    component "Donation History View"
-    component "Prevent Duplicate Donors"
+  package "Gestión de donantes" as DonorMgmt {
+    component "Crear / Actualizar donante"
+    component "Historial de donaciones"
+    component "Validación: no duplicados (name+region)"
   }
 
-  package "Donation Management" as DonationMgmt {
-    component "Create Donation Record"
-    component "Link Donor ↔ School"
-    component "Select Type\n(Material / Monetary)"
-    component "Define Delivery Mode\n(3 Exclusive Options)"
-    component "Register Amount / Estimated Value"
+  package "Gestión de donaciones" as DonationMgmt {
+    component "Crear registro de donación (POST /api/v1/donations)"
+    component "Vincular donante ↔ escuela"
+    component "Tipo: material / monetary"
+    component "Modo de entrega (donor_to_school / donor_to_ngo / donor_to_pickup)"
+    component "Registrar amount / estimated_value"
   }
 
-  package "Workflow Engine (Finite State Control)" as Workflow {
-    component "States:\nRegistered\nApproved\nIn Delivery\nDelivered\nCompleted\nCancelled"
-    component "Validated State Transitions"
+  package "Motor de flujo (state machine)" as Workflow {
+    component "States:\nregistered\napproved\nin_delivery\ndelivered\ncompleted\ncancelled"
+    component "Validación de transiciones (API)"
   }
 
-  package "Reporting Module" as Reports {
-    component "Donations per School"
-    component "Donations per Donor"
-    component "Pending Deliveries"
-    component "Completed Processes"
+  package "Módulo de reportes" as Reports {
+    component "Donations by school (admin)"
+    component "Donations by donor (admin)"
+    component "Pending deliveries"
+    component "Completed donations"
   }
 
-  database "PostgreSQL Database" as DB {
-    component "Users"
-    component "Schools"
-    component "Donors"
-    component "Donations"
-    component "Delivery Config"
+  database "PostgreSQL (impulsa)" as DB {
+    component "users / refresh_tokens"
+    component "schools / schools_needs"
+    component "donors / contacts"
+    component "donations / donation_items"
+    component "audit_logs"
   }
 
 }
@@ -93,12 +93,12 @@ rectangle "NGO Management System (Administrative)" as System {
 ' EXTERNAL INTERACTIONS
 ' =========================
 
-Donor --> Filter : Browse schools
+Donor --> Filter : Navega catálogo
 Filter --> SchoolView
 SchoolView --> ProgressBar
 
-Donor --> Staff : Contacts NGO (offline)
-School --> Staff : Requests support (offline)
+Donor --> Staff : Contacto (offline / form)
+Escuela --> Staff : Solicita apoyo (offline / form)
 
 ' =========================
 ' AUTHENTICATION FLOW
@@ -107,47 +107,47 @@ School --> Staff : Requests support (offline)
 Staff --> Login
 Admin --> Login
 
-Login --> "JWT Validation"
-"JWT Validation" --> "Role Control\n(Admin / Staff)"
+Login --> "Validación JWT"
+"Validación JWT" --> "Control de roles\n(admin / staff)"
 
 ' =========================
 ' SCHOOL REGISTRATION FLOW
 ' =========================
 
-Staff --> "Create / Update / Archive School"
-"Create / Update / Archive School" --> "Prevent Duplicate Schools"
-"Prevent Duplicate Schools" --> DB
+Staff --> "Crear / Actualizar / Archivar escuela"
+"Crear / Actualizar / Archivar escuela" --> "Validación: no duplicados (name+region)"
+"Validación: no duplicados (name+region)" --> DB
 
 ' =========================
 ' DONOR REGISTRATION FLOW
 ' =========================
 
-Staff --> "Create / Update Donor"
-"Create / Update Donor" --> "Prevent Duplicate Donors"
-"Prevent Duplicate Donors" --> DB
+Staff --> "Crear / Actualizar donante"
+"Crear / Actualizar donante" --> "Validación: no duplicados (name+region)"
+"Validación: no duplicados (name+region)" --> DB
 
 ' =========================
 ' DONATION CREATION FLOW
 ' =========================
 
-Staff --> "Create Donation Record"
-"Create Donation Record" --> "Link Donor ↔ School"
-"Link Donor ↔ School" --> DB
+Staff --> "Crear registro de donación"
+"Crear registro de donación" --> "Vincular donante ↔ escuela"
+"Vincular donante ↔ escuela" --> DB
 
-"Create Donation Record" --> "Select Type\n(Material / Monetary)"
-"Select Type\n(Material / Monetary)" --> "Register Amount / Estimated Value"
+"Crear registro de donación" --> "Tipo: material / monetary"
+"Tipo: material / monetary" --> "Registrar amount / estimated_value"
 
-"Create Donation Record" --> "Define Delivery Mode\n(3 Exclusive Options)"
-"Define Delivery Mode\n(3 Exclusive Options)" --> DB
+"Crear registro de donación" --> "Modo de entrega (donor_to_school / donor_to_ngo / donor_pickup)"
+"Modo de entrega (donor_to_school / donor_to_ngo / donor_pickup)" --> DB
 
-"Create Donation Record" --> Workflow
+"Crear registro de donación" --> Workflow
 Workflow --> DB
 
 ' =========================
 ' PROGRESS BAR LOGIC
 ' =========================
 
-DB --> ProgressBar : Funding progress\n= confirmed value / goal
+DB --> ProgressBar : confirmed_value / funding_goal (progress_pct)
 
 ' =========================
 ' REPORTING FLOW
