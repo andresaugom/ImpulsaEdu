@@ -39,7 +39,7 @@ import {
         sx={{
           width: 240,
           height: '100vh',
-          backgroundColor: '#0c3011',
+          backgroundColor: '#004617',
           color: '#F8FAFC',
           display: 'flex',
           flexDirection: 'column',
@@ -78,9 +78,9 @@ import {
                     borderRadius: 1,
                     paddingY: 1.2,
                     color: '#F8FAFC',
-                    backgroundColor: '#009933', 
+                    backgroundColor: '#ec671c', 
                     '&:hover': {
-                      backgroundColor: '#006622',
+                      backgroundColor: '#813a11',
                     },
                   }} 
                 >
