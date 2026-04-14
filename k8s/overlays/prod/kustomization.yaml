@@ -1,0 +1,23 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: impulsa-prod
+
+resources:
+  - ../../base
+
+images:
+  - name: REGISTRY/impulsa-frontend
+    newTag: latest
+  - name: REGISTRY/impulsa-api
+    newTag: latest
+  - name: REGISTRY/impulsa-auth
+    newTag: latest
+
+configMapGenerator:
+  - name: impulsa-config
+    behavior: merge
+    literals:
+      - NODE_ENV=production
+      # Set POSTGRES_HOST to Cloud SQL private IP or postgres headless service
+      - POSTGRES_HOST=postgres.impulsa-prod.svc.cluster.local

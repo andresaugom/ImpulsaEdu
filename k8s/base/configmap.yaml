@@ -1,0 +1,12 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: impulsa-config
+  namespace: impulsa-prod
+data:
+  NODE_ENV: "production"
+  API_SERVICE_URL: "http://api-service:8080"
+  AUTH_SERVICE_URL: "http://auth-service:8081"
+  # Non-sensitive DB config — host injected per environment overlay
+  POSTGRES_PORT: "5432"
+  POSTGRES_DB: "impulsaedu"

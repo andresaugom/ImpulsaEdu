@@ -1,0 +1,9 @@
+# GKE Managed Certificate — replace domain per overlay
+apiVersion: networking.gke.io/v1
+kind: ManagedCertificate
+metadata:
+  name: impulsa-cert
+  namespace: impulsa-prod
+spec:
+  domains:
+    - REPLACE_WITH_DOMAIN

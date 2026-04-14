@@ -1,0 +1,141 @@
+name: Deploy to GKE
+
+on:
+  push:
+    branches:
+      - main       # → impulsa-prod
+      - develop    # → impulsa-dev
+
+env:
+  GCP_PROJECT_ID: ${{ secrets.GCP_PROJECT_ID }}
+  GKE_CLUSTER: ${{ secrets.GKE_CLUSTER }}
+  GKE_REGION: ${{ secrets.GKE_REGION }}
+  REGISTRY: ${{ secrets.GCP_REGION }}-docker.pkg.dev/${{ secrets.GCP_PROJECT_ID }}/impulsa
+
+jobs:
+  # ──────────────────────────────────────────────
+  # 1. Build & push images to Artifact Registry
+  # ──────────────────────────────────────────────
+  build:
+    name: Build & Push Images
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      id-token: write   # Required for Workload Identity Federation
+
+    outputs:
+      image_tag: ${{ steps.meta.outputs.tag }}
+      overlay: ${{ steps.env.outputs.overlay }}
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Determine overlay
+        id: env
+        run: |
+          if [[ "${{ github.ref }}" == "refs/heads/main" ]]; then
+            echo "overlay=prod" >> "$GITHUB_OUTPUT"
+          else
+            echo "overlay=dev" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Authenticate to GCP via Workload Identity
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Configure Docker for Artifact Registry
+        run: gcloud auth configure-docker ${{ secrets.GCP_REGION }}-docker.pkg.dev --quiet
+
+      - name: Compute image tag
+        id: meta
+        run: echo "tag=${{ github.sha }}" >> "$GITHUB_OUTPUT"
+
+      - name: Build & push frontend
+        uses: docker/build-push-action@v5
+        with:
+          context: ./frontend
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/impulsa-frontend:${{ steps.meta.outputs.tag }}
+            ${{ env.REGISTRY }}/impulsa-frontend:${{ steps.env.outputs.overlay == 'prod' && 'latest' || 'dev' }}
+
+      - name: Build & push api-service
+        uses: docker/build-push-action@v5
+        with:
+          context: ./api-service
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/impulsa-api:${{ steps.meta.outputs.tag }}
+            ${{ env.REGISTRY }}/impulsa-api:${{ steps.env.outputs.overlay == 'prod' && 'latest' || 'dev' }}
+
+      - name: Build & push auth-service
+        uses: docker/build-push-action@v5
+        with:
+          context: ./auth-service
+          push: true
+          tags: |
+            ${{ env.REGISTRY }}/impulsa-auth:${{ steps.meta.outputs.tag }}
+            ${{ env.REGISTRY }}/impulsa-auth:${{ steps.env.outputs.overlay == 'prod' && 'latest' || 'dev' }}
+
+  # ──────────────────────────────────────────────
+  # 2. Deploy to GKE with kustomize
+  # ──────────────────────────────────────────────
+  deploy:
+    name: Deploy to GKE (${{ needs.build.outputs.overlay }})
+    runs-on: ubuntu-latest
+    needs: build
+    permissions:
+      contents: read
+      id-token: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Authenticate to GCP via Workload Identity
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WIF_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT }}
+
+      - name: Set up Cloud SDK
+        uses: google-github-actions/setup-gcloud@v2
+
+      - name: Get GKE credentials
+        uses: google-github-actions/get-gke-credentials@v2
+        with:
+          cluster_name: ${{ secrets.GKE_CLUSTER }}
+          location: ${{ secrets.GKE_REGION }}
+
+      - name: Set up Kustomize
+        run: |
+          curl -sfL https://github.com/kubernetes-sigs/kustomize/releases/download/kustomize%2Fv5.3.0/kustomize_v5.3.0_linux_amd64.tar.gz \
+            | tar xz && sudo mv kustomize /usr/local/bin/
+
+      - name: Pin image tags in kustomize overlay
+        run: |
+          OVERLAY=${{ needs.build.outputs.overlay }}
+          TAG=${{ needs.build.outputs.image_tag }}
+          cd k8s/overlays/$OVERLAY
+          kustomize edit set image \
+            REGISTRY/impulsa-frontend=${{ env.REGISTRY }}/impulsa-frontend:$TAG \
+            REGISTRY/impulsa-api=${{ env.REGISTRY }}/impulsa-api:$TAG \
+            REGISTRY/impulsa-auth=${{ env.REGISTRY }}/impulsa-auth:$TAG
+
+      - name: Apply manifests
+        run: |
+          OVERLAY=${{ needs.build.outputs.overlay }}
+          kustomize build k8s/overlays/$OVERLAY | kubectl apply -f -
+
+      - name: Wait for rollout
+        run: |
+          NAMESPACE=impulsa-${{ needs.build.outputs.overlay }}
+          kubectl rollout status deployment/frontend    -n $NAMESPACE --timeout=120s
+          kubectl rollout status deployment/api-service  -n $NAMESPACE --timeout=120s
+          kubectl rollout status deployment/auth-service -n $NAMESPACE --timeout=120s
