@@ -10,36 +10,13 @@ import {
   Button,
   Chip,
   useTheme,
+  useMediaQuery,
 } from "@mui/material";
 import Link from "next/link";
-import { useEffect, useState } from "react";
-import { fetchSchools } from "../../lib/schoolsService";
-import { fetchDonors } from "../../lib/donorsService";
-import { fetchDonations } from "../../lib/donationsService";
-import { pendingDeliveries } from "../../lib/reportsService";
 
 export default function MainCards() {
   const theme = useTheme();
-  const [totalSchools, setTotalSchools] = useState<number | null>(null);
-  const [totalDonors, setTotalDonors] = useState<number | null>(null);
-  const [totalDonations, setTotalDonations] = useState<number | null>(null);
-  const [pendingCount, setPendingCount] = useState<number | null>(null);
-
-  useEffect(() => {
-    Promise.allSettled([
-      fetchSchools({ per_page: 1 }),
-      fetchDonors({ per_page: 1 }),
-      fetchDonations({ per_page: 1 }),
-      pendingDeliveries(),
-    ]).then(([schoolsRes, donorsRes, donationsRes, pendingRes]) => {
-      if (schoolsRes.status === "fulfilled") setTotalSchools(schoolsRes.value.total);
-      if (donorsRes.status === "fulfilled") setTotalDonors(donorsRes.value.total);
-      if (donationsRes.status === "fulfilled") setTotalDonations(donationsRes.value.total);
-      if (pendingRes.status === "fulfilled") setPendingCount(pendingRes.value.length);
-    });
-  }, []);
-
-  const fmt = (n: number | null) => (n === null ? "—" : n);
+  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   return (
     <>
@@ -103,7 +80,21 @@ export default function MainCards() {
                       color: theme.palette.primary.main,
                     }}
                   >
-                    {fmt(totalSchools)}
+                    12
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography sx={{ fontSize: "12px", color: "#4a5f8f" }}>
+                    Financiadas Este Mes
+                  </Typography>
+                  <Typography
+                    sx={{
+                      fontSize: "18px",
+                      fontWeight: 700,
+                      color: theme.palette.primary.main,
+                    }}
+                  >
+                    3
                   </Typography>
                 </Box>
               </Box>
@@ -181,7 +172,21 @@ export default function MainCards() {
                       color: theme.palette.primary.main,
                     }}
                   >
-                    {fmt(totalDonors)}
+                    8
+                  </Typography>
+                </Box>
+                <Box>
+                  <Typography sx={{ fontSize: "12px", color: "#4a5f8f" }}>
+                    Nuevos Este Mes
+                  </Typography>
+                  <Typography
+                    sx={{
+                      fontSize: "18px",
+                      fontWeight: 700,
+                      color: theme.palette.primary.main,
+                    }}
+                  >
+                    5
                   </Typography>
                 </Box>
               </Box>
@@ -259,7 +264,7 @@ export default function MainCards() {
                       color: theme.palette.primary.main,
                     }}
                   >
-                    {fmt(totalDonations)}
+                    45
                   </Typography>
                 </Box>
                 <Box>
@@ -273,7 +278,7 @@ export default function MainCards() {
                       color: theme.palette.primary.main,
                     }}
                   >
-                    {fmt(pendingCount)}
+                    8
                   </Typography>
                 </Box>
               </Box>

@@ -7,23 +7,21 @@ export interface SchoolNeed {
 }
 
 export interface SchoolStructure {
-  id: string;
+  id: number;
   region: string;
   school: string;
   name: string;
-  employees: number;
-  students: number;
+  employees: string;
+  students: string;
   level: string;
   cct: string;
   mode: string;
   shift: string;
   address: string;
   location: string;
-  category: 'Estatal' | 'Federal' | 'Federalizado';
-  description: string | null;
-  goal: number;
+  type: "Publica" | "Privada";
+  category: string;
+  notes: string;
   progress: number;
-  progress_pct: number;
-  status: 'active' | 'archived';
   needs: SchoolNeed[];
 }

@@ -1,13 +1,5 @@
 'use client';
 
-/**
- * Donantes (Donors) page – Endpoint 2: GET/POST/PUT/PATCH /api/v1/donors
- *
- * Fetches the donor list from the backend on mount and reflects any
- * create / edit / deactivate operations through the API in real time.
- * Loading and error states are shown inline.
- */
-
 import {
   Box,
   Button,
@@ -28,89 +20,102 @@ import {
   DialogActions,
   Typography,
   Grid,
-  CircularProgress,
-  Alert,
 } from '@mui/material';
-import { useState, useEffect, useCallback } from 'react';
-import { Donor } from './donantesInterfaces';
-import { getStatusColor, getTypeLabel } from './donantesUiHooks';
-import {
-  fetchDonors,
-  createDonor,
-  updateDonor,
-  deactivateDonor,
-} from '@/lib/donorsService';
-import { ApiError } from '@/lib/apiClient';
+import { useState } from 'react';
+
+interface Donor {
+  id: number;
+  name: string;
+  type: 'individual' | 'corporate';
+  email: string;
+  phone: string;
+  totalDonations: number;
+  status: 'active' | 'inactive';
+}
+
+const mockDonors: Donor[] = [
+  {
+    id: 1,
+    name: 'María García López',
+    type: 'individual',
+    email: 'maria@ejemplo.com',
+    phone: '+52 (33) 1234-5678',
+    totalDonations: 3500,
+    status: 'active',
+  },
+  {
+    id: 2,
+    name: 'Corporativo Educativo Jalisco',
+    type: 'corporate',
+    email: 'contacto@corporativo.com',
+    phone: '+52 (33) 9876-5432',
+    totalDonations: 15000,
+    status: 'active',
+  },
+  {
+    id: 3,
+    name: 'Carlos Hernández Rodríguez',
+    type: 'individual',
+    email: 'carlos@ejemplo.com',
+    phone: '+52 (33) 5555-1234',
+    totalDonations: 2000,
+    status: 'inactive',
+  },
+];
+
+const getStatusColor = (status: string) => {
+  switch (status) {
+    case 'active':
+      return { bg: '#d1fae5', text: '#065f46' };
+    case 'inactive':
+      return { bg: '#fee2e2', text: '#7f1d1d' };
+    default:
+      return { bg: '#dbeafe', text: '#0c2d6b' };
+  }
+};
+
+const getTypeLabel = (type: string) => {
+  return type === 'individual' ? 'Persona Física' : 'Persona Moral';
+};
 
 export default function DonantesPage() {
-  // ── Data & async state ──────────────────────────────────────────────────────
-  const [donors, setDonors] = useState<Donor[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [saveError, setSaveError] = useState<string | null>(null);
-  const [saving, setSaving] = useState(false);
-
-  // ── Filter state ────────────────────────────────────────────────────────────
+  const [donors, setDonors] = useState<Donor[]>(mockDonors);
   const [searchQuery, setSearchQuery] = useState('');
   const [typeFilter, setTypeFilter] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
-
-  // ── Dialog state ────────────────────────────────────────────────────────────
   const [openDialog, setOpenDialog] = useState(false);
   const [editingDonor, setEditingDonor] = useState<Donor | null>(null);
   const [formData, setFormData] = useState({
     name: '',
-    donor_type: 'Fisica' as 'Fisica' | 'Moral',
-    region: '',
+    type: 'individual',
     email: '',
     phone: '',
   });
 
-  // ── Load donors from API ────────────────────────────────────────────────────
-
-  const loadDonors = useCallback(async () => {
-    setLoading(true);
-    setError(null);
-    try {
-      const filters: Record<string, unknown> = {};
-      if (searchQuery) filters.name = searchQuery;
-      if (typeFilter) filters.type = typeFilter;
-      if (statusFilter) filters.is_active = statusFilter === 'active';
-
-      const result = await fetchDonors(filters);
-      setDonors(result.donors);
-    } catch (err) {
-      if (err instanceof ApiError && err.status === 401) {
-        setError('Tu sesión ha expirado. Por favor inicia sesión nuevamente.');
-      } else {
-        setError('No se pudo cargar la lista de donantes. Intenta de nuevo.');
-      }
-    } finally {
-      setLoading(false);
-    }
-  }, [searchQuery, typeFilter, statusFilter]);
-
-  // Initial load
-  useEffect(() => {
-    loadDonors();
-  }, [loadDonors]);
-
-  // ── Dialog handlers ─────────────────────────────────────────────────────────
+  const filteredDonors = donors.filter((donor) => {
+    const matchesSearch = donor.name.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesType = !typeFilter || donor.type === typeFilter;
+    const matchesStatus = !statusFilter || donor.status === statusFilter;
+    return matchesSearch && matchesType && matchesStatus;
+  });
 
   const handleOpenDialog = (donor?: Donor) => {
-    setSaveError(null);
     if (donor) {
       setEditingDonor(donor);
       setFormData({
         name: donor.name,
-        donor_type: donor.donor_type,
-        region: donor.region,
-        email: donor.email ?? '',
-        phone: donor.phone ?? '',
+        type: donor.type,
+        email: donor.email,
+        phone: donor.phone,
       });
     } else {
       setEditingDonor(null);
-      setFormData({ name: '', donor_type: 'Fisica', region: '', email: '', phone: '' });
+      setFormData({
+        name: '',
+        type: 'individual',
+        email: '',
+        phone: '',
+      });
     }
     setOpenDialog(true);
   };
@@ -120,73 +125,35 @@ export default function DonantesPage() {
     setEditingDonor(null);
   };
 
-  // ── Save donor (create or update) ───────────────────────────────────────────
-
-  const handleSaveDonor = async () => {
-    setSaveError(null);
-    setSaving(true);
-    try {
-      if (editingDonor) {
-        const updated = await updateDonor(editingDonor.id, {
-          name: formData.name,
-          donor_type: formData.donor_type,
-          region: formData.region,
-          email: formData.email || undefined,
-          phone: formData.phone || undefined,
-        });
-        setDonors((prev) =>
-          prev.map((d) => (d.id === editingDonor.id ? updated : d))
-        );
-      } else {
-        const created = await createDonor({
-          name: formData.name,
-          donor_type: formData.donor_type,
-          region: formData.region,
-          email: formData.email || undefined,
-          phone: formData.phone || undefined,
-        });
-        setDonors((prev) => [...prev, created]);
-      }
-      handleCloseDialog();
-    } catch (err) {
-      if (err instanceof ApiError && err.status === 409) {
-        setSaveError('Ya existe un donante con ese correo electrónico.');
-      } else {
-        setSaveError('No se pudo guardar el donante. Inténtalo de nuevo.');
-      }
-    } finally {
-      setSaving(false);
-    }
-  };
-
-  // ── Deactivate donor ────────────────────────────────────────────────────────
-
-  const handleDeactivate = async (donor: Donor) => {
-    try {
-      // PATCH /api/v1/donors/:id/deactivate
-      await deactivateDonor(donor.id);
-      setDonors((prev) =>
-        prev.map((d) =>
-          d.id === donor.id ? { ...d, status: 'inactive' as const } : d
+  const handleSaveDonor = () => {
+    if (editingDonor) {
+      setDonors(
+        donors.map((d) =>
+          d.id === editingDonor.id
+            ? {
+                ...d,
+                name: formData.name,
+                type: formData.type as 'individual' | 'corporate',
+                email: formData.email,
+                phone: formData.phone,
+              }
+            : d
         )
       );
-    } catch {
-      setError('No se pudo desactivar al donante. Inténtalo de nuevo.');
+    } else {
+      const newDonor: Donor = {
+        id: Math.max(...donors.map((d) => d.id)) + 1,
+        name: formData.name,
+        type: formData.type as 'individual' | 'corporate',
+        email: formData.email,
+        phone: formData.phone,
+        totalDonations: 0,
+        status: 'active',
+      };
+      setDonors([...donors, newDonor]);
     }
+    handleCloseDialog();
   };
-
-  // ── Client-side filter (applied on top of server results) ──────────────────
-
-  const filteredDonors = donors.filter((donor) => {
-    const matchesSearch = donor.name
-      .toLowerCase()
-      .includes(searchQuery.toLowerCase());
-    const matchesType = !typeFilter || donor.donor_type === typeFilter;
-    const matchesStatus = !statusFilter || donor.status === statusFilter;
-    return matchesSearch && matchesType && matchesStatus;
-  });
-
-  // ── Render ──────────────────────────────────────────────────────────────────
 
   return (
     <Box>
@@ -214,15 +181,14 @@ export default function DonantesPage() {
         </Button>
       </Box>
 
-      {/* Page-level error */}
-      {error && (
-        <Alert severity="error" sx={{ marginBottom: 2 }} onClose={() => setError(null)}>
-          {error}
-        </Alert>
-      )}
-
       {/* Search and Filters */}
-      <Paper sx={{ padding: 2, marginBottom: 3, boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)' }}>
+      <Paper
+        sx={{
+          padding: 2,
+          marginBottom: 3,
+          boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)',
+        }}
+      >
         <Grid container spacing={2}>
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <TextField
@@ -244,8 +210,8 @@ export default function DonantesPage() {
               size="small"
             >
               <MenuItem value="">Todos los Tipos</MenuItem>
-              <MenuItem value="Fisica">Persona Física</MenuItem>
-              <MenuItem value="Moral">Persona Moral</MenuItem>
+              <MenuItem value="individual">Persona Física</MenuItem>
+              <MenuItem value="corporate">Persona Moral</MenuItem>
             </Select>
           </Grid>
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
@@ -268,7 +234,6 @@ export default function DonantesPage() {
                 color="primary"
                 size="small"
                 sx={{ flex: 1, textTransform: 'none' }}
-                onClick={loadDonors}
               >
                 Buscar
               </Button>
@@ -290,105 +255,89 @@ export default function DonantesPage() {
         </Grid>
       </Paper>
 
-      {/* Loading state */}
-      {loading && (
-        <Box sx={{ display: 'flex', justifyContent: 'center', padding: 4 }}>
-          <CircularProgress />
-        </Box>
-      )}
-
       {/* Donors Table */}
-      {!loading && (
-        <TableContainer component={Paper} sx={{ boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)' }}>
-          <Table>
-            <TableHead sx={{ backgroundColor: '#f8fafb' }}>
-              <TableRow>
-                <TableCell sx={{ fontWeight: 700, textTransform: 'uppercase', fontSize: '13px' }}>
-                  Nombre del Donante
-                </TableCell>
-                <TableCell sx={{ fontWeight: 700, textTransform: 'uppercase', fontSize: '13px' }}>
-                  Tipo
-                </TableCell>
-                <TableCell sx={{ fontWeight: 700, textTransform: 'uppercase', fontSize: '13px' }}>
-                  Correo
-                </TableCell>
-                <TableCell sx={{ fontWeight: 700, textTransform: 'uppercase', fontSize: '13px' }}>
-                  Teléfono
-                </TableCell>
-                <TableCell sx={{ fontWeight: 700, textTransform: 'uppercase', fontSize: '13px' }}>
-                  Donaciones
-                </TableCell>
-                <TableCell sx={{ fontWeight: 700, textTransform: 'uppercase', fontSize: '13px' }}>
-                  Estado
-                </TableCell>
-                <TableCell sx={{ fontWeight: 700, textTransform: 'uppercase', fontSize: '13px' }}>
-                  Acciones
-                </TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {filteredDonors.length === 0 ? (
-                <TableRow>
-                  <TableCell colSpan={7} sx={{ textAlign: 'center', color: 'text.secondary', py: 4 }}>
-                    No se encontraron donantes.
+      <TableContainer component={Paper} sx={{ boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)' }}>
+        <Table>
+          <TableHead sx={{ backgroundColor: '#f8fafb' }}>
+            <TableRow>
+              <TableCell sx={{ fontWeight: 700, textTransform: 'uppercase', fontSize: '13px' }}>
+                Nombre del Donante
+              </TableCell>
+              <TableCell sx={{ fontWeight: 700, textTransform: 'uppercase', fontSize: '13px' }}>
+                Tipo
+              </TableCell>
+              <TableCell sx={{ fontWeight: 700, textTransform: 'uppercase', fontSize: '13px' }}>
+                Correo
+              </TableCell>
+              <TableCell sx={{ fontWeight: 700, textTransform: 'uppercase', fontSize: '13px' }}>
+                Teléfono
+              </TableCell>
+              <TableCell sx={{ fontWeight: 700, textTransform: 'uppercase', fontSize: '13px' }}>
+                Donaciones Totales
+              </TableCell>
+              <TableCell sx={{ fontWeight: 700, textTransform: 'uppercase', fontSize: '13px' }}>
+                Estado
+              </TableCell>
+              <TableCell sx={{ fontWeight: 700, textTransform: 'uppercase', fontSize: '13px' }}>
+                Acciones
+              </TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {filteredDonors.map((donor) => {
+              const statusColor = getStatusColor(donor.status);
+              return (
+                <TableRow
+                  key={donor.id}
+                  sx={{
+                    '&:hover': {
+                      backgroundColor: '#f8fafb',
+                    },
+                  }}
+                >
+                  <TableCell sx={{ fontWeight: 600 }}>{donor.name}</TableCell>
+                  <TableCell sx={{ color: '#4a5f8f' }}>{getTypeLabel(donor.type)}</TableCell>
+                  <TableCell sx={{ color: '#4a5f8f' }}>{donor.email}</TableCell>
+                  <TableCell sx={{ color: '#4a5f8f' }}>{donor.phone}</TableCell>
+                  <TableCell>${donor.totalDonations.toLocaleString()}</TableCell>
+                  <TableCell>
+                    <Chip
+                      label={donor.status === 'active' ? 'Activo' : 'Inactivo'}
+                      size="small"
+                      sx={{
+                        backgroundColor: statusColor.bg,
+                        color: statusColor.text,
+                        fontWeight: 600,
+                      }}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Box sx={{ display: 'flex', gap: 1 }}>
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        color="primary"
+                        onClick={() => handleOpenDialog(donor)}
+                        sx={{ textTransform: 'none' }}
+                      >
+                        Editar
+                      </Button>
+                      <Button
+                        size="small"
+                        variant="outlined"
+                        color="error"
+                        sx={{ textTransform: 'none' }}
+                      >
+                        Eliminar
+                      </Button>
+                    </Box>
                   </TableCell>
                 </TableRow>
-              ) : (
-                filteredDonors.map((donor) => {
-                  const statusColor = getStatusColor(donor.status);
-                  return (
-                    <TableRow
-                      key={donor.id}
-                      sx={{ '&:hover': { backgroundColor: '#f8fafb' } }}
-                    >
-                      <TableCell sx={{ fontWeight: 600 }}>{donor.name}</TableCell>
-                      <TableCell sx={{ color: '#4a5f8f' }}>{getTypeLabel(donor.donor_type)}</TableCell>
-                      <TableCell sx={{ color: '#4a5f8f' }}>{donor.email ?? '—'}</TableCell>
-                      <TableCell sx={{ color: '#4a5f8f' }}>{donor.phone ?? '—'}</TableCell>
-                      <TableCell>{donor.totalDonations}</TableCell>
-                      <TableCell>
-                        <Chip
-                          label={donor.status === 'active' ? 'Activo' : 'Inactivo'}
-                          size="small"
-                          sx={{
-                            backgroundColor: statusColor.bg,
-                            color: statusColor.text,
-                            fontWeight: 600,
-                          }}
-                        />
-                      </TableCell>
-                      <TableCell>
-                        <Box sx={{ display: 'flex', gap: 1 }}>
-                          <Button
-                            size="small"
-                            variant="outlined"
-                            color="primary"
-                            onClick={() => handleOpenDialog(donor)}
-                            sx={{ textTransform: 'none' }}
-                          >
-                            Editar
-                          </Button>
-                          {donor.status === 'active' && (
-                            <Button
-                              size="small"
-                              variant="outlined"
-                              color="error"
-                              onClick={() => handleDeactivate(donor)}
-                              sx={{ textTransform: 'none' }}
-                            >
-                              Desactivar
-                            </Button>
-                          )}
-                        </Box>
-                      </TableCell>
-                    </TableRow>
-                  );
-                })
-              )}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      )}
+              );
+            })}
+          </TableBody>
+        </Table>
+      </TableContainer>
 
       {/* Add/Edit Dialog */}
       <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
@@ -396,11 +345,6 @@ export default function DonantesPage() {
           {editingDonor ? 'Editar Donante' : 'Agregar Nuevo Donante'}
         </DialogTitle>
         <DialogContent sx={{ pt: 2 }}>
-          {saveError && (
-            <Alert severity="error" sx={{ marginBottom: 2 }}>
-              {saveError}
-            </Alert>
-          )}
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
             <TextField
               fullWidth
@@ -408,38 +352,24 @@ export default function DonantesPage() {
               value={formData.name}
               onChange={(e) => setFormData({ ...formData, name: e.target.value })}
               variant="outlined"
-              disabled={saving}
             />
             <TextField
               fullWidth
               label="Tipo"
               select
-              value={formData.donor_type}
-              onChange={(e) =>
-                setFormData({ ...formData, donor_type: e.target.value as 'Fisica' | 'Moral' })
-              }
-              disabled={saving}
+              value={formData.type}
+              onChange={(e) => setFormData({ ...formData, type: e.target.value })}
             >
-              <MenuItem value="Fisica">Persona Física</MenuItem>
-              <MenuItem value="Moral">Persona Moral</MenuItem>
+              <MenuItem value="individual">Persona Física</MenuItem>
+              <MenuItem value="corporate">Persona Moral</MenuItem>
             </TextField>
             <TextField
               fullWidth
-              label="Región / Municipio"
-              value={formData.region}
-              onChange={(e) => setFormData({ ...formData, region: e.target.value })}
-              variant="outlined"
-              disabled={saving}
-            />
-            <TextField
-              fullWidth
               label="Correo Electrónico"
-              type="text"
-              inputProps={{ inputMode: 'email', autoComplete: 'email' }}
+              type="email"
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               variant="outlined"
-              disabled={saving}
             />
             <TextField
               fullWidth
@@ -447,21 +377,15 @@ export default function DonantesPage() {
               value={formData.phone}
               onChange={(e) => setFormData({ ...formData, phone: e.target.value })}
               variant="outlined"
-              disabled={saving}
             />
           </Box>
         </DialogContent>
         <DialogActions>
-          <Button onClick={handleCloseDialog} variant="outlined" disabled={saving}>
+          <Button onClick={handleCloseDialog} variant="outlined">
             Cancelar
           </Button>
-          <Button
-            onClick={handleSaveDonor}
-            variant="contained"
-            color="primary"
-            disabled={saving}
-          >
-            {saving ? <CircularProgress size={20} color="inherit" /> : 'Guardar'}
+          <Button onClick={handleSaveDonor} variant="contained" color="primary">
+            Guardar
           </Button>
         </DialogActions>
       </Dialog>

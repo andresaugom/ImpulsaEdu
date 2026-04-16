@@ -19,159 +19,167 @@ import {
   DialogContent,
   DialogActions,
   Typography,
-  CircularProgress,
-  Alert,
+  Grid,
 } from '@mui/material';
-import { useState, useEffect } from 'react';
-import {
-  ApiDonationSummary,
-  DonationStatus,
-  DonationType,
-  fetchDonations,
-  getDonation,
-  createDonation,
-  updateDonation,
-  updateDonationStatus,
-  CreateDonationPayload,
-  UpdateDonationPayload,
-} from '../../lib/donationsService';
-import { fetchDonors } from '../../lib/donorsService';
-import { fetchSchools } from '../../lib/schoolsService';
-import { getStatusColor, getTypeColor, getTypeLabel, getStatusLabel } from './donacionesUiHooks';
+import { useState } from 'react';
 
-type DialogMode = 'create' | 'edit' | 'status';
+interface Donation {
+  id: string;
+  donor: string;
+  school: string;
+  type: 'material' | 'monetary';
+  deliveryMode: string;
+  status: 'pending' | 'delivered' | 'cancelled';
+}
+
+const mockDonations: Donation[] = [
+  {
+    id: '#DN001',
+    donor: 'María García López',
+    school: 'Escuela Primaria San José',
+    type: 'material',
+    deliveryMode: 'Entrega Directa',
+    status: 'delivered',
+  },
+  {
+    id: '#DN002',
+    donor: 'Carlos Hernández Rodríguez',
+    school: 'Escuela Secundaria Morelos',
+    type: 'monetary',
+    deliveryMode: 'Transferencia Bancaria',
+    status: 'pending',
+  },
+  {
+    id: '#DN003',
+    donor: 'Corporativo Educativo Jalisco',
+    school: 'Escuela Técnica Regional',
+    type: 'material',
+    deliveryMode: 'Entrega a Domicilio',
+    status: 'delivered',
+  },
+];
+
+const getStatusColor = (status: string) => {
+  switch (status) {
+    case 'delivered':
+      return { bg: '#d1fae5', text: '#065f46' };
+    case 'pending':
+      return { bg: '#fef3c7', text: '#92400e' };
+    case 'cancelled':
+      return { bg: '#fee2e2', text: '#7f1d1d' };
+    default:
+      return { bg: '#dbeafe', text: '#0c2d6b' };
+  }
+};
+
+const getTypeColor = (type: string) => {
+  switch (type) {
+    case 'material':
+      return { bg: '#dbeafe', text: '#0c2d6b' };
+    case 'monetary':
+      return { bg: '#d1fae5', text: '#065f46' };
+    default:
+      return { bg: '#dbeafe', text: '#0c2d6b' };
+  }
+};
+
+const getTypeLabel = (type: string) => {
+  return type === 'material' ? 'Material' : 'Monetaria';
+};
+
+const getStatusLabel = (status: string) => {
+  switch (status) {
+    case 'delivered':
+      return 'Entregada';
+    case 'pending':
+      return 'Pendiente';
+    case 'cancelled':
+      return 'Cancelada';
+    default:
+      return status;
+  }
+};
 
 export default function DonacionesPage() {
-  const [donations, setDonations] = useState<ApiDonationSummary[]>([]);
-  const [donors, setDonors] = useState<{ id: string; name: string }[]>([]);
-  const [schools, setSchools] = useState<{ id: string; name: string }[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
+  const [donations, setDonations] = useState<Donation[]>(mockDonations);
   const [searchQuery, setSearchQuery] = useState('');
   const [statusFilter, setStatusFilter] = useState('');
   const [openDialog, setOpenDialog] = useState(false);
-  const [dialogMode, setDialogMode] = useState<DialogMode>('create');
-  const [editingId, setEditingId] = useState<string | null>(null);
-  const [dialogError, setDialogError] = useState<string | null>(null);
-
-  const [createForm, setCreateForm] = useState({
-    donor_id: '',
-    school_id: '',
-    donation_type: 'Material' as DonationType,
-    description: '',
-    amount: '',
+  const [editingDonation, setEditingDonation] = useState<Donation | null>(null);
+  const [formData, setFormData] = useState({
+    donor: '',
+    school: '',
+    type: 'material',
+    deliveryMode: '',
+    status: 'pending',
   });
 
-  const [editForm, setEditForm] = useState({
-    description: '',
-  });
-
-  const [statusForm, setStatusForm] = useState<DonationStatus>('Aprobado');
-
-  useEffect(() => {
-    loadDonations();
-    loadSelectOptions();
-  }, []);
-
-  async function loadDonations() {
-    try {
-      setLoading(true);
-      setError(null);
-      const { items } = await fetchDonations({ per_page: 100 });
-      setDonations(items);
-    } catch {
-      setError('Error al cargar las donaciones.');
-    } finally {
-      setLoading(false);
-    }
-  }
-
-  async function loadSelectOptions() {
-    try {
-      const [donorsRes, schoolsRes] = await Promise.all([
-        fetchDonors({ is_active: true, per_page: 100 }),
-        fetchSchools({ status: 'active', per_page: 100 }),
-      ]);
-      setDonors(donorsRes.donors.map((d) => ({ id: d.id, name: d.name })));
-      setSchools(schoolsRes.schools.map((s) => ({ id: s.id, name: s.name })));
-    } catch {
-      // Non-critical — create form may have empty selects
-    }
-  }
-
-  const filteredDonations = donations.filter((d) => {
+  const filteredDonations = donations.filter((donation) => {
     const matchesSearch =
-      d.donor.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      d.school.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      d.id.toLowerCase().includes(searchQuery.toLowerCase());
-    const matchesStatus = !statusFilter || d.status === statusFilter;
+      donation.donor.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      donation.school.toLowerCase().includes(searchQuery.toLowerCase()) ||
+      donation.id.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesStatus = !statusFilter || donation.status === statusFilter;
     return matchesSearch && matchesStatus;
   });
 
-  const handleOpenCreate = () => {
-    setDialogMode('create');
-    setEditingId(null);
-    setCreateForm({ donor_id: '', school_id: '', donation_type: 'Material', description: '', amount: '' });
-    setDialogError(null);
-    setOpenDialog(true);
-  };
-
-  const handleOpenEdit = async (donation: ApiDonationSummary) => {
-    setDialogMode('edit');
-    setEditingId(donation.id);
-    setDialogError(null);
-    setEditForm({ description: '' });
-    setOpenDialog(true);
-    try {
-      const detail = await getDonation(donation.id);
-      setEditForm({ description: detail.description ?? '' });
-    } catch {
-      setDialogError('No se pudo cargar el detalle de la donación.');
+  const handleOpenDialog = (donation?: Donation) => {
+    if (donation) {
+      setEditingDonation(donation);
+      setFormData({
+        donor: donation.donor,
+        school: donation.school,
+        type: donation.type,
+        deliveryMode: donation.deliveryMode,
+        status: donation.status,
+      });
+    } else {
+      setEditingDonation(null);
+      setFormData({
+        donor: '',
+        school: '',
+        type: 'material',
+        deliveryMode: '',
+        status: 'pending',
+      });
     }
-  };
-
-  const handleOpenStatus = (donation: ApiDonationSummary) => {
-    setDialogMode('status');
-    setEditingId(donation.id);
-    setStatusForm('Aprobado');
-    setDialogError(null);
     setOpenDialog(true);
   };
 
   const handleCloseDialog = () => {
     setOpenDialog(false);
-    setEditingId(null);
+    setEditingDonation(null);
   };
 
-  const handleSave = async () => {
-    setDialogError(null);
-    try {
-      if (dialogMode === 'create') {
-        const payload: CreateDonationPayload = {
-          donor_id: createForm.donor_id,
-          school_id: createForm.school_id,
-          donation_type: createForm.donation_type,
-          description: createForm.description || undefined,
-          amount: createForm.amount ? Number(createForm.amount) : undefined,
-        };
-        await createDonation(payload);
-      } else if (dialogMode === 'edit' && editingId) {
-        const payload: UpdateDonationPayload = {
-          description: editForm.description || undefined,
-        };
-        await updateDonation(editingId, payload);
-      } else if (dialogMode === 'status' && editingId) {
-        await updateDonationStatus(editingId, { status: statusForm });
-      }
-      await loadDonations();
-      handleCloseDialog();
-    } catch {
-      setDialogError('Error al guardar los cambios.');
+  const handleSaveDonation = () => {
+    if (editingDonation) {
+      setDonations(
+        donations.map((d) =>
+          d.id === editingDonation.id
+            ? {
+                ...d,
+                donor: formData.donor,
+                school: formData.school,
+                type: formData.type as 'material' | 'monetary',
+                deliveryMode: formData.deliveryMode,
+                status: formData.status as 'pending' | 'delivered' | 'cancelled',
+              }
+            : d
+        )
+      );
+    } else {
+      const newDonation: Donation = {
+        id: `#DN${donations.length + 1}`.padEnd(6, '0'),
+        donor: formData.donor,
+        school: formData.school,
+        type: formData.type as 'material' | 'monetary',
+        deliveryMode: formData.deliveryMode,
+        status: formData.status as 'pending' | 'delivered' | 'cancelled',
+      };
+      setDonations([...donations, newDonation]);
     }
+    handleCloseDialog();
   };
-
-  const isTerminal = (status: DonationStatus) =>
-    status === 'Finalizado' || status === 'Cancelado';
 
   return (
     <Box>
@@ -192,205 +200,200 @@ export default function DonacionesPage() {
         <Button
           variant="contained"
           color="primary"
-          onClick={handleOpenCreate}
+          onClick={() => handleOpenDialog()}
           sx={{ textTransform: 'none' }}
         >
           + Nueva Donación
         </Button>
       </Box>
 
-      {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
-
       {/* Search and Filters */}
-      <Box sx={{ display: 'flex', gap: 2, marginBottom: 3, flexWrap: 'wrap' }}>
+      <Box
+        sx={{
+          display: 'flex',
+          gap: 2,
+          marginBottom: 3,
+          flexWrap: 'wrap',
+        }}
+      >
         <TextField
           placeholder="Buscar donaciones..."
           variant="outlined"
           size="small"
           value={searchQuery}
           onChange={(e) => setSearchQuery(e.target.value)}
-          sx={{ flex: 1, minWidth: 200 }}
+          sx={{
+            flex: 1,
+            minWidth: 200,
+          }}
         />
         <Select
           value={statusFilter}
           onChange={(e) => setStatusFilter(e.target.value)}
           displayEmpty
           size="small"
-          sx={{ minWidth: 200 }}
+          sx={{
+            minWidth: 200,
+          }}
         >
           <MenuItem value="">Filtrar por Estado</MenuItem>
-          <MenuItem value="Registrado">Registrada</MenuItem>
-          <MenuItem value="Aprobado">Aprobada</MenuItem>
-          <MenuItem value="Entregando">En Entrega</MenuItem>
-          <MenuItem value="Entregado">Entregada</MenuItem>
-          <MenuItem value="Finalizado">Finalizada</MenuItem>
-          <MenuItem value="Cancelado">Cancelada</MenuItem>
+          <MenuItem value="pending">Pendiente</MenuItem>
+          <MenuItem value="delivered">Entregada</MenuItem>
+          <MenuItem value="cancelled">Cancelada</MenuItem>
         </Select>
       </Box>
 
       {/* Donations Table */}
-      {loading ? (
-        <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
-          <CircularProgress />
-        </Box>
-      ) : (
-        <TableContainer component={Paper} sx={{ boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)' }}>
-          <Table>
-            <TableHead sx={{ backgroundColor: '#f8fafb' }}>
-              <TableRow>
-                <TableCell sx={{ fontWeight: 700, textTransform: 'uppercase', fontSize: '13px' }}>
-                  ID de Donación
-                </TableCell>
-                <TableCell sx={{ fontWeight: 700, textTransform: 'uppercase', fontSize: '13px' }}>
-                  Donante
-                </TableCell>
-                <TableCell sx={{ fontWeight: 700, textTransform: 'uppercase', fontSize: '13px' }}>
-                  Escuela
-                </TableCell>
-                <TableCell sx={{ fontWeight: 700, textTransform: 'uppercase', fontSize: '13px' }}>
-                  Tipo
-                </TableCell>
-                <TableCell sx={{ fontWeight: 700, textTransform: 'uppercase', fontSize: '13px' }}>
-                  Estado
-                </TableCell>
-                <TableCell sx={{ fontWeight: 700, textTransform: 'uppercase', fontSize: '13px' }}>
-                  Acciones
-                </TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {filteredDonations.map((donation) => {
-                const statusColor = getStatusColor(donation.status);
-                const typeColor = getTypeColor(donation.donation_type);
-                return (
-                  <TableRow
-                    key={donation.id}
-                    sx={{ '&:hover': { backgroundColor: '#f8fafb' } }}
-                  >
-                    <TableCell sx={{ fontWeight: 600 }}>{donation.id}</TableCell>
-                    <TableCell sx={{ color: '#4a5f8f' }}>{donation.donor.name}</TableCell>
-                    <TableCell sx={{ color: '#4a5f8f' }}>{donation.school.name}</TableCell>
-                    <TableCell>
-                      <Chip
-                        label={getTypeLabel(donation.donation_type)}
+      <TableContainer component={Paper} sx={{ boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)' }}>
+        <Table>
+          <TableHead sx={{ backgroundColor: '#f8fafb' }}>
+            <TableRow>
+              <TableCell sx={{ fontWeight: 700, textTransform: 'uppercase', fontSize: '13px' }}>
+                ID de Donación
+              </TableCell>
+              <TableCell sx={{ fontWeight: 700, textTransform: 'uppercase', fontSize: '13px' }}>
+                Donante
+              </TableCell>
+              <TableCell sx={{ fontWeight: 700, textTransform: 'uppercase', fontSize: '13px' }}>
+                Escuela
+              </TableCell>
+              <TableCell sx={{ fontWeight: 700, textTransform: 'uppercase', fontSize: '13px' }}>
+                Tipo
+              </TableCell>
+              <TableCell sx={{ fontWeight: 700, textTransform: 'uppercase', fontSize: '13px' }}>
+                Modo de Entrega
+              </TableCell>
+              <TableCell sx={{ fontWeight: 700, textTransform: 'uppercase', fontSize: '13px' }}>
+                Estado
+              </TableCell>
+              <TableCell sx={{ fontWeight: 700, textTransform: 'uppercase', fontSize: '13px' }}>
+                Acciones
+              </TableCell>
+            </TableRow>
+          </TableHead>
+          <TableBody>
+            {filteredDonations.map((donation) => {
+              const statusColor = getStatusColor(donation.status);
+              const typeColor = getTypeColor(donation.type);
+              return (
+                <TableRow
+                  key={donation.id}
+                  sx={{
+                    '&:hover': {
+                      backgroundColor: '#f8fafb',
+                    },
+                  }}
+                >
+                  <TableCell sx={{ fontWeight: 600 }}>{donation.id}</TableCell>
+                  <TableCell sx={{ color: '#4a5f8f' }}>{donation.donor}</TableCell>
+                  <TableCell sx={{ color: '#4a5f8f' }}>{donation.school}</TableCell>
+                  <TableCell>
+                    <Chip
+                      label={getTypeLabel(donation.type)}
+                      size="small"
+                      sx={{
+                        backgroundColor: typeColor.bg,
+                        color: typeColor.text,
+                        fontWeight: 600,
+                      }}
+                    />
+                  </TableCell>
+                  <TableCell sx={{ color: '#4a5f8f' }}>{donation.deliveryMode}</TableCell>
+                  <TableCell>
+                    <Chip
+                      label={getStatusLabel(donation.status)}
+                      size="small"
+                      sx={{
+                        backgroundColor: statusColor.bg,
+                        color: statusColor.text,
+                        fontWeight: 600,
+                      }}
+                    />
+                  </TableCell>
+                  <TableCell>
+                    <Box sx={{ display: 'flex', gap: 1 }}>
+                      <Button
                         size="small"
-                        sx={{ backgroundColor: typeColor.bg, color: typeColor.text, fontWeight: 600 }}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Chip
-                        label={getStatusLabel(donation.status)}
+                        variant="outlined"
+                        color="primary"
+                        onClick={() => handleOpenDialog(donation)}
+                        sx={{ textTransform: 'none' }}
+                      >
+                        Editar
+                      </Button>
+                      <Button
                         size="small"
-                        sx={{ backgroundColor: statusColor.bg, color: statusColor.text, fontWeight: 600 }}
-                      />
-                    </TableCell>
-                    <TableCell>
-                      <Box sx={{ display: 'flex', gap: 1 }}>
-                        <Button
-                          size="small"
-                          variant="outlined"
-                          color="primary"
-                          onClick={() => handleOpenEdit(donation)}
-                          sx={{ textTransform: 'none' }}
-                        >
-                          Editar
-                        </Button>
-                        <Button
-                          size="small"
-                          variant="outlined"
-                          color="warning"
-                          onClick={() => handleOpenStatus(donation)}
-                          disabled={isTerminal(donation.status)}
-                          sx={{ textTransform: 'none' }}
-                        >
-                          Estado
-                        </Button>
-                      </Box>
-                    </TableCell>
-                  </TableRow>
-                );
-              })}
-            </TableBody>
-          </Table>
-        </TableContainer>
-      )}
+                        variant="outlined"
+                        color="error"
+                        sx={{ textTransform: 'none' }}
+                      >
+                        Eliminar
+                      </Button>
+                    </Box>
+                  </TableCell>
+                </TableRow>
+              );
+            })}
+          </TableBody>
+        </Table>
+      </TableContainer>
 
-      {/* Add/Edit/Status Dialog */}
+      {/* Add/Edit Dialog */}
       <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
         <DialogTitle sx={{ fontWeight: 700, fontSize: '18px' }}>
-          {dialogMode === 'create'
-            ? 'Nueva Donación'
-            : dialogMode === 'edit'
-            ? 'Editar Donación'
-            : 'Cambiar Estado'}
+          {editingDonation ? 'Editar Donación' : 'Nueva Donación'}
         </DialogTitle>
         <DialogContent sx={{ pt: 2 }}>
-          {dialogError && <Alert severity="error" sx={{ mb: 2 }}>{dialogError}</Alert>}
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            {dialogMode === 'create' && (
-              <>
-                <TextField
-                  fullWidth label="Donante" select value={createForm.donor_id}
-                  onChange={(e) => setCreateForm({ ...createForm, donor_id: e.target.value })}
-                >
-                  {donors.map((d) => (
-                    <MenuItem key={d.id} value={d.id}>{d.name}</MenuItem>
-                  ))}
-                </TextField>
-                <TextField
-                  fullWidth label="Escuela" select value={createForm.school_id}
-                  onChange={(e) => setCreateForm({ ...createForm, school_id: e.target.value })}
-                >
-                  {schools.map((s) => (
-                    <MenuItem key={s.id} value={s.id}>{s.name}</MenuItem>
-                  ))}
-                </TextField>
-                <TextField
-                  fullWidth label="Tipo" select value={createForm.donation_type}
-                  onChange={(e) =>
-                    setCreateForm({ ...createForm, donation_type: e.target.value as DonationType })
-                  }
-                >
-                  <MenuItem value="Material">Material</MenuItem>
-                  <MenuItem value="Monetaria">Monetaria</MenuItem>
-                </TextField>
-                <TextField
-                  fullWidth label="Monto ($)" type="number" value={createForm.amount}
-                  onChange={(e) => setCreateForm({ ...createForm, amount: e.target.value })}
-                />
-                <TextField
-                  fullWidth label="Descripción" value={createForm.description}
-                  onChange={(e) => setCreateForm({ ...createForm, description: e.target.value })}
-                  multiline rows={2}
-                />
-              </>
-            )}
-            {dialogMode === 'edit' && (
-              <TextField
-                fullWidth label="Descripción" value={editForm.description}
-                onChange={(e) => setEditForm({ ...editForm, description: e.target.value })}
-                multiline rows={2}
-              />
-            )}
-            {dialogMode === 'status' && (
-              <TextField
-                fullWidth label="Nuevo Estado" select value={statusForm}
-                onChange={(e) => setStatusForm(e.target.value as DonationStatus)}
-              >
-                <MenuItem value="Aprobado">Aprobada</MenuItem>
-                <MenuItem value="Entregando">En Entrega</MenuItem>
-                <MenuItem value="Entregado">Entregada</MenuItem>
-                <MenuItem value="Finalizado">Finalizada</MenuItem>
-                <MenuItem value="Cancelado">Cancelada</MenuItem>
-              </TextField>
-            )}
+            <TextField
+              fullWidth
+              label="Donante"
+              value={formData.donor}
+              onChange={(e) => setFormData({ ...formData, donor: e.target.value })}
+              variant="outlined"
+            />
+            <TextField
+              fullWidth
+              label="Escuela"
+              value={formData.school}
+              onChange={(e) => setFormData({ ...formData, school: e.target.value })}
+              variant="outlined"
+            />
+            <TextField
+              fullWidth
+              label="Tipo"
+              select
+              value={formData.type}
+              onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+            >
+              <MenuItem value="material">Material</MenuItem>
+              <MenuItem value="monetary">Monetaria</MenuItem>
+            </TextField>
+            <TextField
+              fullWidth
+              label="Modo de Entrega"
+              value={formData.deliveryMode}
+              onChange={(e) => setFormData({ ...formData, deliveryMode: e.target.value })}
+              variant="outlined"
+            />
+            <TextField
+              fullWidth
+              label="Estado"
+              select
+              value={formData.status}
+              onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+            >
+              <MenuItem value="pending">Pendiente</MenuItem>
+              <MenuItem value="delivered">Entregada</MenuItem>
+              <MenuItem value="cancelled">Cancelada</MenuItem>
+            </TextField>
           </Box>
         </DialogContent>
         <DialogActions>
           <Button onClick={handleCloseDialog} variant="outlined">
             Cancelar
           </Button>
-          <Button onClick={handleSave} variant="contained" color="primary">
+          <Button onClick={handleSaveDonation} variant="contained" color="primary">
             Guardar
           </Button>
         </DialogActions>
