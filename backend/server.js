@@ -24,6 +24,22 @@ initDatabase(dbConfig).catch(console.error);
 const dbPool = new Pool(dbConfig);
 const JWT_SECRET = process.env.JWT_SECRET;
 
+// Middleware de autenticación
+const authenticateToken = (req, res, next) => {
+    const authHeader = req.headers['authorization'];
+    const token = authHeader && authHeader.split(' ')[1];
+
+    if (!token) return res.status(401).json({ error: "token_required" });
+
+    jwt.verify(token, JWT_SECRET, (err, user) => {
+        if (err) return res.status(403).json({ error: "invalid_access_token" });
+        req.user = user;
+        next();
+    });
+};
+
+// Endpoints
+
 // POST /auth/register
 app.post('/auth/register', async (req, res) => {
     const { email, password, firstname, lastname } = req.body;
@@ -39,13 +55,11 @@ app.post('/auth/register', async (req, res) => {
         }
 
         const passwordHash = await bcrypt.hash(password, 10);
-        
-        // El rol se asigna dependiendo del dominio del email
         const role = email.endsWith('@schoolfinder.org') ? 'admin' : 'staff';
 
         const result = await dbPool.query(
             `INSERT INTO users (firstname, lastname, email, password_hash, role) 
-            VALUES ($1, $2, $3, $4, $5) RETURNING id, role`,
+             VALUES ($1, $2, $3, $4, $5) RETURNING id, role`,
             [firstname, lastname, email, passwordHash, role]
         );
 
@@ -74,21 +88,15 @@ app.post('/auth/login', async (req, res) => {
             { expiresIn: '15m' }
         );
 
-        // Generar el token aleatorio
         const refreshToken = crypto.randomBytes(32).toString('hex');
-        
-        // Generar el HASH
         const tokenHashForDB = crypto.createHash('sha256').update(refreshToken).digest('hex');
-        
         const expiresAt = new Date(Date.now() + 7 * 24 * 60 * 60 * 1000);
 
-        // Insertar usando la variable del hash
         await dbPool.query(
             'INSERT INTO refresh_tokens (user_id, token_hash, expires_at) VALUES ($1, $2, $3)',
             [user.id, tokenHashForDB, expiresAt]
         );
 
-        // Enviar el refreshToken plano al cliente
         res.json({ accessToken, refreshToken });
     } catch (error) {
         console.error("Error en Login:", error);
@@ -99,6 +107,8 @@ app.post('/auth/login', async (req, res) => {
 // POST /auth/refresh
 app.post('/auth/refresh', async (req, res) => {
     const { refreshToken } = req.body;
+    if (!refreshToken) return res.status(400).json({ error: "refresh_token_required" });
+
     const tokenHash = crypto.createHash('sha256').update(refreshToken).digest('hex');
 
     try {
@@ -110,6 +120,7 @@ app.post('/auth/refresh', async (req, res) => {
         if (tokenRes.rowCount === 0) return res.status(401).json({ error: "invalid_token" });
 
         const userId = tokenRes.rows[0].user_id;
+        // Rotación: Borramos el viejo
         await dbPool.query('DELETE FROM refresh_tokens WHERE token_hash = $1', [tokenHash]);
 
         const userRes = await dbPool.query('SELECT id, email, role FROM users WHERE id = $1', [userId]);
@@ -130,4 +141,36 @@ app.post('/auth/refresh', async (req, res) => {
     }
 });
 
-app.listen(3000, () => console.log('Backend ImpulsaEdu en puerto 5432'));
+// GET /auth/me
+app.get('/auth/me', authenticateToken, async (req, res) => {
+    try {
+        const result = await dbPool.query(
+            'SELECT id, firstname, lastname, email, role, created_at FROM users WHERE id = $1',
+            [req.user.sub]
+        );
+
+        if (result.rowCount === 0) return res.status(404).json({ error: "user_not_found" });
+
+        res.json(result.rows[0]);
+    } catch (error) {
+        res.status(500).json({ error: "db_error" });
+    }
+});
+
+// POST /auth/logout
+app.post('/auth/logout', async (req, res) => {
+    const { refreshToken } = req.body;
+    if (!refreshToken) return res.status(400).json({ error: "token_required" });
+
+    try {
+        const tokenHash = crypto.createHash('sha256').update(refreshToken).digest('hex');
+        // Se borra de la base de datos para que no pueda usarse más
+        await dbPool.query('DELETE FROM refresh_tokens WHERE token_hash = $1', [tokenHash]);
+        
+        res.json({ message: "Sesión cerrada exitosamente" });
+    } catch (error) {
+        res.status(500).json({ error: "logout_error" });
+    }
+});
+
+app.listen(3000, () => console.log('Backend ImpulsaEdu corriendo en puerto 3000'));
