@@ -1,14 +1,10 @@
 export const getStatusColor = (status: string) => {
   switch (status) {
-    case "Aprobado":
-    case "Entregado":
+    case "delivered":
       return { bg: "#d1fae5", text: "#065f46" };
-    case "Entregando":
-    case "Registrado":
+    case "pending":
       return { bg: "#fef3c7", text: "#92400e" };
-    case "Finalizado":
-      return { bg: "#a7f3d0", text: "#064e3b" };
-    case "Cancelado":
+    case "cancelled":
       return { bg: "#fee2e2", text: "#7f1d1d" };
     default:
       return { bg: "#dbeafe", text: "#0c2d6b" };
@@ -17,9 +13,9 @@ export const getStatusColor = (status: string) => {
 
 export const getTypeColor = (type: string) => {
   switch (type) {
-    case "Material":
+    case "material":
       return { bg: "#dbeafe", text: "#0c2d6b" };
-    case "Monetaria":
+    case "monetary":
       return { bg: "#d1fae5", text: "#065f46" };
     default:
       return { bg: "#dbeafe", text: "#0c2d6b" };
@@ -27,17 +23,18 @@ export const getTypeColor = (type: string) => {
 };
 
 export const getTypeLabel = (type: string) => {
-  return type === "Material" ? "Material" : "Monetaria";
+  return type === "material" ? "Material" : "Monetaria";
 };
 
 export const getStatusLabel = (status: string) => {
   switch (status) {
-    case "Registrado":  return "Registrada";
-    case "Aprobado":    return "Aprobada";
-    case "Entregando":  return "En Entrega";
-    case "Entregado":   return "Entregada";
-    case "Finalizado":  return "Finalizada";
-    case "Cancelado":   return "Cancelada";
-    default:            return status;
+    case "delivered":
+      return "Entregada";
+    case "pending":
+      return "Pendiente";
+    case "cancelled":
+      return "Cancelada";
+    default:
+      return status;
   }
 };

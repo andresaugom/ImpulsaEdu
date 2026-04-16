@@ -1,10 +1,9 @@
 export interface Donor {
-    id: string;
+    id: number;
     name: string;
-    region: string;
-    donor_type: 'Fisica' | 'Moral';
-    email: string | null;
-    phone: string | null;
+    type: 'individual' | 'corporate';
+    email: string;
+    phone: string;
     totalDonations: number;
     status: 'active' | 'inactive';
   }
