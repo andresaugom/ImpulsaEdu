@@ -22,83 +22,9 @@ import {
   Grid,
 } from '@mui/material';
 import { useState } from 'react';
-
-interface Donation {
-  id: string;
-  donor: string;
-  school: string;
-  type: 'material' | 'monetary';
-  deliveryMode: string;
-  status: 'pending' | 'delivered' | 'cancelled';
-}
-
-const mockDonations: Donation[] = [
-  {
-    id: '#DN001',
-    donor: 'María García López',
-    school: 'Escuela Primaria San José',
-    type: 'material',
-    deliveryMode: 'Entrega Directa',
-    status: 'delivered',
-  },
-  {
-    id: '#DN002',
-    donor: 'Carlos Hernández Rodríguez',
-    school: 'Escuela Secundaria Morelos',
-    type: 'monetary',
-    deliveryMode: 'Transferencia Bancaria',
-    status: 'pending',
-  },
-  {
-    id: '#DN003',
-    donor: 'Corporativo Educativo Jalisco',
-    school: 'Escuela Técnica Regional',
-    type: 'material',
-    deliveryMode: 'Entrega a Domicilio',
-    status: 'delivered',
-  },
-];
-
-const getStatusColor = (status: string) => {
-  switch (status) {
-    case 'delivered':
-      return { bg: '#d1fae5', text: '#065f46' };
-    case 'pending':
-      return { bg: '#fef3c7', text: '#92400e' };
-    case 'cancelled':
-      return { bg: '#fee2e2', text: '#7f1d1d' };
-    default:
-      return { bg: '#dbeafe', text: '#0c2d6b' };
-  }
-};
-
-const getTypeColor = (type: string) => {
-  switch (type) {
-    case 'material':
-      return { bg: '#dbeafe', text: '#0c2d6b' };
-    case 'monetary':
-      return { bg: '#d1fae5', text: '#065f46' };
-    default:
-      return { bg: '#dbeafe', text: '#0c2d6b' };
-  }
-};
-
-const getTypeLabel = (type: string) => {
-  return type === 'material' ? 'Material' : 'Monetaria';
-};
-
-const getStatusLabel = (status: string) => {
-  switch (status) {
-    case 'delivered':
-      return 'Entregada';
-    case 'pending':
-      return 'Pendiente';
-    case 'cancelled':
-      return 'Cancelada';
-    default:
-      return status;
-  }
-};
+import { Donation } from "./donacionesInterfaces";
+import { mockDonations } from './donacionesSampleData';
+import { getStatusColor, getTypeColor, getTypeLabel, getStatusLabel } from './donacionesUiHooks';
 
 export default function DonacionesPage() {
   const [donations, setDonations] = useState<Donation[]>(mockDonations);

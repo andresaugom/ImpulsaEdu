@@ -22,61 +22,9 @@ import {
   Grid,
 } from '@mui/material';
 import { useState } from 'react';
-
-interface Donor {
-  id: number;
-  name: string;
-  type: 'individual' | 'corporate';
-  email: string;
-  phone: string;
-  totalDonations: number;
-  status: 'active' | 'inactive';
-}
-
-const mockDonors: Donor[] = [
-  {
-    id: 1,
-    name: 'María García López',
-    type: 'individual',
-    email: 'maria@ejemplo.com',
-    phone: '+52 (33) 1234-5678',
-    totalDonations: 3500,
-    status: 'active',
-  },
-  {
-    id: 2,
-    name: 'Corporativo Educativo Jalisco',
-    type: 'corporate',
-    email: 'contacto@corporativo.com',
-    phone: '+52 (33) 9876-5432',
-    totalDonations: 15000,
-    status: 'active',
-  },
-  {
-    id: 3,
-    name: 'Carlos Hernández Rodríguez',
-    type: 'individual',
-    email: 'carlos@ejemplo.com',
-    phone: '+52 (33) 5555-1234',
-    totalDonations: 2000,
-    status: 'inactive',
-  },
-];
-
-const getStatusColor = (status: string) => {
-  switch (status) {
-    case 'active':
-      return { bg: '#d1fae5', text: '#065f46' };
-    case 'inactive':
-      return { bg: '#fee2e2', text: '#7f1d1d' };
-    default:
-      return { bg: '#dbeafe', text: '#0c2d6b' };
-  }
-};
-
-const getTypeLabel = (type: string) => {
-  return type === 'individual' ? 'Persona Física' : 'Persona Moral';
-};
+import { Donor } from "./donantesInterfaces";
+import { mockDonors } from './donantesSampleData';
+import { getStatusColor, getTypeLabel } from './donantesUiHooks';
 
 export default function DonantesPage() {
   const [donors, setDonors] = useState<Donor[]>(mockDonors);
