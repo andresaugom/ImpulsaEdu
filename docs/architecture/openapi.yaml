@@ -794,6 +794,45 @@ paths:
                 $ref: '#/components/schemas/Error'
 
   /api/v1/users/{id}:
+    get:
+      tags: [users]
+      summary: Get a user by id
+      description: Admin can read any user; staff can read their own profile only.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: User details
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserSummary'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
     put:
       tags: [users]
       summary: Update a user
