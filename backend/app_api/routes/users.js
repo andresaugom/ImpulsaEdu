@@ -102,6 +102,33 @@ router.post('/', authenticateToken, requireAdmin, async (req, res) => {
     }
 });
 
+// ── GET /api/v1/users/:id ──────────────────────────────────────────────────────
+// Admin can read any user; staff can only read their own profile.
+
+router.get('/:id', authenticateToken, async (req, res) => {
+    const { id } = req.params;
+
+    if (req.user.role !== 'admin' && req.user.sub !== id) {
+        return res.status(403).json(errBody('FORBIDDEN', 'You can only view your own profile'));
+    }
+
+    try {
+        const result = await pool.query(
+            `SELECT id, firstname, lastname, email, role, deleted_at
+             FROM users
+             WHERE id = $1`,
+            [id]
+        );
+        if (result.rowCount === 0) {
+            return res.status(404).json(errBody('NOT_FOUND', 'User not found'));
+        }
+        res.json(formatUser(result.rows[0]));
+    } catch (err) {
+        console.error(err);
+        res.status(500).json(errBody('SERVER_ERROR', 'Internal server error'));
+    }
+});
+
 // ── PUT /api/v1/users/:id ─────────────────────────────────────────────────────
 // Admin can update any user; staff can only update their own profile.
 

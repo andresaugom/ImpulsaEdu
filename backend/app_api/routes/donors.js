@@ -46,8 +46,14 @@ const DONOR_SELECT = `
 
 router.get('/', authenticateToken, async (req, res) => {
     const { type, name, is_active } = req.query;
-    const perPage = Math.min(parseInt(req.query.per_page) || 20, 100);
-    const page    = Math.max(parseInt(req.query.page)     || 1, 1);
+    const parsedPerPage = Number.parseInt(req.query.per_page, 10);
+    const parsedPage    = Number.parseInt(req.query.page, 10);
+    const perPage = Number.isNaN(parsedPerPage)
+        ? 20
+        : Math.min(Math.max(parsedPerPage, 1), 100);
+    const page = Number.isNaN(parsedPage)
+        ? 1
+        : Math.max(parsedPage, 1);
     const offset  = (page - 1) * perPage;
 
     const conditions = [];

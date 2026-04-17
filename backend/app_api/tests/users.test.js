@@ -125,6 +125,51 @@ describe('POST /api/v1/users', () => {
     });
 });
 
+// ── GET /api/v1/users/:id ──────────────────────────────────────────────────────
+
+describe('GET /api/v1/users/:id', () => {
+    it('returns 403 when staff tries to read another user', async () => {
+        const res = await request(app)
+            .get('/api/v1/users/other-user-id')
+            .set('Authorization', `Bearer ${staffToken}`);
+        expect(res.status).toBe(403);
+    });
+
+    it('returns 404 when user not found', async () => {
+        pool.query.mockResolvedValueOnce({ rowCount: 0, rows: [] });
+
+        const res = await request(app)
+            .get('/api/v1/users/nonexistent')
+            .set('Authorization', `Bearer ${adminToken}`);
+        expect(res.status).toBe(404);
+    });
+
+    it('allows admin to read any user', async () => {
+        pool.query.mockResolvedValueOnce({ rowCount: 1, rows: [USER_ROW] });
+
+        const res = await request(app)
+            .get('/api/v1/users/user-uuid-1')
+            .set('Authorization', `Bearer ${adminToken}`);
+
+        expect(res.status).toBe(200);
+        expect(res.body).toMatchObject({ id: 'user-uuid-1', full_name: 'Carlos López', role: 'staff' });
+    });
+
+    it('allows staff to read own profile', async () => {
+        pool.query.mockResolvedValueOnce({
+            rowCount: 1,
+            rows: [{ ...USER_ROW, id: 'staff-1', firstname: 'Staff', lastname: 'User', email: 'staff@test.com' }]
+        });
+
+        const res = await request(app)
+            .get('/api/v1/users/staff-1')
+            .set('Authorization', `Bearer ${staffToken}`);
+
+        expect(res.status).toBe(200);
+        expect(res.body.email).toBe('staff@test.com');
+    });
+});
+
 // ── PUT /api/v1/users/:id ──────────────────────────────────────────────────────
 
 describe('PUT /api/v1/users/:id', () => {
