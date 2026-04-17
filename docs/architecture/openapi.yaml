@@ -1,0 +1,1714 @@
+openapi: 3.0.3
+info:
+  title: ImpulsaEdu API
+  description: |
+    REST API for the ImpulsaEdu platform.
+    All protected endpoints require `Authorization: Bearer <access_token>`.
+    Auth is role-based: **staff** — any logged-in user | **admin** — users with role `admin`.
+  version: 1.0.0
+
+servers:
+  - url: https://api.impulsaedu.org
+    description: Production
+  - url: http://localhost:4000
+    description: Local development
+
+tags:
+  - name: auth
+    description: Authentication & session management
+  - name: users
+    description: NGO user management (admin only)
+  - name: schools
+    description: School registry
+  - name: donors
+    description: Donor registry
+  - name: donations
+    description: Donation records and workflow
+  - name: reports
+    description: Aggregated reports (admin only)
+
+# ---------------------------------------------------------------------------
+# Security scheme
+# ---------------------------------------------------------------------------
+components:
+  securitySchemes:
+    bearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+
+  # -------------------------------------------------------------------------
+  # Reusable schemas
+  # -------------------------------------------------------------------------
+  schemas:
+
+    # --- Error envelope -------------------------------------------------------
+    Error:
+      type: object
+      properties:
+        error:
+          type: object
+          properties:
+            code:
+              type: string
+              example: INVALID_STATE_TRANSITION
+            message:
+              type: string
+              example: "Cannot transition from 'completed' to 'in_delivery'"
+            details:
+              nullable: true
+              example: null
+
+    # --- Pagination wrapper ---------------------------------------------------
+    PaginationMeta:
+      type: object
+      properties:
+        total:
+          type: integer
+          example: 25
+        page:
+          type: integer
+          example: 1
+        per_page:
+          type: integer
+          example: 20
+
+    # --- Auth -----------------------------------------------------------------
+    LoginRequest:
+      type: object
+      required: [email, password]
+      properties:
+        email:
+          type: string
+          format: email
+          example: staff@impulsaedu.org
+        password:
+          type: string
+          example: secret123
+
+    LoginResponse:
+      type: object
+      properties:
+        access_token:
+          type: string
+          example: "<jwt>"
+        refresh_token:
+          type: string
+          example: "<opaque_token>"
+        expires_in:
+          type: integer
+          example: 900
+        user:
+          $ref: '#/components/schemas/UserSummary'
+
+    RefreshRequest:
+      type: object
+      required: [refresh_token]
+      properties:
+        refresh_token:
+          type: string
+          example: "<opaque_token>"
+
+    RefreshResponse:
+      type: object
+      properties:
+        access_token:
+          type: string
+          example: "<jwt>"
+        expires_in:
+          type: integer
+          example: 900
+
+    # --- Users ----------------------------------------------------------------
+    UserSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        email:
+          type: string
+          format: email
+        full_name:
+          type: string
+        role:
+          type: string
+          enum: [staff, admin]
+        is_active:
+          type: boolean
+
+    UserCreateRequest:
+      type: object
+      required: [email, password, full_name, role]
+      properties:
+        email:
+          type: string
+          format: email
+          example: newstaff@impulsaedu.org
+        password:
+          type: string
+          example: initialPass123
+        full_name:
+          type: string
+          example: Carlos López
+        role:
+          type: string
+          enum: [staff, admin]
+
+    UserUpdateRequest:
+      type: object
+      properties:
+        full_name:
+          type: string
+          example: Carlos López Jr.
+        password:
+          type: string
+          example: newPassword456
+
+    # --- Schools --------------------------------------------------------------
+    SchoolSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        name:
+          type: string
+          example: Escuela Primaria Juárez
+        region:
+          type: string
+          example: Jalisco
+        category:
+          type: string
+          example: Infrastructure
+        description:
+          type: string
+        funding_goal:
+          type: number
+          format: double
+          example: 50000.00
+        confirmed_value:
+          type: number
+          format: double
+          example: 22500.00
+        progress_pct:
+          type: number
+          format: double
+          example: 45.00
+        status:
+          type: string
+          enum: [active, archived]
+
+    SchoolCreateRequest:
+      type: object
+      required: [name, region, category, description, funding_goal]
+      properties:
+        name:
+          type: string
+          example: Escuela Primaria Juárez
+        region:
+          type: string
+          example: Jalisco
+        category:
+          type: string
+          example: Infrastructure
+        description:
+          type: string
+          example: Needs new bathrooms and a library.
+        funding_goal:
+          type: number
+          format: double
+          example: 50000.00
+
+    SchoolUpdateRequest:
+      type: object
+      properties:
+        name:
+          type: string
+        region:
+          type: string
+        category:
+          type: string
+        description:
+          type: string
+        funding_goal:
+          type: number
+          format: double
+
+    # --- Donors ---------------------------------------------------------------
+    DonorSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        full_name:
+          type: string
+          example: Empresa XYZ S.A.
+        email:
+          type: string
+          format: email
+          example: contacto@xyz.com
+        tax_id:
+          type: string
+          nullable: true
+          example: XYZ890101AAA
+        phone:
+          type: string
+          example: "+52 33 1234 5678"
+        type:
+          type: string
+          enum: [individual, corporate]
+        organization_name:
+          type: string
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+        is_active:
+          type: boolean
+        donation_count:
+          type: integer
+          example: 3
+
+    DonorDetail:
+      allOf:
+        - $ref: '#/components/schemas/DonorSummary'
+        - type: object
+          properties:
+            donations:
+              type: array
+              items:
+                $ref: '#/components/schemas/DonationInDonorDetail'
+
+    DonationInDonorDetail:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        school_name:
+          type: string
+        type:
+          type: string
+          enum: [monetary, material]
+        amount:
+          type: number
+          nullable: true
+        state:
+          type: string
+          enum: [registered, approved, in_delivery, delivered, completed, cancelled]
+        registered_at:
+          type: string
+          format: date-time
+
+    DonorCreateRequest:
+      type: object
+      required: [full_name, email, type]
+      properties:
+        full_name:
+          type: string
+          example: Juan Pérez
+        email:
+          type: string
+          format: email
+          example: juan@example.com
+        tax_id:
+          type: string
+          nullable: true
+        phone:
+          type: string
+          example: "+52 33 9876 5432"
+        type:
+          type: string
+          enum: [individual, corporate]
+        organization_name:
+          type: string
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+          example: Met at conference
+
+    DonorUpdateRequest:
+      type: object
+      properties:
+        full_name:
+          type: string
+        email:
+          type: string
+          format: email
+        tax_id:
+          type: string
+          nullable: true
+        phone:
+          type: string
+        type:
+          type: string
+          enum: [individual, corporate]
+        organization_name:
+          type: string
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+
+    # --- Donations ------------------------------------------------------------
+    DeliveryInfo:
+      type: object
+      properties:
+        mode:
+          type: string
+          enum: [donor_to_ngo, donor_to_school, ngo_to_school]
+        shipping_address:
+          type: string
+          nullable: true
+        tracking_info:
+          type: string
+          nullable: true
+        notes:
+          type: string
+          nullable: true
+
+    DonationTimeline:
+      type: object
+      properties:
+        registered_at:
+          type: string
+          format: date-time
+          nullable: true
+        approved_at:
+          type: string
+          format: date-time
+          nullable: true
+        in_delivery_at:
+          type: string
+          format: date-time
+          nullable: true
+        delivered_at:
+          type: string
+          format: date-time
+          nullable: true
+        completed_at:
+          type: string
+          format: date-time
+          nullable: true
+        cancelled_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    DonationSummary:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        donor:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            full_name:
+              type: string
+        school:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            name:
+              type: string
+        type:
+          type: string
+          enum: [monetary, material]
+        amount:
+          type: number
+          nullable: true
+          example: 10000.00
+        estimated_value:
+          type: number
+          nullable: true
+        state:
+          type: string
+          enum: [registered, approved, in_delivery, delivered, completed, cancelled]
+        delivery_mode:
+          type: string
+          enum: [donor_to_ngo, donor_to_school, ngo_to_school]
+        registered_at:
+          type: string
+          format: date-time
+
+    DonationDetail:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        donor:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            full_name:
+              type: string
+            type:
+              type: string
+              enum: [individual, corporate]
+        school:
+          type: object
+          properties:
+            id:
+              type: string
+              format: uuid
+            name:
+              type: string
+            region:
+              type: string
+        type:
+          type: string
+          enum: [monetary, material]
+        description:
+          type: string
+          nullable: true
+        amount:
+          type: number
+          nullable: true
+        estimated_value:
+          type: number
+          nullable: true
+        state:
+          type: string
+          enum: [registered, approved, in_delivery, delivered, completed, cancelled]
+        observations:
+          type: string
+          nullable: true
+        delivery:
+          $ref: '#/components/schemas/DeliveryInfo'
+        timeline:
+          $ref: '#/components/schemas/DonationTimeline'
+
+    DonationCreateRequest:
+      type: object
+      required: [donor_id, school_id, type, delivery]
+      properties:
+        donor_id:
+          type: string
+          format: uuid
+        school_id:
+          type: string
+          format: uuid
+        type:
+          type: string
+          enum: [monetary, material]
+        description:
+          type: string
+          nullable: true
+          example: 20 laptops donated by Empresa XYZ
+        amount:
+          type: number
+          nullable: true
+          description: Required when type is "monetary"
+        estimated_value:
+          type: number
+          nullable: true
+          example: 60000.00
+          description: Required when type is "material"
+        observations:
+          type: string
+          nullable: true
+        delivery:
+          $ref: '#/components/schemas/DeliveryInfo'
+
+    DonationUpdateRequest:
+      type: object
+      properties:
+        description:
+          type: string
+          nullable: true
+        observations:
+          type: string
+          nullable: true
+        delivery:
+          $ref: '#/components/schemas/DeliveryInfo'
+
+    DonationStateRequest:
+      type: object
+      required: [state]
+      properties:
+        state:
+          type: string
+          enum: [registered, approved, in_delivery, delivered, completed, cancelled]
+          example: approved
+        observations:
+          type: string
+          example: Reviewed and approved by coordinator
+
+    DonationStateResponse:
+      type: object
+      properties:
+        id:
+          type: string
+          format: uuid
+        state:
+          type: string
+          enum: [registered, approved, in_delivery, delivered, completed, cancelled]
+        approved_at:
+          type: string
+          format: date-time
+          nullable: true
+
+    # --- Reports --------------------------------------------------------------
+    ReportBySchool:
+      type: object
+      properties:
+        school_id:
+          type: string
+          format: uuid
+        school_name:
+          type: string
+        total_monetary:
+          type: number
+          example: 30000.00
+        total_material_value:
+          type: number
+          example: 60000.00
+        total_donations:
+          type: integer
+          example: 5
+        pending:
+          type: integer
+          example: 2
+        completed:
+          type: integer
+          example: 3
+
+    ReportByDonor:
+      type: object
+      properties:
+        donor_id:
+          type: string
+          format: uuid
+        donor_name:
+          type: string
+        total_donations:
+          type: integer
+          example: 3
+        total_value:
+          type: number
+          example: 70000.00
+        schools_supported:
+          type: integer
+          example: 2
+
+# ---------------------------------------------------------------------------
+# Paths
+# ---------------------------------------------------------------------------
+paths:
+
+  # ==========================================================================
+  # AUTH
+  # ==========================================================================
+  /auth/login:
+    post:
+      tags: [auth]
+      summary: Login
+      description: Authenticates a user and returns JWT access + refresh tokens.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/LoginRequest'
+      responses:
+        '200':
+          description: Successful login
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/LoginResponse'
+        '401':
+          description: Invalid credentials
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Account is inactive
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/refresh:
+    post:
+      tags: [auth]
+      summary: Refresh access token
+      description: Issues a new access token using a valid refresh token.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshRequest'
+      responses:
+        '200':
+          description: New access token issued
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/RefreshResponse'
+        '401':
+          description: Refresh token expired or revoked
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/logout:
+    post:
+      tags: [auth]
+      summary: Logout
+      description: Revokes the refresh token.
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/RefreshRequest'
+      responses:
+        '204':
+          description: Logged out successfully
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/me:
+    get:
+      tags: [auth]
+      summary: Get current user profile
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Current user profile
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserSummary'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # ==========================================================================
+  # USERS  (admin only)
+  # ==========================================================================
+  /api/v1/users:
+    get:
+      tags: [users]
+      summary: List users
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: role
+          in: query
+          schema:
+            type: string
+            enum: [staff, admin]
+        - name: is_active
+          in: query
+          schema:
+            type: boolean
+      responses:
+        '200':
+          description: Paginated user list
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  items:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/UserSummary'
+                  total:
+                    type: integer
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden — admin role required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      tags: [users]
+      summary: Create a user
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserCreateRequest'
+      responses:
+        '201':
+          description: User created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserSummary'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Email already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/v1/users/{id}:
+    put:
+      tags: [users]
+      summary: Update a user
+      description: Admin can update any user; staff can update their own profile only.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/UserUpdateRequest'
+      responses:
+        '200':
+          description: Updated user
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/UserSummary'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/v1/users/{id}/deactivate:
+    patch:
+      tags: [users]
+      summary: Deactivate a user (soft delete)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: User deactivated
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden — admin role required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: User not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # ==========================================================================
+  # SCHOOLS
+  # ==========================================================================
+  /api/v1/schools:
+    get:
+      tags: [schools]
+      summary: List schools
+      description: Public endpoint — no auth required.
+      parameters:
+        - name: region
+          in: query
+          schema:
+            type: string
+        - name: category
+          in: query
+          schema:
+            type: string
+        - name: status
+          in: query
+          schema:
+            type: string
+            enum: [active, archived]
+            default: active
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+      responses:
+        '200':
+          description: Paginated school list
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/SchoolSummary'
+                  - $ref: '#/components/schemas/PaginationMeta'
+
+    post:
+      tags: [schools]
+      summary: Create a school
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SchoolCreateRequest'
+      responses:
+        '201':
+          description: School created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SchoolSummary'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: School with same name already exists in that region
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/v1/schools/{id}:
+    get:
+      tags: [schools]
+      summary: Get a school
+      description: Public endpoint — no auth required.
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: School detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SchoolSummary'
+        '404':
+          description: School not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    put:
+      tags: [schools]
+      summary: Update a school
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SchoolUpdateRequest'
+      responses:
+        '200':
+          description: Updated school
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/SchoolSummary'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: School not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Name/region conflict
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/v1/schools/{id}/archive:
+    patch:
+      tags: [schools]
+      summary: Archive a school (soft delete)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: School archived
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: School not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # ==========================================================================
+  # DONORS
+  # ==========================================================================
+  /api/v1/donors:
+    get:
+      tags: [donors]
+      summary: List donors
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [individual, corporate]
+        - name: name
+          in: query
+          schema:
+            type: string
+          description: Partial name search
+        - name: is_active
+          in: query
+          schema:
+            type: boolean
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+      responses:
+        '200':
+          description: Paginated donor list
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/DonorSummary'
+                  - $ref: '#/components/schemas/PaginationMeta'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      tags: [donors]
+      summary: Create a donor
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DonorCreateRequest'
+      responses:
+        '201':
+          description: Donor created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DonorSummary'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '409':
+          description: Email or tax_id already exists
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/v1/donors/{id}:
+    get:
+      tags: [donors]
+      summary: Get a donor with donation history
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Donor detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DonorDetail'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Donor not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    put:
+      tags: [donors]
+      summary: Update a donor
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DonorUpdateRequest'
+      responses:
+        '200':
+          description: Updated donor
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DonorSummary'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Donor not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/v1/donors/{id}/deactivate:
+    patch:
+      tags: [donors]
+      summary: Deactivate a donor (soft archive)
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Donor deactivated
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Donor not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # ==========================================================================
+  # DONATIONS
+  # ==========================================================================
+  /api/v1/donations:
+    get:
+      tags: [donations]
+      summary: List donations
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: school_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: donor_id
+          in: query
+          schema:
+            type: string
+            format: uuid
+        - name: state
+          in: query
+          schema:
+            type: string
+            enum: [registered, approved, in_delivery, delivered, completed, cancelled]
+        - name: type
+          in: query
+          schema:
+            type: string
+            enum: [monetary, material]
+        - name: page
+          in: query
+          schema:
+            type: integer
+            default: 1
+        - name: per_page
+          in: query
+          schema:
+            type: integer
+            default: 20
+            maximum: 100
+      responses:
+        '200':
+          description: Paginated donation list
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - type: object
+                    properties:
+                      items:
+                        type: array
+                        items:
+                          $ref: '#/components/schemas/DonationSummary'
+                  - $ref: '#/components/schemas/PaginationMeta'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      tags: [donations]
+      summary: Create a donation record
+      security:
+        - bearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DonationCreateRequest'
+      responses:
+        '201':
+          description: Donation created
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DonationDetail'
+        '400':
+          description: Missing required field (e.g. amount for monetary, estimated_value for material)
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: donor_id or school_id not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: School is archived
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/v1/donations/{id}:
+    get:
+      tags: [donations]
+      summary: Get a donation with full delivery and timeline info
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Donation detail
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DonationDetail'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Donation not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    put:
+      tags: [donations]
+      summary: Update editable donation fields
+      description: Updates description, observations, and delivery details. Does not change state.
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DonationUpdateRequest'
+      responses:
+        '200':
+          description: Updated donation
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DonationDetail'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Donation not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/v1/donations/{id}/state:
+    patch:
+      tags: [donations]
+      summary: Advance or cancel a donation's workflow state
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+            format: uuid
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/DonationStateRequest'
+      responses:
+        '200':
+          description: State updated
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/DonationStateResponse'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '404':
+          description: Donation not found
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '422':
+          description: Transition not allowed
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # ==========================================================================
+  # REPORTS  (admin only)
+  # ==========================================================================
+  /api/v1/reports/donations-by-school:
+    get:
+      tags: [reports]
+      summary: Donation summary grouped by school
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: school_id
+          in: query
+          description: Filter to a single school (optional)
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Donations-by-school report
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ReportBySchool'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden — admin role required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/v1/reports/donations-by-donor:
+    get:
+      tags: [reports]
+      summary: Donation summary grouped by donor
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: donor_id
+          in: query
+          description: Filter to a single donor (optional)
+          schema:
+            type: string
+            format: uuid
+      responses:
+        '200':
+          description: Donations-by-donor report
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/ReportByDonor'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden — admin role required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/v1/reports/pending-deliveries:
+    get:
+      tags: [reports]
+      summary: All donations in state "approved" or "in_delivery"
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Pending delivery donations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DonationSummary'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden — admin role required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/v1/reports/completed:
+    get:
+      tags: [reports]
+      summary: All donations in state "completed"
+      security:
+        - bearerAuth: []
+      responses:
+        '200':
+          description: Completed donations
+          content:
+            application/json:
+              schema:
+                type: array
+                items:
+                  $ref: '#/components/schemas/DonationSummary'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden — admin role required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /api/v1/reports/export:
+    get:
+      tags: [reports]
+      summary: Export report data as CSV
+      security:
+        - bearerAuth: []
+      parameters:
+        - name: report
+          in: query
+          required: true
+          schema:
+            type: string
+            enum: [donations-by-school, donations-by-donor, pending-deliveries, completed]
+      responses:
+        '200':
+          description: CSV file download
+          headers:
+            Content-Disposition:
+              schema:
+                type: string
+                example: 'attachment; filename="report-2026-04-16.csv"'
+          content:
+            text/csv:
+              schema:
+                type: string
+        '400':
+          description: Missing or invalid "report" query parameter
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Unauthorized
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '403':
+          description: Forbidden — admin role required
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
