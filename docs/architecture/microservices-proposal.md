@@ -10,7 +10,7 @@ Four containers. No more, no less.
 
 ```
                          ┌─────────────────────────────────────────────────────┐
-                         │                  GKE Cluster                        │
+                         │                  AKS Cluster                        │
                          │                                                     │
  Browser ───────────────►│  ┌─────────────┐   ┌─────────────┐                  │
                          │  │  Ingress /  │──►│  frontend   │  Next.js 14      │
@@ -58,7 +58,7 @@ Four containers. No more, no less.
 | ORM / query builder | **Drizzle ORM** | Lightweight, TypeScript-native, generates raw SQL — easy to reason about and debug |
 | Auth mechanism | JWT (HS256) — access + refresh tokens | Stateless, simple to implement; no session store needed |
 | Database | PostgreSQL 16 | Relational integrity crucial for donations ↔ donors ↔ schools; familiar, well-supported |
-| Container orchestration | Google Kubernetes Engine (GKE) | As specified |
+| Container orchestration | Azure Kubernetes Service (AKS) | As specified |
 | Ingress | NGINX Ingress Controller | Routes `/api/*` → api-service, `/auth/*` → auth-service, `/*` → frontend |
 | CI/CD | GitHub Actions | Automated test + build + deploy pipeline |
 
@@ -162,7 +162,7 @@ GROUP BY s.id, s.funding_goal;
 
 ---
 
-## 8. GKE Deployment Model
+## 8. AKS Deployment Model
 
 ### Kubernetes Objects per Service
 
@@ -181,7 +181,7 @@ frontend:
   Service (ClusterIP)
 
 postgres:
-  StatefulSet (replicas: 1 for MVP — or use Cloud SQL)
+  StatefulSet (replicas: 1 for MVP — or use Azure Database for PostgreSQL)
   Service (ClusterIP)
   PersistentVolumeClaim (10Gi)
 
@@ -192,8 +192,8 @@ Shared:
   Namespace: impulsa-prod / impulsa-dev
 ```
 
-### Recommended: Cloud SQL instead of StatefulSet
-For a 6-week academic project deployed to GKE, **Cloud SQL (PostgreSQL)** is preferable to running PostgreSQL in a pod. It eliminates backup management, provides automatic failover, and takes 10 minutes to set up.
+### Recommended: Azure Database for PostgreSQL instead of StatefulSet
+For a 6-week academic project deployed to AKS, **Azure Database for PostgreSQL (Flexible Server)** is preferable to running PostgreSQL in a pod. It eliminates backup management, provides automatic failover, and takes 10 minutes to set up.
 
 ---
 
@@ -208,7 +208,7 @@ For a 6-week academic project deployed to GKE, **Cloud SQL (PostgreSQL)** is pre
 
 ## 10. Security Checklist
 
-- [ ] HTTPS enforced via GKE managed certificate (cert-manager or Google-managed)
+- [ ] HTTPS enforced via cert-manager or Azure-managed certificate
 - [ ] JWT `exp` set to 15 minutes (access) / 7 days (refresh)
 - [ ] `httpOnly`, `Secure`, `SameSite=Strict` cookie flags on frontend
 - [ ] All mutations require JWT with appropriate role
@@ -226,6 +226,6 @@ For a 6-week academic project deployed to GKE, **Cloud SQL (PostgreSQL)** is pre
 | Backend framework | Fastify vs Express | **Fastify** — better performance and built-in schema validation; Express if team is more familiar |
 | ORM depth | Drizzle vs plain `pg` queries | **Drizzle** — type-safe with minimal overhead; raw `pg` if team prefers full SQL control |
 | Monorepo structure | Separate repos vs pnpm workspaces monorepo | **pnpm workspaces** — share TypeScript types between frontend, api-service, and auth-service without duplication |
-| PostgreSQL hosting | Cloud SQL vs StatefulSet in GKE | **Cloud SQL** — reduces ops burden significantly |
+| PostgreSQL hosting | Azure Database for PostgreSQL vs StatefulSet in AKS | **Azure Database for PostgreSQL (Flexible Server)** — reduces ops burden significantly |
 | Export format (reports) | CSV only vs CSV+PDF | **CSV only** for MVP; PDF is scope risk |
 | Refresh token storage | DB table vs Redis | **DB table** (refresh_tokens) — avoids adding another service |

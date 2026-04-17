@@ -20,7 +20,7 @@ docs/
 
 | Document | Purpose |
 |---|---|
-| [architecture/microservices-proposal.md](architecture/microservices-proposal.md) | Service topology, tech stack, GKE deployment model |
+| [architecture/microservices-proposal.md](architecture/microservices-proposal.md) | Service topology, tech stack, AKS deployment model |
 | [architecture/database-schema.md](architecture/database-schema.md) | PostgreSQL schema (DDL), entity relationships, indexes |
 | [architecture/api-contracts.md](architecture/api-contracts.md) | REST endpoint contracts for each service |
 | [initial-plan.md](initial-plan.md) | Functional/non-functional requirements, user stories, test plan |
