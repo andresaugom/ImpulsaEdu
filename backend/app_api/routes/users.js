@@ -2,6 +2,7 @@
 
 const router = require('express').Router();
 const bcrypt = require('bcryptjs');
+const { rateLimit } = require('express-rate-limit');
 const pool = require('../db/pool');
 const { authenticateToken, requireAdmin } = require('../middleware/auth');
 const { errBody } = require('../utils/errors');
@@ -32,9 +33,24 @@ function splitFullName(full_name) {
     };
 }
 
+const userReadRateLimit = rateLimit({
+    windowMs: 60_000,
+    max: 120,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: errBody('TOO_MANY_REQUESTS', 'Too many requests')
+});
+const userWriteRateLimit = rateLimit({
+    windowMs: 60_000,
+    max: 60,
+    standardHeaders: true,
+    legacyHeaders: false,
+    message: errBody('TOO_MANY_REQUESTS', 'Too many requests')
+});
+
 // ── GET /api/v1/users  (admin only) ──────────────────────────────────────────
 
-router.get('/', authenticateToken, requireAdmin, async (req, res) => {
+router.get('/', userReadRateLimit, authenticateToken, requireAdmin, async (req, res) => {
     const { role, is_active } = req.query;
 
     const conditions = [];
@@ -70,7 +86,7 @@ router.get('/', authenticateToken, requireAdmin, async (req, res) => {
 
 // ── POST /api/v1/users  (admin only) ─────────────────────────────────────────
 
-router.post('/', authenticateToken, requireAdmin, async (req, res) => {
+router.post('/', userWriteRateLimit, authenticateToken, requireAdmin, async (req, res) => {
     const { email, password, full_name, role } = req.body;
 
     if (!email || !password || !full_name || !role) {
@@ -105,7 +121,7 @@ router.post('/', authenticateToken, requireAdmin, async (req, res) => {
 // ── GET /api/v1/users/:id ──────────────────────────────────────────────────────
 // Admin can read any user; staff can only read their own profile.
 
-router.get('/:id', authenticateToken, async (req, res) => {
+router.get('/:id', userReadRateLimit, authenticateToken, async (req, res) => {
     const { id } = req.params;
 
     if (req.user.role !== 'admin' && req.user.sub !== id) {
@@ -116,7 +132,7 @@ router.get('/:id', authenticateToken, async (req, res) => {
         const result = await pool.query(
             `SELECT id, firstname, lastname, email, role, deleted_at
              FROM users
-             WHERE id = $1`,
+             WHERE id = $1 AND deleted_at IS NULL`,
             [id]
         );
         if (result.rowCount === 0) {
@@ -132,7 +148,7 @@ router.get('/:id', authenticateToken, async (req, res) => {
 // ── PUT /api/v1/users/:id ─────────────────────────────────────────────────────
 // Admin can update any user; staff can only update their own profile.
 
-router.put('/:id', authenticateToken, async (req, res) => {
+router.put('/:id', userWriteRateLimit, authenticateToken, async (req, res) => {
     const { id } = req.params;
     const { full_name, password } = req.body;
 
@@ -186,7 +202,7 @@ router.put('/:id', authenticateToken, async (req, res) => {
 
 // ── PATCH /api/v1/users/:id/deactivate  (admin only) ─────────────────────────
 
-router.patch('/:id/deactivate', authenticateToken, requireAdmin, async (req, res) => {
+router.patch('/:id/deactivate', userWriteRateLimit, authenticateToken, requireAdmin, async (req, res) => {
     const { id } = req.params;
 
     try {
