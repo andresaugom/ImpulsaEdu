@@ -10,23 +10,17 @@ let MainTheme = createTheme({
     primary: {
       main: '#009933', // Brand Green
       light: '#33b366',
-      lighter: '#66cc99',
       dark: '#006622',
-      darker: '#004411',
     },
     secondary: {
       main: '#ec671b', // Orange
       light: '#f08844',
-      lighter: '#f4a969',
       dark: '#c45110',
-      darker: '#9c3a0b',
     },
     info: {
       main: '#f4981c', // Yellow
       light: '#f7ac47',
-      lighter: '#fac070',
       dark: '#d17a14',
-      darker: '#a85d0f',
     },
     warning: {
       main: '#f4981c', // Yellow (for alerts)
