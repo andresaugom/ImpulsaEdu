@@ -12,7 +12,7 @@ import {
   DialogContentText,
   DialogActions,
 } from "@mui/material";
-import { DetailPanelProps } from "@/uitools/interfaces";
+import { DetailPanelProps } from "@/app/uitools/interfaces";
 import { Snackbar, Alert } from "@mui/material";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 
