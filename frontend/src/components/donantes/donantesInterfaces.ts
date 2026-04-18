@@ -1,5 +1,5 @@
 export interface Donor {
-    id: number;
+    id: string;
     name: string;
     type: 'individual' | 'corporate';
     email: string;

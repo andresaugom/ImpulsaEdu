@@ -1,5 +1,13 @@
 'use client';
 
+/**
+ * Login page – Endpoint 1: POST /auth/login
+ *
+ * Submits credentials to the auth service and stores the returned
+ * access + refresh tokens in localStorage via authService.login().
+ * Redirects to the dashboard on success; shows an inline error on failure.
+ */
+
 import {
   Box,
   Container,
@@ -10,22 +18,45 @@ import {
   Checkbox,
   Typography,
   Link,
+  Alert,
+  CircularProgress,
   useTheme,
   useMediaQuery,
 } from '@mui/material';
 import { useState } from 'react';
+import { useRouter } from 'next/navigation';
+import { login } from '@/lib/authService';
+import { ApiError } from '@/lib/apiClient';
 
 export default function LoginPage() {
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [remember, setRemember] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
+  const router = useRouter();
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle login logic here
-    console.log('Login:', { email, password, remember });
+    setError(null);
+    setLoading(true);
+
+    try {
+      // POST /auth/login — stores accessToken + refreshToken in localStorage
+      await login(email, password);
+      router.push('/');
+    } catch (err) {
+      if (err instanceof ApiError && err.status === 401) {
+        setError('Correo o contraseña incorrectos. Inténtalo de nuevo.');
+      } else {
+        setError('No se pudo conectar con el servidor. Inténtalo más tarde.');
+      }
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -68,6 +99,13 @@ export default function LoginPage() {
           ImpulsaEdu
         </Box>
 
+        {/* Error banner */}
+        {error && (
+          <Alert severity="error" sx={{ marginBottom: '20px' }}>
+            {error}
+          </Alert>
+        )}
+
         {/* Login Form */}
         <Box component="form" onSubmit={handleSubmit}>
           <Box sx={{ marginBottom: '20px' }}>
@@ -94,11 +132,8 @@ export default function LoginPage() {
               variant="outlined"
               size="small"
               required
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  fontSize: '14px',
-                },
-              }}
+              disabled={loading}
+              sx={{ '& .MuiOutlinedInput-root': { fontSize: '14px' } }}
             />
           </Box>
 
@@ -126,11 +161,8 @@ export default function LoginPage() {
               variant="outlined"
               size="small"
               required
-              sx={{
-                '& .MuiOutlinedInput-root': {
-                  fontSize: '14px',
-                },
-              }}
+              disabled={loading}
+              sx={{ '& .MuiOutlinedInput-root': { fontSize: '14px' } }}
             />
           </Box>
 
@@ -141,11 +173,10 @@ export default function LoginPage() {
                   checked={remember}
                   onChange={(e) => setRemember(e.target.checked)}
                   size="small"
+                  disabled={loading}
                 />
               }
-              label={
-                <Typography sx={{ fontSize: '14px' }}>Recuérdame</Typography>
-              }
+              label={<Typography sx={{ fontSize: '14px' }}>Recuérdame</Typography>}
             />
           </Box>
 
@@ -155,13 +186,18 @@ export default function LoginPage() {
             color="primary"
             fullWidth
             size="large"
+            disabled={loading}
             sx={{
               textTransform: 'none',
               fontWeight: 600,
               marginBottom: '10px',
             }}
           >
-            Iniciar Sesión
+            {loading ? (
+              <CircularProgress size={22} color="inherit" />
+            ) : (
+              'Iniciar Sesión'
+            )}
           </Button>
         </Box>
 
@@ -181,9 +217,7 @@ export default function LoginPage() {
               color: theme.palette.primary.main,
               textDecoration: 'none',
               fontWeight: 600,
-              '&:hover': {
-                textDecoration: 'underline',
-              },
+              '&:hover': { textDecoration: 'underline' },
             }}
           >
             Contacta a tu administrador

@@ -1,6 +1,6 @@
 import React from "react";
 import { Table, TableHead, TableRow, TableCell, TableBody, Paper, Button, Typography } from "@mui/material";
-import { DataTableProps } from "@/uitools/interfaces";
+import { DataTableProps } from "@/app/uitools/interfaces";
 
 export default function DataTable<T extends { id: string }>({ columns, data, onSelect }: DataTableProps<T>) {
   return (
