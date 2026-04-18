@@ -1,4 +1,5 @@
 const express = require('express');
+const cors = require('cors');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const { Pool } = require('pg');
@@ -8,6 +9,7 @@ require('dotenv').config();
 const initDatabase = require('./db/init');
 
 const app = express();
+app.use(cors());
 app.use(express.json());
 
 const dbConfig = {
