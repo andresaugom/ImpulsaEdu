@@ -12,16 +12,15 @@ import {
   TableRow,
   Paper,
   Chip,
-  useTheme,
-  useMediaQuery,
 } from "@mui/material";
 import Link from "next/link";
 import { mockDonations } from "./sampleData";
 import { getStatusColor, getStatusTextColor } from "./themeFunctions";
 
 export default function RecentDonationsTable() {
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  // TODO: Add mobile-specific table behavior in a dedicated follow-up issue.
+  // const theme = useTheme();
+  // const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
   return (
     <>
       {/* Recent Donations Section */}

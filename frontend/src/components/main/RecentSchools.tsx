@@ -14,7 +14,6 @@ import {
   Chip,
   LinearProgress,
   useTheme,
-  useMediaQuery,
 } from "@mui/material";
 import Link from "next/link";
 import { mockSchools } from "./sampleData";
@@ -22,7 +21,8 @@ import { getStatusColor, getStatusTextColor } from "./themeFunctions";
 
 export default function RecentSchoolsTable() {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  // TODO: Add mobile-specific table behavior in a dedicated follow-up issue.
+  // const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   return (
     <>

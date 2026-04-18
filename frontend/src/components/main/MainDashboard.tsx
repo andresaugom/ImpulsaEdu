@@ -1,13 +1,14 @@
 "use client";
 
-import { Box, Typography, useTheme, useMediaQuery } from "@mui/material";
+import { Box, Typography } from "@mui/material";
 import MainCards from "./StatsCards";
 import RecentSchoolsTable from "./RecentSchools";
 import RecentDonationsTable from "./RecentDonations";
 
 export default function DashboardPage() {
-  const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  // TODO: Add mobile-specific dashboard behavior in a dedicated follow-up issue.
+  // const theme = useTheme();
+  // const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   return (
     <Box>
