@@ -2,7 +2,7 @@ import { Donor } from "./donantesInterfaces";
 
 export const mockDonors: Donor[] = [
   {
-    id: 1,
+    id: "1",
     name: "María García López",
     type: "individual",
     email: "maria@ejemplo.com",
@@ -11,7 +11,7 @@ export const mockDonors: Donor[] = [
     status: "active",
   },
   {
-    id: 2,
+    id: "2",
     name: "Corporativo Educativo Jalisco",
     type: "corporate",
     email: "contacto@corporativo.com",
@@ -20,7 +20,7 @@ export const mockDonors: Donor[] = [
     status: "active",
   },
   {
-    id: 3,
+    id: "3",
     name: "Carlos Hernández Rodríguez",
     type: "individual",
     email: "carlos@ejemplo.com",
