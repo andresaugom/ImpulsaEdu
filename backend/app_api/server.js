@@ -3,6 +3,7 @@
 require('dotenv').config();
 
 const express = require('express');
+const cors = require('cors');
 const initDatabase = require('./db/init');
 
 const usersRouter     = require('./routes/users');
@@ -12,6 +13,7 @@ const donationsRouter = require('./routes/donations');
 const reportsRouter   = require('./routes/reports');
 
 const app = express();
+app.use(cors());
 app.use(express.json());
 
 // ── Routes ────────────────────────────────────────────────────────────────────
