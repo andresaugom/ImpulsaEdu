@@ -1,6 +1,6 @@
 import React from "react";
 import { Box, Typography, TextField, Button, MenuItem } from "@mui/material";
-import { TableToolbarProps } from "@/uitools/interfaces";
+import { TableToolbarProps } from "@/app/uitools/interfaces";
 
 const inputStyles = {
   "& .MuiOutlinedInput-root": {
