@@ -95,7 +95,7 @@ export default function DonacionesPage() {
       );
     } else {
       const newDonation: Donation = {
-        id: `#DN${donations.length + 1}`.padEnd(6, '0'),
+        id: `#DN${String(donations.length + 1).padStart(3, '0')}`,
         donor: formData.donor,
         school: formData.school,
         type: formData.type as 'material' | 'monetary',
