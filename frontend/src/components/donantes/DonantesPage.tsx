@@ -89,8 +89,9 @@ export default function DonantesPage() {
         )
       );
     } else {
+      const nextDonorId = donors.length ? Math.max(...donors.map((d) => d.id)) + 1 : 1;
       const newDonor: Donor = {
-        id: Math.max(...donors.map((d) => d.id)) + 1,
+        id: nextDonorId,
         name: formData.name,
         type: formData.type as 'individual' | 'corporate',
         email: formData.email,
