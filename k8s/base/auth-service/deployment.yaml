@@ -17,7 +17,8 @@ spec:
     spec:
       containers:
         - name: auth-service
-          image: ghcr.io/andresaugom/impulsaedu-auth-service:latest
+          image: acrimpulsaedu.azurecr.io/impulsaedu-auth-service:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 8081
           env:

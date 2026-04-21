@@ -17,7 +17,8 @@ spec:
     spec:
       containers:
         - name: api-service
-          image: ghcr.io/andresaugom/impulsaedu-api-service:latest
+          image: acrimpulsaedu.azurecr.io/impulsaedu-api-service:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 8080
           env:

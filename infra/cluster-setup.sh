@@ -25,6 +25,9 @@ CLUSTER_NAME="${CLUSTER_NAME:-aks-impulsaedu}"
 LOCATION="${LOCATION:-mexicocentral}"
 KUBERNETES_VERSION="${KUBERNETES_VERSION:-1.29}"
 
+# ACR name must be globally unique and alphanumeric only (no hyphens)
+ACR_NAME="${ACR_NAME:-acrimpulsaedu}"
+
 # Node SKU — Standard_B2s: 2 vCPU, 4 GB RAM (cheapest AKS-supported B-series)
 SYSTEM_NODE_SKU="Standard_B2s"
 WORKLOADS_NODE_SKU="Standard_B2s"
@@ -39,8 +42,36 @@ az group create \
   --output none
 
 # ---------------------------------------------------------------------------
-# 2. AKS cluster with system node pool
+# 2. Azure Container Registry
+#    Created before the cluster so we can attach it at cluster creation time.
+#    Basic SKU is sufficient for development; upgrade to Standard for prod.
+# ---------------------------------------------------------------------------
+echo "==> Creating Azure Container Registry: $ACR_NAME"
+az acr create \
+  --resource-group "$RESOURCE_GROUP" \
+  --name "$ACR_NAME" \
+  --sku Basic \
+  --location "$LOCATION" \
+  --output none
+
+ACR_LOGIN_SERVER=$(az acr show \
+  --name "$ACR_NAME" \
+  --resource-group "$RESOURCE_GROUP" \
+  --query loginServer -o tsv)
+
+echo "==> ACR login server: $ACR_LOGIN_SERVER"
+echo ""
+echo "  *** Add the following GitHub Actions secrets to your repository ***"
+echo "  AZURE_CREDENTIALS       — output of: az ad sp create-for-rbac --name sp-impulsaedu-github --role contributor --scopes /subscriptions/<SUB_ID>/resourceGroups/$RESOURCE_GROUP --sdk-auth"
+echo "  ACR_LOGIN_SERVER        — $ACR_LOGIN_SERVER"
+echo "  AZURE_RESOURCE_GROUP    — $RESOURCE_GROUP"
+echo "  AKS_CLUSTER_NAME        — $CLUSTER_NAME"
+echo ""
+
+# ---------------------------------------------------------------------------
+# 3. AKS cluster with system node pool
 #    --node-count 1 keeps cost minimal; system pool needs at least 1 node
+#    --attach-acr grants the cluster's managed identity AcrPull on the ACR.
 # ---------------------------------------------------------------------------
 echo "==> Creating AKS cluster: $CLUSTER_NAME (system node pool)"
 az aks create \
@@ -58,12 +89,13 @@ az aks create \
   --enable-cluster-autoscaler \
   --min-count 1 \
   --max-count 2 \
+  --attach-acr "$ACR_NAME" \
   --output none
 
 echo "==> Cluster created."
 
 # ---------------------------------------------------------------------------
-# 3. Add workloads node pool
+# 4. Add workloads node pool
 #    Tainted with CriticalAddonsOnly=true:NoSchedule is already on system pool
 #    by default; workloads pool has no taint so application pods land here.
 # ---------------------------------------------------------------------------
@@ -84,7 +116,7 @@ az aks nodepool add \
 echo "==> Workloads node pool added."
 
 # ---------------------------------------------------------------------------
-# 4. Fetch credentials and verify connectivity
+# 5. Fetch credentials and verify connectivity
 # ---------------------------------------------------------------------------
 echo "==> Fetching kubeconfig"
 az aks get-credentials \
@@ -96,7 +128,7 @@ echo "==> Verifying cluster connectivity"
 kubectl get nodes -o wide
 
 # ---------------------------------------------------------------------------
-# 5. Apply base Kubernetes manifests
+# 6. Apply base Kubernetes manifests
 # ---------------------------------------------------------------------------
 echo "==> Applying base manifests (namespaces, quotas, limit ranges)"
 kubectl apply -f k8s/base/namespaces.yaml

@@ -17,7 +17,8 @@ spec:
     spec:
       containers:
         - name: frontend
-          image: ghcr.io/andresaugom/impulsaedu-frontend:latest
+          image: acrimpulsaedu.azurecr.io/impulsaedu-frontend:latest
+          imagePullPolicy: Always
           ports:
             - containerPort: 3000
           env:
