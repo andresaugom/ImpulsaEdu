@@ -22,7 +22,7 @@ set -euo pipefail
 # ---------------------------------------------------------------------------
 RESOURCE_GROUP="${RESOURCE_GROUP:-rg-impulsaedu}"
 CLUSTER_NAME="${CLUSTER_NAME:-aks-impulsaedu}"
-LOCATION="${LOCATION:-eastus}"
+LOCATION="${LOCATION:-mexicocentral}"
 KUBERNETES_VERSION="${KUBERNETES_VERSION:-1.29}"
 
 # Node SKU — Standard_B2s: 2 vCPU, 4 GB RAM (cheapest AKS-supported B-series)
