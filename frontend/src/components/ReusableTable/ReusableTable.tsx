@@ -3,7 +3,7 @@ import { Box } from "@mui/material";
 import TableToolbar from "./TableToolbar";
 import DataTable from "./DataTable";
 import DetailPanel from "./DetailPanel";
-import { EditableTableProps } from "@/uitools/interfaces";
+import { EditableTableProps } from "@/app/uitools/interfaces";
 import { useRouter } from "next/navigation";
 
 export default function EditableTable<T extends { id: string }>({

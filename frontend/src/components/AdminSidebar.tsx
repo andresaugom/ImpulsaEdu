@@ -24,8 +24,8 @@ import {
   const navItems = [
     { icon: HomeOutlined, text: 'Panel', href: '/' },
     { icon: SchoolOutlined, text: 'Gestión de Escuelas', href: '/escuelas' },
-    { icon: VolunteerActivismOutlined, text: 'Gestión de Donantes', href: '/donantes' },
     { icon: InventoryOutlined, text: 'Donaciones', href: '/donaciones' },
+    { icon: VolunteerActivismOutlined, text: 'Gestión de Donantes', href: '/donantes' },
     { icon: SettingsOutlined, text: 'Preferencias', href: '/preferencias' },
     { icon: AccountCircle, text: 'Login', href: '/login' },
   ];

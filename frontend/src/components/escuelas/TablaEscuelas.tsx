@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Box } from "@mui/material";
 import EditableTable from "@/components/ReusableTable/ReusableTable";
-import { ColumnDefinition, EditableField } from "@/uitools/interfaces";
+import { ColumnDefinition, EditableField } from "@/app/uitools/interfaces";
 
 export interface School {
     id: string;
