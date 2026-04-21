@@ -112,8 +112,75 @@ echo "==> Verifying resource quotas"
 kubectl describe resourcequota -n impulsa-dev
 kubectl describe resourcequota -n impulsa-prod
 
+# ---------------------------------------------------------------------------
+# 6. Install ingress-nginx controller on the workloads node pool
+#    The workloads node pool has no taints, so ingress-nginx pods land there
+#    automatically (system pool rejects non-system workloads by default).
+# ---------------------------------------------------------------------------
+echo "==> Adding Helm repos (ingress-nginx, jetstack)"
+helm repo add ingress-nginx https://kubernetes.github.io/ingress-nginx
+helm repo add jetstack https://charts.jetstack.io
+helm repo update
+
+echo "==> Installing ingress-nginx controller"
+helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx \
+  --namespace ingress-nginx \
+  --create-namespace \
+  --set controller.service.type=LoadBalancer \
+  --set controller.service.annotations."service\.beta\.kubernetes\.io/azure-load-balancer-health-probe-request-path"=/healthz \
+  --wait \
+  --timeout 5m
+
+echo "==> Waiting for ingress-nginx controller to be Ready"
+kubectl rollout status deployment/ingress-nginx-controller -n ingress-nginx --timeout=3m
+
+echo "==> ingress-nginx LoadBalancer IP (use this for the DNS A record):"
+kubectl get svc ingress-nginx-controller -n ingress-nginx \
+  -o jsonpath='{.status.loadBalancer.ingress[0].ip}{"\n"}'
+
+# ---------------------------------------------------------------------------
+# 7. Install cert-manager and configure ClusterIssuers for Let's Encrypt
+# ---------------------------------------------------------------------------
+echo "==> Installing cert-manager"
+helm upgrade --install cert-manager jetstack/cert-manager \
+  --namespace cert-manager \
+  --create-namespace \
+  --set crds.enabled=true \
+  --wait \
+  --timeout 5m
+
+echo "==> Waiting for cert-manager webhooks to be Ready"
+kubectl rollout status deployment/cert-manager-webhook -n cert-manager --timeout=3m
+
+echo "==> Applying ClusterIssuers (staging + prod)"
+kubectl apply -f k8s/base/cert-manager/clusterissuer.yaml
+
+echo "==> Verifying ClusterIssuers"
+kubectl get clusterissuer
+
+# ---------------------------------------------------------------------------
+# 8. Apply Ingress manifest
+#    Prerequisite: DNS A record must resolve app.impulsaedu.com (or your
+#    custom APP_DOMAIN) to the ingress-nginx LoadBalancer IP shown above.
+#    See docs/dns-configuration.md for full instructions.
+#    NOTE: The Ingress is configured with letsencrypt-staging by default.
+#          Switch cert-manager.io/cluster-issuer to letsencrypt-prod once
+#          staging certificate issuance is confirmed.
+# ---------------------------------------------------------------------------
+echo "==> Applying Ingress"
+kubectl apply -f k8s/base/ingress.yaml
+
 echo ""
 echo "Cluster setup complete."
+echo ""
+echo "Next steps for HTTPS:"
+echo "  1. Get the LoadBalancer IP:  kubectl get svc ingress-nginx-controller -n ingress-nginx"
+echo "  2. Create an A record:       app.impulsaedu.com -> <LoadBalancer IP>"
+echo "  3. Monitor cert issuance:    kubectl describe certificate impulsa-tls -n impulsa-dev"
+echo "  4. After staging succeeds, edit k8s/base/ingress.yaml and switch"
+echo "     cert-manager.io/cluster-issuer to letsencrypt-prod, then re-apply."
+echo "  See docs/dns-configuration.md for full instructions."
+echo ""
 echo "Node pools:"
 az aks nodepool list \
   --resource-group "$RESOURCE_GROUP" \

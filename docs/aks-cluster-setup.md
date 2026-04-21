@@ -43,6 +43,11 @@ The script:
 3. Adds the `workloads` node pool (1–3 nodes)
 4. Fetches `kubeconfig` credentials
 5. Applies all base manifests under `k8s/base/`
+6. Installs ingress-nginx controller (creates an Azure LoadBalancer)
+7. Installs cert-manager and applies Let's Encrypt ClusterIssuers
+8. Applies the Ingress manifest (`k8s/base/ingress.yaml`)
+
+After the script completes, follow the DNS and TLS steps in [docs/dns-configuration.md](dns-configuration.md).
 
 ### Override defaults
 
@@ -102,6 +107,32 @@ kubectl get namespaces
 ```
 
 This permanently deletes the cluster and resource group. Run `cluster-setup.sh` again to recreate.
+
+---
+
+## HTTPS Ingress and TLS
+
+The cluster exposes a single public entry point via ingress-nginx with TLS certificates managed by cert-manager (Let's Encrypt).
+
+### Path routing
+
+| Path prefix | Backend service | Auth |
+|-------------|----------------|------|
+| `/auth` | auth-service (port 8081) | Handled by auth-service |
+| `/api/v1` | api-service (port 8080) | JWT enforced by api-service middleware |
+| `/` | frontend (port 3000) | None |
+
+### Prerequisites
+
+- `helm` installed locally (`brew install helm` or [helm.sh/docs/intro/install](https://helm.sh/docs/intro/install/))
+
+### TLS certificate issuance
+
+See **[docs/dns-configuration.md](dns-configuration.md)** for the full workflow:
+1. Get the LoadBalancer IP assigned to the ingress-nginx service
+2. Create a DNS A record pointing your domain to that IP
+3. Verify staging certificate issuance
+4. Switch to the production Let's Encrypt issuer
 
 ---
 
