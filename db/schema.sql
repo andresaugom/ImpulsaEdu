@@ -1,115 +1,168 @@
-import * as xlsx from 'xlsx';
-import pool from '../db/pool';
+-- Extensions
+CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
-export async function syncExcelToDB(filePath: string) {
-    // 1. Read Workbook
-    const workbook = xlsx.readFile(filePath);
-    
-    // --- Extraction: Schools ---
-    const schoolsWorksheet = workbook.Sheets["Datos de las escuelas"];
-    if (!schoolsWorksheet) throw new Error('Sheet "Datos de las escuelas" not found.');
-    const schoolsExcelData: any[] = xlsx.utils.sheet_to_json(schoolsWorksheet, { range: 4 });
+-- ENUMS
+CREATE TYPE user_role AS ENUM ('staff', 'admin');
+CREATE TYPE donor_type AS ENUM ('Fisica', 'Moral');
+CREATE TYPE donation_status AS ENUM ('Registrado','Aprobado','Entregando','Entregado','Finalizado','Cancelado');
+CREATE TYPE donation_type AS ENUM ('Material','Monetaria');
+CREATE TYPE school_level AS ENUM ('Preescolar','Primaria','Secundaria','Preparatoria','Universidad');
+CREATE TYPE school_mode AS ENUM ('Presencial','Semi-presencial','En linea');
+CREATE TYPE school_shift AS ENUM ('Matutino','Vespertino','Mixto');
+CREATE TYPE school_category AS ENUM ('Estatal','Federal','Federalizado');
+CREATE TYPE entity_type AS ENUM ('donor','donation','school');
+CREATE TYPE audit_action AS ENUM ('create','update','archive','state_change');
 
-    // Validate School Columns (Fail Fast)
-    if (schoolsExcelData.length > 0 && !schoolsExcelData[0]['CCT']) {
-        throw new Error("Column 'CCT' not found at Row 5. Check Schools sheet.");
-    }
+-- USERS
+CREATE TABLE users (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  firstname TEXT NOT NULL,
+  middlename TEXT,
+  lastname TEXT NOT NULL,
+  role user_role NOT NULL DEFAULT 'staff',
+  email TEXT NOT NULL UNIQUE,
+  phone TEXT,
+  password_hash TEXT NOT NULL,
 
-    // --- Extraction: Needs ---
-    const needsWorksheet = workbook.Sheets["Necesidades"];
-    if (!needsWorksheet) throw new Error('Sheet "Necesidades" not found.');
-    const needsExcelData: any[] = xlsx.utils.sheet_to_json(needsWorksheet, { range: 3 });
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  created_by UUID REFERENCES users(id),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_by UUID REFERENCES users(id),
+  deleted_at TIMESTAMPTZ,
+  deleted_by UUID REFERENCES users(id)
+);
 
-    // Validate Needs Columns (Fail Fast)
-    if (needsExcelData.length > 0 && !needsExcelData[0]['ID / Clave']) {
-        throw new Error("Column 'ID / Clave' not found at Row 4. Check Needs sheet.");
-    }
+-- REFRESH TOKENS
+CREATE TABLE refresh_tokens (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+  token_hash VARCHAR(64) NOT NULL UNIQUE,
+  expires_at TIMESTAMPTZ NOT NULL,
+  revoked BOOLEAN NOT NULL DEFAULT FALSE,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
 
-    // 2. Optimization: Lookup Maps (Performance Fix)
-    const schoolNameToCctMap = new Map<string, string>(
-        schoolsExcelData.map(s => [s['Nombre de la Escuela'], s.CCT])
-    );
-    const excelSchoolsMap = new Map(schoolsExcelData.map(s => [s.CCT, s]));
-    const excelNeedsMap = new Map(needsExcelData.map(n => [n['ID / Clave'], n]));
+-- DONORS
+CREATE TABLE donors (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  name TEXT NOT NULL,
+  region TEXT NOT NULL,
+  donor_type donor_type NOT NULL,
+  notes TEXT,
 
-    const client = await pool.connect();
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  created_by UUID REFERENCES users(id),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_by UUID REFERENCES users(id),
+  deleted_at TIMESTAMPTZ,
+  deleted_by UUID REFERENCES users(id),
 
-    try {
-        await client.query('BEGIN');
+  UNIQUE(name, region)
+);
 
-        // --- PHASE 1: SYNC SCHOOLS ---
-        const { rows: dbSchools } = await client.query('SELECT cct FROM schools');
-        const dbSchoolsMap = new Map(dbSchools.map(s => [s.cct, s]));
+-- SCHOOLS
+CREATE TABLE schools (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  region TEXT NOT NULL,
+  school TEXT NOT NULL,
+  name TEXT NOT NULL,
+  employees INT NOT NULL DEFAULT 0,
+  students INT NOT NULL DEFAULT 0,
+  level school_level NOT NULL,
+  cct TEXT NOT NULL,
+  mode school_mode NOT NULL,
+  shift school_shift NOT NULL,
+  address TEXT NOT NULL,
+  location TEXT NOT NULL,
+  category school_category NOT NULL,
+  notes TEXT,
+  goal NUMERIC(12,2) NOT NULL CHECK (goal > 0),
+  progress NUMERIC(12,2) NOT NULL DEFAULT 0 CHECK (progress >= 0),
 
-        const schoolsToInsert = schoolsExcelData.filter(s => s.CCT && !dbSchoolsMap.has(s.CCT));
-        const schoolsToUpdate = schoolsExcelData.filter(s => s.CCT && dbSchoolsMap.has(s.CCT));
-        const schoolsToDelete = dbSchools.filter(s => !excelSchoolsMap.has(s.cct));
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  created_by UUID REFERENCES users(id),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_by UUID REFERENCES users(id),
+  deleted_at TIMESTAMPTZ,
+  deleted_by UUID REFERENCES users(id),
 
-        // DELETE (Child needs first, then schools)
-        for (const school of schoolsToDelete) {
-            await client.query('DELETE FROM schools_needs WHERE school_cct = $1', [school.cct]);
-            await client.query('DELETE FROM schools WHERE cct = $1', [school.cct]);
-        }
+  UNIQUE(region, school, name)
+);
 
-        // INSERT SCHOOLS
-        for (const item of schoolsToInsert) {
-            await client.query({
-                text: `INSERT INTO schools (municipality, name, personnel, students, level, cct, mode, shift, sostenimiento, address, location) 
-                       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
-                values: [item.Municipio, item['Nombre de la Escuela'], item['Personal escolar'], item.Estudiantes, item['Nivel ed.'], item.CCT, item.Modalidad, item.Turno, item.Sostenimiento, item.Dirección, item.Ubicación]
-            });
-        }
+-- SCHOOL NEEDS
+CREATE TABLE schools_needs (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  school_id UUID NOT NULL REFERENCES schools(id),
+  item_name TEXT NOT NULL,
+  quantity INT,
+  unit TEXT,
+  amount NUMERIC(12,2) NOT NULL,
 
-        // UPDATE SCHOOLS
-        for (const item of schoolsToUpdate) {
-            await client.query({
-                text: `UPDATE schools SET municipality=$1, name=$2, personnel=$3, students=$4, level=$5, mode=$6, shift=$7, sostenimiento=$8, address=$9, location=$10 WHERE cct=$11`,
-                values: [item.Municipio, item['Nombre de la Escuela'], item['Personal escolar'], item.Estudiantes, item['Nivel ed.'], item.Modalidad, item.Turno, item.Sostenimiento, item.Dirección, item.Ubicación, item.CCT]
-            });
-        }
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  created_by UUID REFERENCES users(id),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_by UUID REFERENCES users(id),
+  deleted_at TIMESTAMPTZ,
+  deleted_by UUID REFERENCES users(id)
+);
 
-        // --- PHASE 2: SYNC NEEDS ---
-        const { rows: dbNeeds } = await client.query('SELECT id_excel FROM schools_needs');
-        const dbNeedsMap = new Map(dbNeeds.map(n => [n.id_excel, n]));
+-- DONATIONS
+CREATE TABLE donations (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  donor_id UUID NOT NULL REFERENCES donors(id),
+  school_id UUID NOT NULL REFERENCES schools(id),
+  amount NUMERIC(12,2) NOT NULL DEFAULT 0,
+  donation_type donation_type NOT NULL,
+  status donation_status NOT NULL DEFAULT 'Registrado',
+  description TEXT,
+  notes TEXT,
 
-        const needsToInsert = needsExcelData.filter(n => n['ID / Clave'] && !dbNeedsMap.has(n['ID / Clave']));
-        const needsToUpdate = needsExcelData.filter(n => n['ID / Clave'] && dbNeedsMap.has(n['ID / Clave']));
-        const needsToDelete = dbNeeds.filter(n => n.id_excel && !excelNeedsMap.has(n.id_excel));
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  created_by UUID REFERENCES users(id),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_by UUID REFERENCES users(id),
+  deleted_at TIMESTAMPTZ,
+  deleted_by UUID REFERENCES users(id)
+);
 
-        // DELETE NEEDS
-        for (const need of needsToDelete) {
-            await client.query('DELETE FROM schools_needs WHERE id_excel = $1', [need.id_excel]);
-        }
+-- DONATION ITEMS
+CREATE TABLE donation_items (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  donation_id UUID NOT NULL REFERENCES donations(id) ON DELETE CASCADE,
+  item_name TEXT NOT NULL,
+  quantity INT CHECK (quantity > 0),
+  amount NUMERIC(12,2) NOT NULL,
 
-        // INSERT NEEDS
-        for (const item of needsToInsert) {
-            const schoolCct = schoolNameToCctMap.get(item.Escuela);
-            if (!schoolCct) continue; 
-            await client.query({
-                text: `INSERT INTO schools_needs (id_excel, school_cct, municipality, school_name, category, subcategory, proposal, quantity, unit, status, details) 
-                       VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
-                values: [item['ID / Clave'], schoolCct, item.Municipio, item.Escuela, item.Categoría, item.Subcategoría, item.Propuesta, item.Cantidad, item.Unidad, item.Estado, item.Detalles]
-            });
-        }
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  created_by UUID REFERENCES users(id),
+  updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
+  updated_by UUID REFERENCES users(id),
+  deleted_at TIMESTAMPTZ,
+  deleted_by UUID REFERENCES users(id)
+);
 
-        // UPDATE NEEDS
-        for (const item of needsToUpdate) {
-            const schoolCct = schoolNameToCctMap.get(item.Escuela);
-            if (!schoolCct) continue;
-            await client.query({
-                text: `UPDATE schools_needs SET school_cct=$1, municipality=$2, school_name=$3, category=$4, subcategory=$5, proposal=$6, quantity=$7, unit=$8, status=$9, details=$10 WHERE id_excel=$11`,
-                values: [schoolCct, item.Municipio, item.Escuela, item.Categoría, item.Subcategoría, item.Propuesta, item.Cantidad, item.Unidad, item.Estado, item.Detalles, item['ID / Clave']]
-            });
-        }
+-- CONTACTS
+CREATE TABLE contacts (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  donor_id UUID REFERENCES donors(id) ON DELETE CASCADE,
+  school_id UUID REFERENCES schools(id) ON DELETE CASCADE,
+  email TEXT,
+  phone TEXT,
 
-        await client.query('COMMIT');
-        return { success: true, message: "Synchronization complete." };
+  CONSTRAINT chk_contact_owner CHECK (
+    (donor_id IS NOT NULL AND school_id IS NULL) OR
+    (donor_id IS NULL AND school_id IS NOT NULL)
+  )
+);
 
-    } catch (error) {
-        await client.query('ROLLBACK');
-        console.error("Critical Sync Error:", error);
-        throw error;
-    } finally {
-        client.release();
-    }
-}
+-- AUDIT LOGS
+CREATE TABLE audit_logs (
+  id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
+  user_id UUID REFERENCES users(id) ON DELETE SET NULL,
+  entity_type entity_type NOT NULL,
+  entity_id UUID NOT NULL,
+  action audit_action NOT NULL,
+  old_value JSONB,
+  new_value JSONB,
+  created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
+);
