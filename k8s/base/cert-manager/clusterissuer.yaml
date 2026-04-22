@@ -1,0 +1,39 @@
+# ClusterIssuers for Let's Encrypt TLS certificates via HTTP-01 challenge.
+#
+# Workflow:
+#   1. Deploy with letsencrypt-staging first to verify ACME challenge works
+#      without hitting Let's Encrypt production rate limits.
+#   2. Once staging issues a (untrusted) certificate successfully, switch the
+#      Ingress annotation to letsencrypt-prod for a browser-trusted cert.
+#
+# Replace ACME_EMAIL below with the actual account email before applying.
+---
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-staging
+spec:
+  acme:
+    server: https://acme-staging-v02.api.letsencrypt.org/directory
+    email: admin@impulsaedu.com   # replace with real email
+    privateKeySecretRef:
+      name: letsencrypt-staging-account-key
+    solvers:
+      - http01:
+          ingress:
+            ingressClassName: nginx
+---
+apiVersion: cert-manager.io/v1
+kind: ClusterIssuer
+metadata:
+  name: letsencrypt-prod
+spec:
+  acme:
+    server: https://acme-v02.api.letsencrypt.org/directory
+    email: admin@impulsaedu.com   # replace with real email
+    privateKeySecretRef:
+      name: letsencrypt-prod-account-key
+    solvers:
+      - http01:
+          ingress:
+            ingressClassName: nginx
