@@ -1,0 +1,108 @@
+# CD — develop → impulsa-dev
+#
+# Triggered on every push to the develop branch.
+# Builds all three service images, pushes them to ACR tagged with the git
+# commit SHA, then rolls out the new images in the impulsa-dev namespace.
+#
+# Required GitHub Actions secrets:
+#   AZURE_CREDENTIALS     — JSON output of:
+#                           az ad sp create-for-rbac \
+#                             --name sp-impulsaedu-github \
+#                             --role contributor \
+#                             --scopes /subscriptions/<SUB>/resourceGroups/rg-impulsaedu \
+#                             --sdk-auth
+#   ACR_LOGIN_SERVER      — e.g. acrimpulsaedu.azurecr.io
+#   AZURE_RESOURCE_GROUP  — e.g. rg-impulsaedu
+#   AKS_CLUSTER_NAME      — e.g. aks-impulsaedu
+
+name: CD — develop
+
+on:
+  push:
+    branches:
+      - develop
+
+env:
+  NAMESPACE: impulsa-dev
+
+jobs:
+  build-push-deploy:
+    name: Build → Push → Deploy (dev)
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v4
+
+      # ── Compute a short, deterministic image tag ──────────────────────────
+      - name: Set image tag
+        id: tag
+        run: echo "IMAGE_TAG=sha-$(git rev-parse --short HEAD)" >> "$GITHUB_OUTPUT"
+
+      # ── Authenticate to Azure ─────────────────────────────────────────────
+      - name: Azure login
+        uses: azure/login@v2
+        with:
+          creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+      # ── Log in to ACR so docker can push ─────────────────────────────────
+      - name: ACR login
+        run: az acr login --name "${{ secrets.ACR_LOGIN_SERVER }}"
+
+      # ── Build & push api-service ──────────────────────────────────────────
+      - name: Build api-service
+        run: |
+          docker build \
+            -t "${{ secrets.ACR_LOGIN_SERVER }}/impulsaedu-api-service:${{ steps.tag.outputs.IMAGE_TAG }}" \
+            -f backend/app_api/Dockerfile \
+            backend/app_api
+          docker push "${{ secrets.ACR_LOGIN_SERVER }}/impulsaedu-api-service:${{ steps.tag.outputs.IMAGE_TAG }}"
+
+      # ── Build & push auth-service ─────────────────────────────────────────
+      - name: Build auth-service
+        run: |
+          docker build \
+            -t "${{ secrets.ACR_LOGIN_SERVER }}/impulsaedu-auth-service:${{ steps.tag.outputs.IMAGE_TAG }}" \
+            -f backend/auth/Dockerfile \
+            backend/auth
+          docker push "${{ secrets.ACR_LOGIN_SERVER }}/impulsaedu-auth-service:${{ steps.tag.outputs.IMAGE_TAG }}"
+
+      # ── Build & push frontend ─────────────────────────────────────────────
+      - name: Build frontend
+        run: |
+          docker build \
+            -t "${{ secrets.ACR_LOGIN_SERVER }}/impulsaedu-frontend:${{ steps.tag.outputs.IMAGE_TAG }}" \
+            -f frontend/Dockerfile \
+            frontend
+          docker push "${{ secrets.ACR_LOGIN_SERVER }}/impulsaedu-frontend:${{ steps.tag.outputs.IMAGE_TAG }}"
+
+      # ── Get AKS credentials ───────────────────────────────────────────────
+      - name: Set AKS context
+        uses: azure/aks-set-context@v4
+        with:
+          resource-group: ${{ secrets.AZURE_RESOURCE_GROUP }}
+          cluster-name: ${{ secrets.AKS_CLUSTER_NAME }}
+
+      # ── Roll out new images to impulsa-dev ────────────────────────────────
+      - name: Deploy to impulsa-dev
+        run: |
+          TAG="${{ steps.tag.outputs.IMAGE_TAG }}"
+          ACR="${{ secrets.ACR_LOGIN_SERVER }}"
+
+          kubectl set image deployment/api-service \
+            api-service="${ACR}/impulsaedu-api-service:${TAG}" \
+            -n "$NAMESPACE"
+
+          kubectl set image deployment/auth-service \
+            auth-service="${ACR}/impulsaedu-auth-service:${TAG}" \
+            -n "$NAMESPACE"
+
+          kubectl set image deployment/frontend \
+            frontend="${ACR}/impulsaedu-frontend:${TAG}" \
+            -n "$NAMESPACE"
+
+      # ── Wait for rollouts to complete ─────────────────────────────────────
+      - name: Verify rollout
+        run: |
+          kubectl rollout status deployment/api-service  -n "$NAMESPACE" --timeout=5m
+          kubectl rollout status deployment/auth-service -n "$NAMESPACE" --timeout=5m
+          kubectl rollout status deployment/frontend     -n "$NAMESPACE" --timeout=5m
