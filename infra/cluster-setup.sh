@@ -29,8 +29,8 @@ KUBERNETES_VERSION="${KUBERNETES_VERSION:-1.29}"
 ACR_NAME="${ACR_NAME:-acrimpulsaedu}"
 
 # Node SKU — Standard_B2s: 2 vCPU, 4 GB RAM (cheapest AKS-supported B-series)
-SYSTEM_NODE_SKU="Standard_B2s"
-WORKLOADS_NODE_SKU="Standard_B2s"
+SYSTEM_NODE_SKU="${SYSTEM_NODE_SKU:-Standard_B2s}"
+WORKLOADS_NODE_SKU="${WORKLOADS_NODE_SKU:-Standard_B2s}"
 
 # ---------------------------------------------------------------------------
 # 1. Resource group
@@ -74,16 +74,17 @@ echo ""
 #    --attach-acr grants the cluster's managed identity AcrPull on the ACR.
 # ---------------------------------------------------------------------------
 echo "==> Creating AKS cluster: $CLUSTER_NAME (system node pool)"
+if az aks show --resource-group "$RESOURCE_GROUP" --name "$CLUSTER_NAME" --output none 2>/dev/null; then
+  echo "==> Cluster '$CLUSTER_NAME' already exists — skipping creation."
+else
 az aks create \
   --resource-group "$RESOURCE_GROUP" \
   --name "$CLUSTER_NAME" \
   --location "$LOCATION" \
   --kubernetes-version "$KUBERNETES_VERSION" \
-  --node-pool-name system \
+  --nodepool-name system \
   --node-count 1 \
   --node-vm-size "$SYSTEM_NODE_SKU" \
-  --nodepool-mode System \
-  --os-disk-size-gb 30 \
   --network-plugin azure \
   --generate-ssh-keys \
   --enable-cluster-autoscaler \
@@ -91,29 +92,35 @@ az aks create \
   --max-count 2 \
   --attach-acr "$ACR_NAME" \
   --output none
+fi
+echo "==> Cluster ready."
 
-echo "==> Cluster created."
-
-# ---------------------------------------------------------------------------
-# 4. Add workloads node pool
-#    Tainted with CriticalAddonsOnly=true:NoSchedule is already on system pool
-#    by default; workloads pool has no taint so application pods land here.
-# ---------------------------------------------------------------------------
-echo "==> Adding workloads node pool"
-az aks nodepool add \
+echo "==> Configuring system node pool properties"
+az aks nodepool update \
   --resource-group "$RESOURCE_GROUP" \
   --cluster-name "$CLUSTER_NAME" \
-  --name workloads \
-  --node-count 1 \
-  --node-vm-size "$WORKLOADS_NODE_SKU" \
-  --mode User \
-  --os-disk-size-gb 30 \
-  --enable-cluster-autoscaler \
-  --min-count 1 \
-  --max-count 3 \
+  --name system \
+  --mode System \
   --output none
 
-echo "==> Workloads node pool added."
+echo "==> Adding workloads node pool"
+if az aks nodepool show --resource-group "$RESOURCE_GROUP" --cluster-name "$CLUSTER_NAME" --name workloads --output none 2>/dev/null; then
+  echo "==> Node pool 'workloads' already exists — skipping."
+else
+  az aks nodepool add \
+    --resource-group "$RESOURCE_GROUP" \
+    --cluster-name "$CLUSTER_NAME" \
+    --name workloads \
+    --mode User \
+    --node-count 1 \
+    --node-vm-size "$WORKLOADS_NODE_SKU" \
+    --node-osdisk-size 30 \
+    --enable-cluster-autoscaler \
+    --min-count 1 \
+    --max-count 3 \
+    --output none
+fi
+echo "==> Node pools ready."
 
 # ---------------------------------------------------------------------------
 # 5. Fetch credentials and verify connectivity
