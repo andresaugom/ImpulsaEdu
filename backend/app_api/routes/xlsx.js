@@ -51,32 +51,64 @@ router.post('/upload', upload.single('file'), async (req, res) => {
 // GET /api/v1/xlsx/download
 router.get('/download', async (req, res) => {
   try {
-    const mockData = {
-      needs: [],
-      schools: []
-    };
+      const schoolsResult = await pool.query(`
+          SELECT
+              region       AS municipio,
+              school       AS plantel,
+              name         AS escuela,
+              employees    AS personal_escolar,
+              students     AS estudiantes,
+              level        AS nivel_educativo,
+              cct,
+              mode         AS modalidad,
+              shift        AS turno,
+              category     AS sostenimiento,
+              address      AS direccion,
+              location     AS ubicacion_mapa
+          FROM schools
+          ORDER BY name
+      `);
 
-    const buffer = await exportFullDatabaseToExcel(mockData);
+      const needsResult = await pool.query(`
+          SELECT
+              s.region      AS municipio,
+              s.name        AS escuela,
+              'General'     AS categoria,
+              'General'     AS subcategoria,
+              sn.item_name  AS propuesta,
+              sn.quantity   AS cantidad,
+              sn.unit       AS unidad,
+              'Pendiente'   AS estado,
+              ''            AS detalles
+          FROM schools_needs sn
+          JOIN schools s ON s.id = sn.school_id
+          ORDER BY s.name
+      `);
 
-    res.setHeader(
-      'Content-Type',
-      'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
-    );
+      const data = {
+          needs: needsResult.rows,
+          schools: schoolsResult.rows
+      };
 
-    res.setHeader(
-      'Content-Disposition',
-      'attachment; filename="impulsaedu.xlsx"'
-    );
+      const buffer = await exportFullDatabaseToExcel(data);
 
-    res.send(buffer);
+      res.setHeader(
+          'Content-Type',
+          'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      );
+
+      res.setHeader(
+          'Content-Disposition',
+          'attachment; filename="impulsaedu.xlsx"'
+      );
+
+      res.send(buffer);
 
   } catch (err) {
-    console.error(err);
+      console.error(err);
 
-    res.status(500).json(
-      errBody('DOWNLOAD_ERROR', 'Failed to generate Excel file')
-    );
+      res.status(500).json(
+          errBody('DOWNLOAD_ERROR', 'Failed to generate Excel file')
+      );
   }
 });
-
-module.exports = router;
