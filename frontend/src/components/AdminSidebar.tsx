@@ -5,7 +5,8 @@ import {
     SettingsOutlined,
     AccountCircle,
     SchoolOutlined,
-    VolunteerActivismOutlined
+    VolunteerActivismOutlined,
+    NoteAddOutlined
   } from '@mui/icons-material';
   import {
     Box,
@@ -22,6 +23,7 @@ import {
   
   const navItems = [
     { icon: HomeOutlined, text: 'Panel', href: '/' },
+    { icon: NoteAddOutlined, text: 'Sincronización Excel', href: '/upload' },
     { icon: SchoolOutlined, text: 'Gestión de Escuelas', href: '/escuelas' },
     { icon: InventoryOutlined, text: 'Donaciones', href: '/donaciones' },
     { icon: VolunteerActivismOutlined, text: 'Gestión de Donantes', href: '/donantes' },
