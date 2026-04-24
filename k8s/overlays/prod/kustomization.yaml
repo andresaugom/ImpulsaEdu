@@ -7,6 +7,7 @@ resources:
   - ../../base
   - limitrange.yaml
   - resourcequota.yaml
+  - ingress.yaml
 
 images:
   - name: acrimpulsaedu.azurecr.io/impulsaedu-api-service

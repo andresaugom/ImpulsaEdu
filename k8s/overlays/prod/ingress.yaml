@@ -1,0 +1,60 @@
+# Ingress for ImpulsaEdu — impulsa-prod namespace only.
+# Dev environment is accessed via kubectl port-forward (no public ingress).
+#
+# Replace HOST below (app.impulsaedu.com) with the actual public domain name
+# that has an A record pointing to the ingress-nginx LoadBalancer IP.
+# See docs/dns-configuration.md for setup instructions.
+#
+# TLS certificate is provisioned automatically by cert-manager.
+# Start with letsencrypt-staging to validate the challenge, then switch to
+# letsencrypt-prod once confirmed working (see docs/dns-configuration.md).
+#
+# Path routing (longest prefix wins):
+#   /auth      → auth-service:8081    (JWT auth handled by auth-service)
+#   /api/v1    → api-service:8080     (JWT auth enforced by api-service middleware;
+#                                      GET /api/v1/schools is publicly accessible
+#                                      per api-service business logic)
+#   /          → frontend:3000        (catch-all)
+#
+# HTTP → HTTPS redirect is enforced via the ssl-redirect annotation.
+---
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: impulsa-ingress
+  namespace: impulsa-prod
+  annotations:
+    nginx.ingress.kubernetes.io/ssl-redirect: "true"
+    nginx.ingress.kubernetes.io/use-regex: "false"
+    cert-manager.io/cluster-issuer: "letsencrypt-staging"  # switch to letsencrypt-prod after staging succeeds
+spec:
+  ingressClassName: nginx
+  tls:
+    - hosts:
+        - app.impulsaedu.com   # replace with actual domain
+      secretName: impulsa-tls
+  rules:
+    - host: app.impulsaedu.com   # replace with actual domain
+      http:
+        paths:
+          - path: /auth
+            pathType: Prefix
+            backend:
+              service:
+                name: auth-service
+                port:
+                  number: 8081
+          - path: /api/v1
+            pathType: Prefix
+            backend:
+              service:
+                name: api-service
+                port:
+                  number: 8080
+          - path: /
+            pathType: Prefix
+            backend:
+              service:
+                name: frontend
+                port:
+                  number: 3000
