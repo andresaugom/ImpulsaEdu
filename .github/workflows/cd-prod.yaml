@@ -39,34 +39,34 @@ jobs:
 
       # ── Log in to ACR so docker can push ─────────────────────────────────
       - name: ACR login
-        run: az acr login --name "${{ secrets.ACR_LOGIN_SERVER }}"
+        run: az acr login --name "${{ secrets.ACR_NAME }}"
 
       # ── Build & push api-service ──────────────────────────────────────────
       - name: Build api-service
         run: |
           docker build \
-            -t "${{ secrets.ACR_LOGIN_SERVER }}.azurecr.io/impulsaedu-api-service:${{ steps.tag.outputs.IMAGE_TAG }}" \
+            -t "${{ secrets.ACR_LOGIN_SERVER }}/impulsaedu-api-service:${{ steps.tag.outputs.IMAGE_TAG }}" \
             -f backend/app_api/Dockerfile \
             backend/app_api
-          docker push "${{ secrets.ACR_LOGIN_SERVER }}.azurecr.io/impulsaedu-api-service:${{ steps.tag.outputs.IMAGE_TAG }}"
+          docker push "${{ secrets.ACR_LOGIN_SERVER }}/impulsaedu-api-service:${{ steps.tag.outputs.IMAGE_TAG }}"
 
       # ── Build & push auth-service ─────────────────────────────────────────
       - name: Build auth-service
         run: |
           docker build \
-            -t "${{ secrets.ACR_LOGIN_SERVER }}.azurecr.io/impulsaedu-auth-service:${{ steps.tag.outputs.IMAGE_TAG }}" \
+            -t "${{ secrets.ACR_LOGIN_SERVER }}/impulsaedu-auth-service:${{ steps.tag.outputs.IMAGE_TAG }}" \
             -f backend/auth/Dockerfile \
             backend/auth
-          docker push "${{ secrets.ACR_LOGIN_SERVER }}.azurecr.io/impulsaedu-auth-service:${{ steps.tag.outputs.IMAGE_TAG }}"
+          docker push "${{ secrets.ACR_LOGIN_SERVER }}/impulsaedu-auth-service:${{ steps.tag.outputs.IMAGE_TAG }}"
 
       # ── Build & push frontend ─────────────────────────────────────────────
       - name: Build frontend
         run: |
           docker build \
-            -t "${{ secrets.ACR_LOGIN_SERVER }}.azurecr.io/impulsaedu-frontend:${{ steps.tag.outputs.IMAGE_TAG }}" \
+            -t "${{ secrets.ACR_LOGIN_SERVER }}/impulsaedu-frontend:${{ steps.tag.outputs.IMAGE_TAG }}" \
             -f frontend/Dockerfile \
             frontend
-          docker push "${{ secrets.ACR_LOGIN_SERVER }}.azurecr.io/impulsaedu-frontend:${{ steps.tag.outputs.IMAGE_TAG }}"
+          docker push "${{ secrets.ACR_LOGIN_SERVER }}/impulsaedu-frontend:${{ steps.tag.outputs.IMAGE_TAG }}"
 
       # ── Get AKS credentials ───────────────────────────────────────────────
       - name: Set AKS context
@@ -79,19 +79,12 @@ jobs:
       - name: Deploy to impulsa-prod
         run: |
           TAG="${{ steps.tag.outputs.IMAGE_TAG }}"
-          ACR="${{ secrets.ACR_LOGIN_SERVER }}"
-
-          kubectl set image deployment/api-service \
-            api-service="${ACR}/impulsaedu-api-service:${TAG}" \
-            -n "$NAMESPACE"
-
-          kubectl set image deployment/auth-service \
-            auth-service="${ACR}/impulsaedu-auth-service:${TAG}" \
-            -n "$NAMESPACE"
-
-          kubectl set image deployment/frontend \
-            frontend="${ACR}/impulsaedu-frontend:${TAG}" \
-            -n "$NAMESPACE"
+          cd k8s/overlays/prod
+          kustomize edit set image \
+            acrimpulsaedu.azurecr.io/impulsaedu-api-service:${TAG} \
+            acrimpulsaedu.azurecr.io/impulsaedu-auth-service:${TAG} \
+            acrimpulsaedu.azurecr.io/impulsaedu-frontend:${TAG}
+          kubectl apply -k . -n "$NAMESPACE"
 
       # ── Wait for rollouts to complete ─────────────────────────────────────
       - name: Verify rollout

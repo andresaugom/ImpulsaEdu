@@ -86,19 +86,12 @@ jobs:
       - name: Deploy to impulsa-dev
         run: |
           TAG="${{ steps.tag.outputs.IMAGE_TAG }}"
-          ACR="${{ secrets.ACR_LOGIN_SERVER }}"
-
-          kubectl set image deployment/api-service \
-            api-service="${ACR}/impulsaedu-api-service:${TAG}" \
-            -n "$NAMESPACE"
-
-          kubectl set image deployment/auth-service \
-            auth-service="${ACR}/impulsaedu-auth-service:${TAG}" \
-            -n "$NAMESPACE"
-
-          kubectl set image deployment/frontend \
-            frontend="${ACR}/impulsaedu-frontend:${TAG}" \
-            -n "$NAMESPACE"
+          cd k8s/overlays/dev
+          kustomize edit set image \
+            acrimpulsaedu.azurecr.io/impulsaedu-api-service:${TAG} \
+            acrimpulsaedu.azurecr.io/impulsaedu-auth-service:${TAG} \
+            acrimpulsaedu.azurecr.io/impulsaedu-frontend:${TAG}
+          kubectl apply -k . -n "$NAMESPACE"
 
       # ── Wait for rollouts to complete ─────────────────────────────────────
       - name: Verify rollout
