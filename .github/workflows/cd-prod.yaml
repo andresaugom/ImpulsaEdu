@@ -47,7 +47,7 @@ jobs:
             -t "${{ secrets.ACR_LOGIN_SERVER }}/impulsaedu-api-service:${{ steps.tag.outputs.IMAGE_TAG }}" \
             -f backend/app_api/Dockerfile \
             backend/app_api
-          docker push "${{ secrets.ACR_LOGIN_SERVER }}/impulsaedu-api-service:${{ steps.tag.outputs.IMAGE_TAG }}"
+          docker push "${{ secrets.ACR_LOGIN_SERVER }}.azurecr.io/impulsaedu-api-service:${{ steps.tag.outputs.IMAGE_TAG }}"
 
       # ── Build & push auth-service ─────────────────────────────────────────
       - name: Build auth-service
@@ -56,7 +56,7 @@ jobs:
             -t "${{ secrets.ACR_LOGIN_SERVER }}/impulsaedu-auth-service:${{ steps.tag.outputs.IMAGE_TAG }}" \
             -f backend/auth/Dockerfile \
             backend/auth
-          docker push "${{ secrets.ACR_LOGIN_SERVER }}/impulsaedu-auth-service:${{ steps.tag.outputs.IMAGE_TAG }}"
+          docker push "${{ secrets.ACR_LOGIN_SERVER }}.azurecr.io/impulsaedu-auth-service:${{ steps.tag.outputs.IMAGE_TAG }}"
 
       # ── Build & push frontend ─────────────────────────────────────────────
       - name: Build frontend
@@ -65,7 +65,7 @@ jobs:
             -t "${{ secrets.ACR_LOGIN_SERVER }}/impulsaedu-frontend:${{ steps.tag.outputs.IMAGE_TAG }}" \
             -f frontend/Dockerfile \
             frontend
-          docker push "${{ secrets.ACR_LOGIN_SERVER }}/impulsaedu-frontend:${{ steps.tag.outputs.IMAGE_TAG }}"
+          docker push "${{ secrets.ACR_LOGIN_SERVER }}.azurecr.io/impulsaedu-frontend:${{ steps.tag.outputs.IMAGE_TAG }}"
 
       # ── Get AKS credentials ───────────────────────────────────────────────
       - name: Set AKS context
