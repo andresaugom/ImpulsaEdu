@@ -144,6 +144,31 @@ kubectl apply -f k8s/base/resourcequota-prod.yaml
 kubectl apply -f k8s/base/limitrange-dev.yaml
 kubectl apply -f k8s/base/limitrange-prod.yaml
 
+# ---------------------------------------------------------------------------
+# 6a. Create impulsa-secrets in both namespaces
+#     Requires DB_PASSWORD and JWT_SECRET to be set in the environment.
+#     In CI/CD these come from GitHub Actions secrets; locally set them before
+#     running this script:
+#       export DB_PASSWORD='...'
+#       export JWT_SECRET='...'
+# ---------------------------------------------------------------------------
+: "${DB_PASSWORD:?DB_PASSWORD must be set}"
+: "${JWT_SECRET:?JWT_SECRET must be set}"
+
+echo "==> Creating impulsa-secrets in impulsa-dev"
+kubectl create secret generic impulsa-secrets \
+  --from-literal=DB_PASSWORD="$DB_PASSWORD" \
+  --from-literal=JWT_SECRET="$JWT_SECRET" \
+  --namespace impulsa-dev \
+  --dry-run=client -o yaml | kubectl apply -f -
+
+echo "==> Creating impulsa-secrets in impulsa-prod"
+kubectl create secret generic impulsa-secrets \
+  --from-literal=DB_PASSWORD="$DB_PASSWORD" \
+  --from-literal=JWT_SECRET="$JWT_SECRET" \
+  --namespace impulsa-prod \
+  --dry-run=client -o yaml | kubectl apply -f -
+
 echo "==> Verifying namespaces"
 kubectl get namespaces impulsa-dev impulsa-prod
 
@@ -198,16 +223,14 @@ echo "==> Verifying ClusterIssuers"
 kubectl get clusterissuer
 
 # ---------------------------------------------------------------------------
-# 8. Apply Ingress manifest
-#    Prerequisite: DNS A record must resolve app.impulsaedu.com (or your
-#    custom APP_DOMAIN) to the ingress-nginx LoadBalancer IP shown above.
+# 8. Apply Ingress manifest (prod namespace)
+#    Prerequisite: DNS A record must resolve app.impulsaedu.com to the
+#    ingress-nginx LoadBalancer IP shown above before cert-manager can
+#    complete the HTTP-01 ACME challenge and issue the TLS certificate.
 #    See docs/dns-configuration.md for full instructions.
-#    NOTE: The Ingress is configured with letsencrypt-staging by default.
-#          Switch cert-manager.io/cluster-issuer to letsencrypt-prod once
-#          staging certificate issuance is confirmed.
 # ---------------------------------------------------------------------------
-echo "==> Applying Ingress"
-kubectl apply -f k8s/base/ingress.yaml
+echo "==> Applying Ingress (impulsa-prod)"
+kubectl apply -f k8s/overlays/prod/ingress.yaml
 
 echo ""
 echo "Cluster setup complete."
@@ -215,9 +238,7 @@ echo ""
 echo "Next steps for HTTPS:"
 echo "  1. Get the LoadBalancer IP:  kubectl get svc ingress-nginx-controller -n ingress-nginx"
 echo "  2. Create an A record:       app.impulsaedu.com -> <LoadBalancer IP>"
-echo "  3. Monitor cert issuance:    kubectl describe certificate impulsa-tls -n impulsa-dev"
-echo "  4. After staging succeeds, edit k8s/base/ingress.yaml and switch"
-echo "     cert-manager.io/cluster-issuer to letsencrypt-prod, then re-apply."
+echo "  3. Monitor cert issuance:    kubectl describe certificate impulsa-tls -n impulsa-prod"
 echo "  See docs/dns-configuration.md for full instructions."
 echo ""
 echo "Node pools:"
