@@ -28,6 +28,10 @@ KUBERNETES_VERSION="${KUBERNETES_VERSION:-1.29}"
 # ACR name must be globally unique and alphanumeric only (no hyphens)
 ACR_NAME="${ACR_NAME:-acrimpulsaedu}"
 
+# Storage account name must be globally unique, 3-24 chars, lowercase alphanumeric
+STORAGE_ACCOUNT_NAME="${STORAGE_ACCOUNT_NAME:-stimpulsaedu}"
+STORAGE_CONTAINER_NAME="${STORAGE_CONTAINER_NAME:-schools}"
+
 # Node SKU — Standard_B2s: 2 vCPU, 4 GB RAM (cheapest AKS-supported B-series)
 SYSTEM_NODE_SKU="${SYSTEM_NODE_SKU:-Standard_B2s}"
 WORKLOADS_NODE_SKU="${WORKLOADS_NODE_SKU:-Standard_B2s}"
@@ -60,12 +64,45 @@ ACR_LOGIN_SERVER=$(az acr show \
   --query loginServer -o tsv)
 
 echo "==> ACR login server: $ACR_LOGIN_SERVER"
+
+# ---------------------------------------------------------------------------
+# 3. Azure Blob Storage for school images
+#    Public access set to 'blob' — individual blobs are publicly readable
+#    (needed to serve images to the frontend via direct URL), while container
+#    enumeration requires the connection string (used by the API service).
+# ---------------------------------------------------------------------------
+echo "==> Creating Azure Storage Account: $STORAGE_ACCOUNT_NAME"
+az storage account create \
+  --name "$STORAGE_ACCOUNT_NAME" \
+  --resource-group "$RESOURCE_GROUP" \
+  --location "$LOCATION" \
+  --sku Standard_LRS \
+  --kind StorageV2 \
+  --allow-blob-public-access true \
+  --output none
+
+echo "==> Creating blob container: $STORAGE_CONTAINER_NAME"
+az storage container create \
+  --name "$STORAGE_CONTAINER_NAME" \
+  --account-name "$STORAGE_ACCOUNT_NAME" \
+  --public-access blob \
+  --output none
+
+STORAGE_CONNECTION_STRING=$(az storage account show-connection-string \
+  --name "$STORAGE_ACCOUNT_NAME" \
+  --resource-group "$RESOURCE_GROUP" \
+  --query connectionString -o tsv)
+
 echo ""
 echo "  *** Add the following GitHub Actions secrets to your repository ***"
-echo "  AZURE_CREDENTIALS       — output of: az ad sp create-for-rbac --name sp-impulsaedu-github --role contributor --scopes /subscriptions/<SUB_ID>/resourceGroups/$RESOURCE_GROUP --sdk-auth"
-echo "  ACR_LOGIN_SERVER        — $ACR_LOGIN_SERVER"
-echo "  AZURE_RESOURCE_GROUP    — $RESOURCE_GROUP"
-echo "  AKS_CLUSTER_NAME        — $CLUSTER_NAME"
+echo "  AZURE_CREDENTIALS              — output of: az ad sp create-for-rbac --name sp-impulsaedu-github --role contributor --scopes /subscriptions/<SUB_ID>/resourceGroups/$RESOURCE_GROUP --sdk-auth"
+echo "  ACR_LOGIN_SERVER               — $ACR_LOGIN_SERVER"
+echo "  AZURE_RESOURCE_GROUP           — $RESOURCE_GROUP"
+echo "  AKS_CLUSTER_NAME               — $CLUSTER_NAME"
+echo "  AZURE_STORAGE_CONNECTION_STRING — (see below)"
+echo ""
+echo "  Storage connection string (add as GitHub secret AZURE_STORAGE_CONNECTION_STRING):"
+echo "  $STORAGE_CONNECTION_STRING"
 echo ""
 
 # ---------------------------------------------------------------------------
@@ -143,6 +180,33 @@ kubectl apply -f k8s/base/resourcequota-dev.yaml
 kubectl apply -f k8s/base/resourcequota-prod.yaml
 kubectl apply -f k8s/base/limitrange-dev.yaml
 kubectl apply -f k8s/base/limitrange-prod.yaml
+
+# ---------------------------------------------------------------------------
+# 6a. Create impulsa-secrets in both namespaces
+#     Requires DB_PASSWORD and JWT_SECRET to be set in the environment.
+#     In CI/CD these come from GitHub Actions secrets; locally set them before
+#     running this script:
+#       export DB_PASSWORD='...'
+#       export JWT_SECRET='...'
+# ---------------------------------------------------------------------------
+: "${DB_PASSWORD:?DB_PASSWORD must be set}"
+: "${JWT_SECRET:?JWT_SECRET must be set}"
+
+echo "==> Creating impulsa-secrets in impulsa-dev"
+kubectl create secret generic impulsa-secrets \
+  --from-literal=DB_PASSWORD="$DB_PASSWORD" \
+  --from-literal=JWT_SECRET="$JWT_SECRET" \
+  --from-literal=AZURE_STORAGE_CONNECTION_STRING="$STORAGE_CONNECTION_STRING" \
+  --namespace impulsa-dev \
+  --dry-run=client -o yaml | kubectl apply -f -
+
+echo "==> Creating impulsa-secrets in impulsa-prod"
+kubectl create secret generic impulsa-secrets \
+  --from-literal=DB_PASSWORD="$DB_PASSWORD" \
+  --from-literal=JWT_SECRET="$JWT_SECRET" \
+  --from-literal=AZURE_STORAGE_CONNECTION_STRING="$STORAGE_CONNECTION_STRING" \
+  --namespace impulsa-prod \
+  --dry-run=client -o yaml | kubectl apply -f -
 
 echo "==> Verifying namespaces"
 kubectl get namespaces impulsa-dev impulsa-prod

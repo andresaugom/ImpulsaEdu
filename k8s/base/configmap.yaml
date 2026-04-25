@@ -10,3 +10,6 @@ data:
   DB_USER: "impulsaedu"
   API_PORT: "8080"
   AUTH_PORT: "8081"
+  DB_SSL: "false"
+  AZURE_STORAGE_ACCOUNT_NAME: "stimpulsaedu"
+  AZURE_STORAGE_CONTAINER: "schools"

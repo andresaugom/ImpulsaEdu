@@ -5,15 +5,21 @@
 # commit SHA, then rolls out the new images in the impulsa-dev namespace.
 #
 # Required GitHub Actions secrets:
-#   AZURE_CREDENTIALS     — JSON output of:
-#                           az ad sp create-for-rbac \
-#                             --name sp-impulsaedu-github \
-#                             --role contributor \
-#                             --scopes /subscriptions/<SUB>/resourceGroups/rg-impulsaedu \
-#                             --sdk-auth
-#   ACR_LOGIN_SERVER      — e.g. acrimpulsaedu.azurecr.io
-#   AZURE_RESOURCE_GROUP  — e.g. rg-impulsaedu
-#   AKS_CLUSTER_NAME      — e.g. aks-impulsaedu
+#   AZURE_CREDENTIALS              — JSON output of:
+#                                    az ad sp create-for-rbac \
+#                                      --name sp-impulsaedu-github \
+#                                      --role contributor \
+#                                      --scopes /subscriptions/<SUB>/resourceGroups/rg-impulsaedu \
+#                                      --sdk-auth
+#   ACR_LOGIN_SERVER               — e.g. acrimpulsaedu.azurecr.io
+#   AZURE_RESOURCE_GROUP           — e.g. rg-impulsaedu
+#   AKS_CLUSTER_NAME               — e.g. aks-impulsaedu
+#   DB_PASSWORD                    — PostgreSQL superuser password
+#   JWT_SECRET                     — Random secret for signing JWT tokens
+#   AZURE_STORAGE_CONNECTION_STRING — Azure Storage Account connection string
+#                                     (output of: az storage account show-connection-string
+#                                      --name stimpulsaedu --resource-group rg-impulsaedu
+#                                      --query connectionString -o tsv)
 
 name: CD — develop
 
@@ -81,6 +87,16 @@ jobs:
         with:
           resource-group: ${{ secrets.AZURE_RESOURCE_GROUP }}
           cluster-name: ${{ secrets.AKS_CLUSTER_NAME }}
+
+      # ── Inject secrets into the cluster ──────────────────────────────────
+      - name: Apply Kubernetes secrets
+        run: |
+          kubectl create secret generic impulsa-secrets \
+            -n "$NAMESPACE" \
+            --from-literal=DB_PASSWORD="${{ secrets.DB_PASSWORD }}" \
+            --from-literal=JWT_SECRET="${{ secrets.JWT_SECRET }}" \
+            --from-literal=AZURE_STORAGE_CONNECTION_STRING="${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}" \
+            --dry-run=client -o yaml | kubectl apply -f -
 
       # ── Roll out new images to impulsa-dev ────────────────────────────────
       - name: Deploy to impulsa-dev
