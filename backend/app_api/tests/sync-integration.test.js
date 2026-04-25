@@ -56,7 +56,10 @@ async function cleanupTestData(client) {
     await client.query('DELETE FROM schools WHERE cct = $1', [TEST_CCT]);
 }
 
-describe('syncExcelToDB — integration (real DB)', () => {
+const hasDbConnection = !!(process.env.DB_PASSWORD);
+const describeIntegration = hasDbConnection ? describe : describe.skip;
+
+describeIntegration('syncExcelToDB — integration (real DB)', () => {
     let client;
 
     beforeAll(async () => {

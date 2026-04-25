@@ -2,7 +2,7 @@
 import {
     HomeOutlined,
     InventoryOutlined,
-    LocalShippingOutlined,
+    
     SettingsOutlined,
     AccountCircle,
     SchoolOutlined,
