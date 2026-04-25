@@ -1,5 +1,4 @@
-# Ingress for ImpulsaEdu — impulsa-prod namespace only.
-# Dev environment is accessed via kubectl port-forward (no public ingress).
+# Ingress for ImpulsaEdu.
 #
 # Replace HOST below (app.impulsaedu.com) with the actual public domain name
 # that has an A record pointing to the ingress-nginx LoadBalancer IP.
@@ -22,7 +21,7 @@ apiVersion: networking.k8s.io/v1
 kind: Ingress
 metadata:
   name: impulsa-ingress
-  namespace: impulsa-prod
+  namespace: impulsa
   annotations:
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
     nginx.ingress.kubernetes.io/use-regex: "false"

@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: impulsa-config
-  namespace: impulsa-dev
+  namespace: impulsa
 data:
   DB_HOST: "postgres"
   DB_PORT: "5432"

@@ -1,10 +1,10 @@
-# CD — main → impulsa-prod
+# CD — main → impulsa
 #
 # Triggered on every push/merge to the main branch.
 # Builds all three service images, pushes them to ACR tagged with the git
-# commit SHA, then rolls out the new images in the impulsa-prod namespace.
+# commit SHA, then rolls out the new images in the impulsa namespace.
 #
-# Required GitHub Actions secrets (same as cd-dev.yaml):
+# Required GitHub Actions secrets:
 #   AZURE_CREDENTIALS, ACR_NAME, ACR_LOGIN_SERVER, AZURE_RESOURCE_GROUP, AKS_CLUSTER_NAME,
 #   DB_PASSWORD, JWT_SECRET
 
@@ -17,11 +17,11 @@ on:
       - bugfix/45
 
 env:
-  NAMESPACE: impulsa-prod
+  NAMESPACE: impulsa
 
 jobs:
   build-push-deploy:
-    name: Build → Push → Deploy (prod)
+    name: Build → Push → Deploy
     runs-on: ubuntu-latest
 
     steps:
@@ -85,8 +85,8 @@ jobs:
             --from-literal=JWT_SECRET="${{ secrets.JWT_SECRET }}" \
             --dry-run=client -o yaml | kubectl apply -f -
 
-      # ── Roll out new images to impulsa-prod ───────────────────────────────
-      - name: Deploy to impulsa-prod
+      # ── Roll out new images to impulsa ────────────────────────────────────
+      - name: Deploy to impulsa
         run: |
           TAG="${{ steps.tag.outputs.IMAGE_TAG }}"
           cd k8s/overlays/prod

@@ -103,7 +103,7 @@ kubectl get svc ingress-nginx-controller -n ingress-nginx \
 # 2. Create an A record: app.impulsaedu.com -> <LoadBalancer IP>
 
 # 3. Watch staging certificate issuance
-kubectl describe certificate impulsa-tls -n impulsa-dev
+kubectl describe certificate impulsa-tls -n impulsa
 
 # 4. Once staging succeeds, switch the cluster-issuer in k8s/base/ingress.yaml
 #    to letsencrypt-prod and re-apply
@@ -125,8 +125,8 @@ You will be prompted to type the cluster name to confirm. This deletes the entir
 
 ```bash
 kubectl get nodes -o wide
-kubectl get namespaces impulsa-dev impulsa-prod
-kubectl describe resourcequota -n impulsa-dev
+kubectl get namespace impulsa
+kubectl describe resourcequota -n impulsa
 kubectl get clusterissuer
 kubectl get svc ingress-nginx-controller -n ingress-nginx
 ```
