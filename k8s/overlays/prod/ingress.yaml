@@ -26,7 +26,7 @@ metadata:
   annotations:
     nginx.ingress.kubernetes.io/ssl-redirect: "true"
     nginx.ingress.kubernetes.io/use-regex: "false"
-    cert-manager.io/cluster-issuer: "letsencrypt-staging"  # switch to letsencrypt-prod after staging succeeds
+    cert-manager.io/cluster-issuer: "letsencrypt-prod"
 spec:
   ingressClassName: nginx
   tls:

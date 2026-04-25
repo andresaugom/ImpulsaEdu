@@ -23,9 +23,9 @@ spec:
             - containerPort: 3000
           env:
             - name: NEXT_PUBLIC_API_URL
-              value: "http://api-service:8080"
+              value: "https://app.impulsaedu.com/api/v1"
             - name: NEXT_PUBLIC_AUTH_URL
-              value: "http://auth-service:8081"
+              value: "https://app.impulsaedu.com/auth"
           resources:
             requests:
               cpu: 100m
