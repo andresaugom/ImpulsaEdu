@@ -141,7 +141,7 @@ async function syncExcelToDB(filePath) {
     } catch (error) {
         await client.query('ROLLBACK');
         console.error("Error during sync:", error);
-        throw error; 
+        throw new Error(`Sync failed and transaction was rolled back. Details: ${error.message}`);
     } finally {
         client.release();
     }

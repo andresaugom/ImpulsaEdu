@@ -30,10 +30,6 @@ router.post('/upload', upload.single('file'), async (req, res) => {
   try {
     const result = await syncExcelToDB(req.file.path);
 
-    if (fs.existsSync(req.file.path)) {
-      fs.unlinkSync(req.file.path);
-    }
-
     res.json({
       message: 'Excel uploaded successfully',
       result
@@ -43,8 +39,12 @@ router.post('/upload', upload.single('file'), async (req, res) => {
     console.error(err);
 
     res.status(500).json(
-      errBody('UPLOAD_ERROR', 'Failed to process Excel file')
+      errBody('UPLOAD_ERROR', err.message || 'Failed to process Excel file')
     );
+  } finally {
+    if (req.file && fs.existsSync(req.file.path)) {
+      fs.unlinkSync(req.file.path);
+    }
   }
 });
 
