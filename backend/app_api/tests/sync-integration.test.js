@@ -56,7 +56,8 @@ async function cleanupTestData(client) {
     await client.query('DELETE FROM schools WHERE cct = $1', [TEST_CCT]);
 }
 
-const hasDbConnection = !!(process.env.DB_PASSWORD);
+const isCI = process.env.CI === 'true';
+const hasDbConnection = !!(process.env.DB_PASSWORD) && !isCI;
 const describeIntegration = hasDbConnection ? describe : describe.skip;
 
 describeIntegration('syncExcelToDB — integration (real DB)', () => {
