@@ -3,7 +3,6 @@ kind: Kustomization
 
 resources:
   - configmap.yaml
-  - secret.yaml
   - cert-manager/clusterissuer.yaml
   - api-service/deployment.yaml
   - api-service/service.yaml

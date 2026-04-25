@@ -14,6 +14,8 @@
 #   ACR_LOGIN_SERVER      — e.g. acrimpulsaedu.azurecr.io
 #   AZURE_RESOURCE_GROUP  — e.g. rg-impulsaedu
 #   AKS_CLUSTER_NAME      — e.g. aks-impulsaedu
+#   DB_PASSWORD           — PostgreSQL superuser password
+#   JWT_SECRET            — Random secret for signing JWT tokens
 
 name: CD — develop
 
@@ -81,6 +83,15 @@ jobs:
         with:
           resource-group: ${{ secrets.AZURE_RESOURCE_GROUP }}
           cluster-name: ${{ secrets.AKS_CLUSTER_NAME }}
+
+      # ── Inject secrets into the cluster ──────────────────────────────────
+      - name: Apply Kubernetes secrets
+        run: |
+          kubectl create secret generic impulsa-secrets \
+            -n "$NAMESPACE" \
+            --from-literal=DB_PASSWORD="${{ secrets.DB_PASSWORD }}" \
+            --from-literal=JWT_SECRET="${{ secrets.JWT_SECRET }}" \
+            --dry-run=client -o yaml | kubectl apply -f -
 
       # ── Roll out new images to impulsa-dev ────────────────────────────────
       - name: Deploy to impulsa-dev

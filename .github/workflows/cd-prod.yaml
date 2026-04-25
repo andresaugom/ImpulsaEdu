@@ -5,7 +5,8 @@
 # commit SHA, then rolls out the new images in the impulsa-prod namespace.
 #
 # Required GitHub Actions secrets (same as cd-dev.yaml):
-#   AZURE_CREDENTIALS, ACR_LOGIN_SERVER, AZURE_RESOURCE_GROUP, AKS_CLUSTER_NAME
+#   AZURE_CREDENTIALS, ACR_NAME, ACR_LOGIN_SERVER, AZURE_RESOURCE_GROUP, AKS_CLUSTER_NAME,
+#   DB_PASSWORD, JWT_SECRET
 
 name: CD — main
 
@@ -74,6 +75,15 @@ jobs:
         with:
           resource-group: ${{ secrets.AZURE_RESOURCE_GROUP }}
           cluster-name: ${{ secrets.AKS_CLUSTER_NAME }}
+
+      # ── Inject secrets into the cluster ──────────────────────────────────
+      - name: Apply Kubernetes secrets
+        run: |
+          kubectl create secret generic impulsa-secrets \
+            -n "$NAMESPACE" \
+            --from-literal=DB_PASSWORD="${{ secrets.DB_PASSWORD }}" \
+            --from-literal=JWT_SECRET="${{ secrets.JWT_SECRET }}" \
+            --dry-run=client -o yaml | kubectl apply -f -
 
       # ── Roll out new images to impulsa-prod ───────────────────────────────
       - name: Deploy to impulsa-prod
