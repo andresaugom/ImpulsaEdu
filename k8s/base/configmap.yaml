@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: impulsa-config
-  namespace: impulsa-dev
+  namespace: impulsa
 data:
   DB_HOST: "postgres"
   DB_PORT: "5432"
@@ -10,3 +10,5 @@ data:
   DB_USER: "impulsaedu"
   API_PORT: "8080"
   AUTH_PORT: "8081"
+  DB_SSL: "false"
+  APP_DOMAIN: "impulsaedu.sytes.net"

@@ -15,7 +15,7 @@ async function initDatabase(config) {
         password: config.password,
         database: config.database,
         port: parseInt(config.port) || 5432,
-        ssl: config.host && config.host !== 'localhost' ? { rejectUnauthorized: false } : false
+        ssl: config.ssl === 'true' ? { rejectUnauthorized: false } : false
     });
 
     try {
