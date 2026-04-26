@@ -1,0 +1,33 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: impulsa
+
+resources:
+  - ../../base
+  - limitrange.yaml
+  - resourcequota.yaml
+  - ingress.yaml
+
+images:
+  - name: acrimpulsaedu.azurecr.io/impulsaedu-api-service
+    newTag: latest
+  - name: acrimpulsaedu.azurecr.io/impulsaedu-auth-service
+    newTag: latest
+  - name: acrimpulsaedu.azurecr.io/impulsaedu-frontend
+    newTag: latest
+
+# Propagate APP_DOMAIN from the ConfigMap into the Ingress so the domain
+# is defined in a single place (configmap.yaml data.APP_DOMAIN).
+replacements:
+  - source:
+      kind: ConfigMap
+      name: impulsa-config
+      fieldPath: data.APP_DOMAIN
+    targets:
+      - select:
+          kind: Ingress
+          name: impulsa-ingress
+        fieldPaths:
+          - spec.tls.0.hosts.0
+          - spec.rules.0.host

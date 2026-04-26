@@ -1,0 +1,18 @@
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: impulsa-quota
+  namespace: impulsa
+spec:
+  hard:
+    # Compute — sized for 2x Standard_B2s workloads nodes (4 vCPU / 8 GB)
+    requests.cpu: "2"
+    requests.memory: 4Gi
+    limits.cpu: "4"
+    limits.memory: 8Gi
+    # Object counts
+    pods: "30"
+    services: "10"
+    persistentvolumeclaims: "5"
+    secrets: "20"
+    configmaps: "20"

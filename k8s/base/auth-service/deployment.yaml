@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: auth-service
-  namespace: impulsa-dev
+  namespace: impulsa
   labels:
     app: auth-service
 spec:
@@ -52,6 +52,11 @@ spec:
                 secretKeyRef:
                   name: impulsa-secrets
                   key: DB_PASSWORD
+            - name: DB_SSL
+              valueFrom:
+                configMapKeyRef:
+                  name: impulsa-config
+                  key: DB_SSL
             - name: JWT_SECRET
               valueFrom:
                 secretKeyRef:

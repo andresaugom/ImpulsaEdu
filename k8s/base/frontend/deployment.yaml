@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: frontend
-  namespace: impulsa-dev
+  namespace: impulsa
   labels:
     app: frontend
 spec:
@@ -23,9 +23,9 @@ spec:
             - containerPort: 3000
           env:
             - name: NEXT_PUBLIC_API_URL
-              value: "http://api-service:8080"
+              value: "/api/v1"
             - name: NEXT_PUBLIC_AUTH_URL
-              value: "http://auth-service:8081"
+              value: "/auth"
           resources:
             requests:
               cpu: 100m
