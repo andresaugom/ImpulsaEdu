@@ -213,19 +213,14 @@ log "Verifying cluster connectivity"
 kubectl get nodes -o wide
 
 # ---------------------------------------------------------------------------
-# 6. Apply base Kubernetes manifests
-#    Namespaces are applied first; we wait for them to become Active before
-#    applying quotas and secrets that reference them, avoiding a race against
-#    the namespace controller's eventually-consistent propagation.
+# 6. Create the production namespace
+#    Applied first so the impulsa-secrets step below can reference it
+#    immediately. We wait for Active before proceeding.
 # ---------------------------------------------------------------------------
 log "Applying namespace manifests"
 kubectl apply -f k8s/base/namespaces.yaml
 
 wait_for_namespace impulsa
-
-log "Applying resource quotas and limit ranges"
-kubectl apply -f k8s/base/resourcequota.yaml
-kubectl apply -f k8s/base/limitrange.yaml
 
 # ---------------------------------------------------------------------------
 # 6a. Create impulsa-secrets in the namespace
@@ -245,12 +240,6 @@ kubectl create secret generic impulsa-secrets \
   --from-literal=AZURE_STORAGE_CONNECTION_STRING="$STORAGE_CONNECTION_STRING" \
   --namespace impulsa \
   --dry-run=client -o yaml | kubectl apply -f -
-
-log "Verifying namespace"
-kubectl get namespace impulsa
-
-log "Verifying resource quotas"
-kubectl describe resourcequota -n impulsa
 
 # ---------------------------------------------------------------------------
 # 7. Install ingress-nginx controller on the workloads node pool
@@ -325,14 +314,19 @@ log "Verifying ClusterIssuers"
 kubectl get clusterissuer
 
 # ---------------------------------------------------------------------------
-# 9. Apply Ingress manifest (prod namespace)
-#    Prerequisite: DNS A record must resolve app.impulsaedu.com to the
-#    ingress-nginx LoadBalancer IP shown above before cert-manager can
-#    complete the HTTP-01 ACME challenge and issue the TLS certificate.
-#    See docs/dns-configuration.md for full instructions.
+# 9. Apply the production overlay via kustomize
+#    Deploys all workloads, services, ingress, resource quotas, and limit
+#    ranges for the single production namespace (impulsa).
+#    cert-manager and ingress-nginx must already be running (steps 7–8).
 # ---------------------------------------------------------------------------
-log "Applying Ingress (impulsa)"
-kubectl apply -f k8s/overlays/prod/ingress.yaml
+log "Applying production manifests (kustomize overlay: k8s/overlays/prod)"
+kubectl apply -k k8s/overlays/prod
+
+log "Verifying namespace"
+kubectl get namespace impulsa
+
+log "Verifying resource quotas"
+kubectl describe resourcequota -n impulsa
 
 echo ""
 echo "Cluster setup complete."
