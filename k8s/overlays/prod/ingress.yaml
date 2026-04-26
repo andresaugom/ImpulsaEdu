@@ -1,8 +1,8 @@
 # Ingress for ImpulsaEdu.
 #
-# Replace HOST below (app.impulsaedu.com) with the actual public domain name
-# that has an A record pointing to the ingress-nginx LoadBalancer IP.
-# See docs/dns-configuration.md for setup instructions.
+# Domain is set via APP_DOMAIN in k8s/base/configmap.yaml and propagated here
+# through the kustomize replacement defined in overlays/prod/kustomization.yaml.
+# See docs/dns-configuration.md for DNS setup instructions.
 #
 # TLS certificate is provisioned automatically by cert-manager.
 # Start with letsencrypt-staging to validate the challenge, then switch to
@@ -30,10 +30,10 @@ spec:
   ingressClassName: nginx
   tls:
     - hosts:
-        - app.impulsaedu.com   # replace with actual domain
+        - impulsaedu.sytes.net
       secretName: impulsa-tls
   rules:
-    - host: app.impulsaedu.com   # replace with actual domain
+    - host: impulsaedu.sytes.net
       http:
         paths:
           - path: /auth
