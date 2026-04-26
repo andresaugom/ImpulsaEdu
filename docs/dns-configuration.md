@@ -42,9 +42,17 @@ helm upgrade --install ingress-nginx ingress-nginx/ingress-nginx \
 
 ## Step 2 — Create the A Record
 
+Create the zone first:
+
+```bash
+az network dns zone create \
+  --resource-group rg-impulsaedu \
+  --name impulsaedu.com
+```
+
 | Record type | Name | Value |
 |-------------|------|-------|
-| A | `app.impulsaedu.com` | `<LoadBalancer IP>` |
+| A | `your.domain.com` | `<LoadBalancer IP>` |
 
 Configure this in your DNS provider (e.g., Azure DNS, Cloudflare, GoDaddy).
 
@@ -58,17 +66,74 @@ az network dns record-set a add-record \
   --ipv4-address <LoadBalancer IP>
 ```
 
+Then, get the nameservers assigned to the zone: 
+
+```bash
+az network dns zone show \
+  --resource-group rg-impulsaedu \
+  --name impulsaedu.com \
+  --query nameServers -o tsv
+```
+
+---
+
+### No-IP DDNS (free dynamic DNS option)
+
+If you do not own a domain, [No-IP](https://www.noip.com) provides free hostnames (e.g. `myapp.ddns.net`) that you can point to the LoadBalancer IP.
+
+**2a. Create or update a hostname in the No-IP dashboard**
+
+1. Log in at <https://www.noip.com> and go to **Dynamic DNS → No-IP Hostnames**.
+2. Click **Create Hostname** (or edit an existing one).
+3. Fill in:
+   - **Hostname**: your chosen label (e.g. `impulsaedu`)
+   - **Domain**: pick a free suffix (e.g. `ddns.net`) or your own domain if linked
+   - **IP / Target**: paste the LoadBalancer IP from Step 1
+4. Click **Save**.
+
+Your hostname (e.g. `impulsaedu.ddns.net`) now resolves to the LoadBalancer IP.
+
+**2b. Keep the record up to date if your IP changes**
+
+The Azure LoadBalancer IP is stable as long as the cluster exists, but if you ever recreate the cluster (and did not reserve a static IP in Step 1), you must update the No-IP record manually — or run the No-IP Dynamic Update Client (DUC) on a machine that monitors the IP:
+
+```bash
+# Install the DUC on a Linux host (see https://www.noip.com/support/knowledgebase/install-linux-3-x-dynamic-update-client-duc/)
+# Then configure /etc/no-ip2.conf with your credentials and hostname.
+# The DUC polls your public IP and pushes updates to No-IP automatically.
+noip2 -C   # interactive configuration wizard
+noip2      # start the daemon
+```
+
+> **Tip:** If the LoadBalancer IP is reserved as a static Azure public IP (see Step 1), the IP never changes and you do not need the DUC.
+
+**2c. Use the No-IP hostname in your ingress**
+
+Replace any reference to `your.domain.com` in `k8s/base/ingress.yaml` (and in cert-manager's `dnsNames`) with your No-IP hostname:
+
+```yaml
+spec:
+  tls:
+    - hosts:
+        - impulsaedu.ddns.net
+      secretName: impulsa-tls
+  rules:
+    - host: impulsaedu.ddns.net
+```
+
+Let's Encrypt supports HTTP-01 challenges for `ddns.net` subdomains, so certificate issuance works the same way as with a custom domain.
+
 ---
 
 ## Step 3 — Verify DNS propagation
 
 ```bash
 # Confirm the A record resolves
-dig +short app.impulsaedu.com
+dig +short your.domain.com
 # Should return the LoadBalancer IP
 
 # Or with nslookup
-nslookup app.impulsaedu.com
+nslookup your.domain.com
 ```
 
 DNS TTL propagation can take a few minutes up to 1 hour depending on your provider.
@@ -127,15 +192,15 @@ Once `Ready`, HTTPS is live and HTTP will automatically redirect (301) to HTTPS.
 
 ```bash
 # HTTPS health checks
-curl -I https://app.impulsaedu.com/           # → frontend (200)
-curl -I https://app.impulsaedu.com/auth/      # → auth-service
-curl -I https://app.impulsaedu.com/api/v1/schools  # → api-service (200, public)
-curl -I https://app.impulsaedu.com/api/v1/courses  # → api-service (401, JWT required)
+curl -I https://your.domain.com/           # → frontend (200)
+curl -I https://your.domain.com/auth/      # → auth-service
+curl -I https://your.domain.com/api/v1/schools  # → api-service (200, public)
+curl -I https://your.domain.com/api/v1/courses  # → api-service (401, JWT required)
 
 # HTTP → HTTPS redirect
-curl -I http://app.impulsaedu.com/
+curl -I http://your.domain.com/
 # → HTTP/1.1 301 Moved Permanently
-# → Location: https://app.impulsaedu.com/
+# → Location: https://your.domain.com/
 ```
 
 ---
