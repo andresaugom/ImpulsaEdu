@@ -109,7 +109,7 @@ noip2      # start the daemon
 
 **2c. Use the No-IP hostname in your ingress**
 
-Replace any reference to `your.domain.com` in `k8s/base/ingress.yaml` (and in cert-manager's `dnsNames`) with your No-IP hostname:
+Replace any reference to `your.domain.com` in `k8s/overlays/prod/ingress.yaml` (and in cert-manager's `dnsNames`) with your No-IP hostname before applying `kubectl apply -k k8s/overlays/prod`:
 
 ```yaml
 spec:
