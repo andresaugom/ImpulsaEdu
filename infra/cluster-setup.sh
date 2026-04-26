@@ -62,10 +62,11 @@ az group create \
 
 # ---------------------------------------------------------------------------
 # 2. Azure Container Registry
-#    - Admin account enabled so GitHub Actions can push images using
-#      username/password credentials (ACR_USERNAME / ACR_PASSWORD secrets)
-#      without needing a separately provisioned service principal.
 #    - Basic SKU is sufficient for development; upgrade to Standard for prod.
+#    - GitHub Actions authenticates via AZURE_CREDENTIALS (service principal)
+#      with AcrPush role — no admin account needed.
+#    - In-cluster image pulls are handled by --attach-acr on the AKS cluster
+#      (grants the cluster's managed identity AcrPull on the ACR).
 # ---------------------------------------------------------------------------
 log "Creating Azure Container Registry: $ACR_NAME"
 az acr create \
@@ -73,7 +74,6 @@ az acr create \
   --name "$ACR_NAME" \
   --sku Basic \
   --location "$LOCATION" \
-  --admin-enabled true \
   --output none
 
 ACR_LOGIN_SERVER=$(az acr show \
@@ -81,18 +81,26 @@ ACR_LOGIN_SERVER=$(az acr show \
   --resource-group "$RESOURCE_GROUP" \
   --query loginServer -o tsv)
 
-# Retrieve admin credentials for GitHub Actions secrets
-ACR_USERNAME=$(az acr credential show \
-  --name "$ACR_NAME" \
-  --resource-group "$RESOURCE_GROUP" \
-  --query username -o tsv)
-
-ACR_PASSWORD=$(az acr credential show \
-  --name "$ACR_NAME" \
-  --resource-group "$RESOURCE_GROUP" \
-  --query "passwords[0].value" -o tsv)
-
 log "ACR login server: $ACR_LOGIN_SERVER"
+
+# Grant the service principal used by GitHub Actions AcrPush on this registry.
+# Retrieve the service principal's object ID from AZURE_CREDENTIALS or set
+# SP_OBJECT_ID before running this script.
+if [[ -n "${SP_OBJECT_ID:-}" ]]; then
+  ACR_ID=$(az acr show \
+    --name "$ACR_NAME" \
+    --resource-group "$RESOURCE_GROUP" \
+    --query id -o tsv)
+  az role assignment create \
+    --assignee "$SP_OBJECT_ID" \
+    --role AcrPush \
+    --scope "$ACR_ID" \
+    --output none
+  log "Granted AcrPush to service principal $SP_OBJECT_ID on $ACR_NAME"
+else
+  log "SP_OBJECT_ID not set — skipping AcrPush role assignment."
+  log "Run: az role assignment create --assignee <sp-object-id> --role AcrPush --scope \$(az acr show --name $ACR_NAME --query id -o tsv)"
+fi
 
 # ---------------------------------------------------------------------------
 # 3. Azure Blob Storage for school images
@@ -131,8 +139,6 @@ echo "  *** Add the following GitHub Actions secrets to your repository ***"
 echo ""
 echo "  AZURE_CREDENTIALS              — output of: az ad sp create-for-rbac --name sp-impulsaedu-github --role contributor --scopes /subscriptions/<SUB_ID>/resourceGroups/$RESOURCE_GROUP --sdk-auth"
 echo "  ACR_LOGIN_SERVER               — $ACR_LOGIN_SERVER"
-echo "  ACR_USERNAME                   — $ACR_USERNAME"
-echo "  ACR_PASSWORD                   — $ACR_PASSWORD"
 echo "  AZURE_RESOURCE_GROUP           — $RESOURCE_GROUP"
 echo "  AKS_CLUSTER_NAME               — $CLUSTER_NAME"
 echo "  AZURE_STORAGE_CONNECTION_STRING — (see below)"
@@ -146,7 +152,7 @@ echo ""
 #    --node-count 1      keeps cost minimal; system pool needs at least 1 node
 #    --attach-acr        grants the cluster's managed identity AcrPull on the
 #                        ACR — covers in-cluster image pulls. AcrPush for CI/CD
-#                        is handled via the ACR admin credentials above.
+#                        is handled via the service principal in AZURE_CREDENTIALS.
 #    --node-osdisk-size  set to 30 GB (matches workloads pool) to avoid paying
 #                        for the default 128 GB OS disk on the system node.
 # ---------------------------------------------------------------------------
@@ -338,7 +344,7 @@ echo "  3. Monitor cert issuance:    kubectl describe certificate impulsa-tls -n
 echo "  See docs/dns-configuration.md for full instructions."
 echo ""
 echo "GitHub Actions secrets to configure:"
-echo "  AZURE_CREDENTIALS, ACR_LOGIN_SERVER, ACR_USERNAME, ACR_PASSWORD,"
+echo "  AZURE_CREDENTIALS, ACR_LOGIN_SERVER,"
 echo "  AZURE_RESOURCE_GROUP, AKS_CLUSTER_NAME, AZURE_STORAGE_CONNECTION_STRING"
 echo "  (values printed above)"
 echo ""
