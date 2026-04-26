@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: api-service
-  namespace: impulsa-dev
+  namespace: impulsa
   labels:
     app: api-service
 spec:
@@ -52,6 +52,16 @@ spec:
                 secretKeyRef:
                   name: impulsa-secrets
                   key: DB_PASSWORD
+            - name: DB_SSL
+              valueFrom:
+                configMapKeyRef:
+                  name: impulsa-config
+                  key: DB_SSL
+            - name: JWT_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: impulsa-secrets
+                  key: JWT_SECRET
           resources:
             requests:
               cpu: 100m

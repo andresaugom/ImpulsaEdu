@@ -47,10 +47,10 @@ The script performs the following steps in order:
 3. Creates the AKS cluster with a `system` node pool (1–2 × Standard_B2s)
 4. Adds the `workloads` user node pool (1–3 × Standard_B2s)
 5. Fetches `kubeconfig` credentials
-6. Applies base manifests: namespaces, resource quotas, limit ranges
+6. Applies the `impulsa` namespace; waits for it to become Active, then creates `impulsa-secrets`
 7. Installs ingress-nginx via Helm (creates an Azure LoadBalancer)
 8. Installs cert-manager via Helm and applies Let's Encrypt ClusterIssuers
-9. Applies `k8s/base/ingress.yaml`
+9. Applies the production overlay (`k8s/overlays/prod`) via kustomize — deploys all workloads, services, ingress, resource quotas, and limit ranges
 
 ### Override defaults via environment
 
@@ -103,10 +103,10 @@ kubectl get svc ingress-nginx-controller -n ingress-nginx \
 # 2. Create an A record: app.impulsaedu.com -> <LoadBalancer IP>
 
 # 3. Watch staging certificate issuance
-kubectl describe certificate impulsa-tls -n impulsa-dev
+kubectl describe certificate impulsa-tls -n impulsa
 
-# 4. Once staging succeeds, switch the cluster-issuer in k8s/base/ingress.yaml
-#    to letsencrypt-prod and re-apply
+# 4. Once staging succeeds, switch the cluster-issuer in k8s/overlays/prod/ingress.yaml
+#    to letsencrypt-prod and re-apply: kubectl apply -k k8s/overlays/prod
 ```
 
 ---
@@ -125,8 +125,8 @@ You will be prompted to type the cluster name to confirm. This deletes the entir
 
 ```bash
 kubectl get nodes -o wide
-kubectl get namespaces impulsa-dev impulsa-prod
-kubectl describe resourcequota -n impulsa-dev
+kubectl get namespace impulsa
+kubectl describe resourcequota -n impulsa
 kubectl get clusterissuer
 kubectl get svc ingress-nginx-controller -n ingress-nginx
 ```
