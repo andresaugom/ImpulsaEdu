@@ -56,9 +56,7 @@ async function cleanupTestData(client) {
     await client.query('DELETE FROM schools WHERE cct = $1', [TEST_CCT]);
 }
 
-const isCI = process.env.CI === 'true' || process.env.GITHUB_ACTIONS;
-
-(isCI ? describe.skip : describe)('syncExcelToDB — integration (real DB)', () => {
+describe('syncExcelToDB — integration (real DB)', () => {
     let client;
 
     beforeAll(async () => {
