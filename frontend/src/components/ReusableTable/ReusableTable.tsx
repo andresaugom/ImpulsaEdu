@@ -11,7 +11,6 @@ export default function EditableTable<T extends { id: string }>({
   data,
   columns,
   editableFields,
-  searchPlaceholder = "Buscar...",
   enableAddNew = true,
   disableRowEdit = false,
   disableRowDelete = false,
@@ -57,17 +56,17 @@ export default function EditableTable<T extends { id: string }>({
 
 
     const blankItem = editableFields.reduce((acc, field) => {
-      acc[field.key] = "" as any;
+      acc[field.key] = "" as T[keyof T];
       return acc;
     }, {} as T);
-    (blankItem as any).id = `temp-${Date.now()}`;
+    blankItem.id = `temp-${Date.now()}`;
     setEditable(blankItem);
     setSelected(null);
     setIsNew(true);
   };
 
   // --- Handle field edit ---
-  const handleEditField = (field: keyof T, value: any) => {
+  const handleEditField = (field: keyof T, value: T[keyof T]) => {
     if (!editable) return;
     setEditable({ ...editable, [field]: value });
   };
