@@ -11,7 +11,7 @@ on:
   pull_request:
     branches:
       - main
-      - feature/my-azure-images-endpoint-fix-v4
+      - feature/my-azure-images-endpoint-fix-v*
 
 jobs:
   # ── api-service: unit tests ────────────────────────────────────────────────
