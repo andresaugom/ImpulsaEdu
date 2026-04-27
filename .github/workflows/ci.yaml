@@ -17,6 +17,20 @@ jobs:
   test-api-service:
     name: Test api-service
     runs-on: ubuntu-latest
+    services:
+      postgres:
+        image: postgres:15
+        env:
+          POSTGRES_USER: postgres
+          POSTGRES_PASSWORD: postgrespassword
+          POSTGRES_DB: impulsaedu
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd pg_isready
+          --health-interval 10s
+          --health-timeout 5s
+          --health-retries 5
     defaults:
       run:
         working-directory: backend/app_api
@@ -33,16 +47,24 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Start Database and Run Migrations
+        run: |
+          psql -h localhost -U postgres -d impulsaedu -f ../../db/schema.sql
+        env:
+          PGPASSWORD: postgrespassword
+
       - name: Run tests
         run: npm test
         env:
-          # Tests mock DB calls; these are placeholders to satisfy dotenv
           DB_HOST: localhost
           DB_PORT: "5432"
-          DB_NAME: test
-          DB_USER: test
-          DB_PASSWORD: test
+          DB_NAME: impulsaedu
+          DB_USER: postgres
+          DB_PASSWORD: postgrespassword
           JWT_SECRET: test-secret-for-ci
+          # Mock connections for other services
+          AZURE_STORAGE_CONNECTION_STRING: "DefaultEndpointsProtocol=https;AccountName=fake;AccountKey=fake;EndpointSuffix=core.windows.net"
+          AZURE_STORAGE_CONTAINER_NAME: "schools"
 
   # ── frontend: lint ─────────────────────────────────────────────────────────
   lint-frontend:
