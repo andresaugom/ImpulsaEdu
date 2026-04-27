@@ -61,7 +61,9 @@ jobs:
 
       - name: Start database and run migration
         # Uses the env variables defined at the top
-        run: psql -h $DB_HOST -U $DB_USER -d $DB_NAME -v ON_ERROR_STOP=1 -f ../../db/schema.sql
+        run: |
+          psql -h $DB_HOST -U $DB_USER -d $DB_NAME -v ON_ERROR_STOP=1 -f ../../db/schema.sql
+          psql -h $DB_HOST -U $DB_USER -d $DB_NAME -v ON_ERROR_STOP=1 -f ../../db/triggers.sql
 
       - name: Run tests
         run: npm test
