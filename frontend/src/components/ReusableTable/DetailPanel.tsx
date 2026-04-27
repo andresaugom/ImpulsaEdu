@@ -105,7 +105,7 @@ export default function DetailPanel<T extends { id: string }>({
                     fullWidth
                     label={field.label}
                     value={value ?? ""}
-                    onChange={(e) => onEditField(field.key, e.target.value)}
+                    onChange={(e) => onEditField(field.key, e.target.value as unknown as T[keyof T])}
                     sx={{ ...inputStyles, mt: 2 }}
                   >
                     {field.options.map((opt, i) => (
@@ -127,9 +127,9 @@ export default function DetailPanel<T extends { id: string }>({
                   onChange={(e) =>
                     onEditField(
                       field.key,
-                      field.type === "number"
+                      (field.type === "number"
                         ? Number(e.target.value)
-                        : e.target.value
+                        : e.target.value) as unknown as T[keyof T]
                     )
                   }
                   type={field.type || "text"}
