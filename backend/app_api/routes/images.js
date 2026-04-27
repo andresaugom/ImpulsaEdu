@@ -6,7 +6,7 @@ require('dotenv').config();
 // Initialize Azure Blob Service Client
 // Expose AZURE_STORAGE_CONNECTION_STRING in your .env
 const AZURE_CONNECTION_STRING = process.env.AZURE_STORAGE_CONNECTION_STRING;
-const CONTAINER_NAME = process.env.AZURE_STORAGE_CONTAINER_NAME || 'public-images';
+const CONTAINER_NAME = process.env.AZURE_STORAGE_CONTAINER_NAME || 'images';
 
 let blobServiceClient;
 if (AZURE_CONNECTION_STRING) {
@@ -35,7 +35,7 @@ router.get('/', async (req, res) => {
 
         if (n) {
             // Check for specific image N
-            const prefix = `schools/${cct}/${n}`;
+            const prefix = `${cct}/${n}`;
             let found = false;
             let blobUrl = '';
             
@@ -56,7 +56,7 @@ router.get('/', async (req, res) => {
 
         } else {
             // List all images for the school
-            const prefix = `schools/${cct}/`;
+            const prefix = `${cct}/`;
             for await (const blob of containerClient.listBlobsFlat({ prefix })) {
                 const blobUrl = containerClient.getBlobClient(blob.name).url;
                 urls.push(blobUrl);
