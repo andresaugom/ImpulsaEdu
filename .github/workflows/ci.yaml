@@ -2,13 +2,16 @@
 name: CI
 
 on:
+  push:
+    # Trigger on any push to any branch
   pull_request:
     branches:
       - main
+  workflow_dispatch: # Allows you to run it manually from the Actions tab
 
-# KEEP THESE: They are necessary for the local Postgres service in the runner
 env:
-  DB_HOST: localhost
+  # These are "test-only" credentials for the temporary runner database
+  DB_HOST: 127.0.0.1  # Using IP instead of localhost prevents IPv6 resolution errors
   DB_PORT: "5432"
   DB_NAME: test
   DB_USER: test
@@ -53,14 +56,18 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
+      - name: Install psql client
+        run: sudo apt-get update && sudo apt-get install -y postgresql-client
+
       - name: Start database and run migration
+        # Uses the env variables defined at the top
         run: psql -h $DB_HOST -U $DB_USER -d $DB_NAME -f ../../db/schema.sql
 
       - name: Run tests
         run: npm test
         env:
-          # SECRETS: These are pulled safely from your GitHub Repository Secrets
           JWT_SECRET: test-secret-for-ci
+          # These pull from your GitHub Settings -> Secrets
           AZURE_STORAGE_CONNECTION_STRING: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}
           AZURE_STORAGE_CONTAINER_NAME: ${{ secrets.AZURE_STORAGE_CONTAINER_NAME }}
 
