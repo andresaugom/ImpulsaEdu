@@ -12,6 +12,7 @@ const donorsRouter    = require('./routes/donors');
 const donationsRouter = require('./routes/donations');
 const reportsRouter   = require('./routes/reports');
 const xlsxRoutes = require('./routes/xlsx');
+const imagesRouter = require('./routes/images');
 
 const app = express();
 app.use(cors());
@@ -25,6 +26,7 @@ app.use('/api/v1/donors',    donorsRouter);
 app.use('/api/v1/donations', donationsRouter);
 app.use('/api/v1/reports',   reportsRouter);
 app.use('/api/v1/xlsx', xlsxRoutes);
+app.use('/api/v1/images',   imagesRouter);
 
 // ── Start ─────────────────────────────────────────────────────────────────────
 
