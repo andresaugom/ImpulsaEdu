@@ -1,0 +1,4 @@
+openpyxl
+gdown
+azure-storage-blob
+python-dotenv
