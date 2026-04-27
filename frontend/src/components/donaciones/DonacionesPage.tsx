@@ -19,7 +19,6 @@ import {
   DialogContent,
   DialogActions,
   Typography,
-  Grid,
 } from '@mui/material';
 import { useState } from 'react';
 import { Donation } from "./donacionesInterfaces";
