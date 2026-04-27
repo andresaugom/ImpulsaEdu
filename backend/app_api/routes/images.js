@@ -14,7 +14,7 @@ if (AZURE_CONNECTION_STRING) {
 } else {
     // Optionally connect without connection string if you fall back to public URLs only,
     // but we need it to verify files exist.
-    console.warn("AZURE_STORAGE_CONNECTION_STRING is not set.");
+    console.error("AZURE_STORAGE_CONNECTION_STRING is not set.");
 }
 
 router.get('/', async (req, res) => {
