@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "impulsaedu-api": {
+      "type": "stdio",
+      "command": "node",
+      "args": ["mcp/impulsaedu-api/server.js"],
+      "description": "ImpulsaEdu API documentation — endpoint specs, TypeScript types, and frontend implementation status. Use this before implementing any service file in frontend/src/lib/."
+    }
+  }
+}
