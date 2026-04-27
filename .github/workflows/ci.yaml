@@ -1,6 +1,6 @@
 # CI — Lint & Test
 #
-# Runs on every pull request targeting main or develop.
+# Runs on every pull request targeting main.
 # Jobs are independent and run in parallel.
 #
 # Required: no secrets needed for this workflow.
@@ -11,7 +11,6 @@ on:
   pull_request:
     branches:
       - main
-      - develop
 
 jobs:
   # ── api-service: unit tests ────────────────────────────────────────────────

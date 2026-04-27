@@ -1,33 +1,26 @@
-# CD — develop → impulsa-dev
+# CD — main → impulsa
 #
-# Triggered on every push to the develop branch.
+# Triggered on every push/merge to the main branch.
 # Builds all three service images, pushes them to ACR tagged with the git
-# commit SHA, then rolls out the new images in the impulsa-dev namespace.
+# commit SHA, then rolls out the new images in the impulsa namespace.
 #
 # Required GitHub Actions secrets:
-#   AZURE_CREDENTIALS     — JSON output of:
-#                           az ad sp create-for-rbac \
-#                             --name sp-impulsaedu-github \
-#                             --role contributor \
-#                             --scopes /subscriptions/<SUB>/resourceGroups/rg-impulsaedu \
-#                             --sdk-auth
-#   ACR_LOGIN_SERVER      — e.g. acrimpulsaedu.azurecr.io
-#   AZURE_RESOURCE_GROUP  — e.g. rg-impulsaedu
-#   AKS_CLUSTER_NAME      — e.g. aks-impulsaedu
+#   AZURE_CREDENTIALS, ACR_NAME, ACR_LOGIN_SERVER, AZURE_RESOURCE_GROUP, AKS_CLUSTER_NAME,
+#   DB_PASSWORD, JWT_SECRET
 
-name: CD — develop
+name: CD — main
 
 on:
   push:
     branches:
-      - develop
+      - main
 
 env:
-  NAMESPACE: impulsa-dev
+  NAMESPACE: impulsa
 
 jobs:
   build-push-deploy:
-    name: Build → Push → Deploy (dev)
+    name: Build → Push → Deploy
     runs-on: ubuntu-latest
 
     steps:
@@ -46,7 +39,7 @@ jobs:
 
       # ── Log in to ACR so docker can push ─────────────────────────────────
       - name: ACR login
-        run: az acr login --name "${{ secrets.ACR_LOGIN_SERVER }}"
+        run: az acr login --name "${{ secrets.ACR_NAME }}"
 
       # ── Build & push api-service ──────────────────────────────────────────
       - name: Build api-service
@@ -82,23 +75,25 @@ jobs:
           resource-group: ${{ secrets.AZURE_RESOURCE_GROUP }}
           cluster-name: ${{ secrets.AKS_CLUSTER_NAME }}
 
-      # ── Roll out new images to impulsa-dev ────────────────────────────────
-      - name: Deploy to impulsa-dev
+      # ── Inject secrets into the cluster ──────────────────────────────────
+      - name: Apply Kubernetes secrets
+        run: |
+          kubectl create secret generic impulsa-secrets \
+            -n "$NAMESPACE" \
+            --from-literal=DB_PASSWORD="${{ secrets.DB_PASSWORD }}" \
+            --from-literal=JWT_SECRET="${{ secrets.JWT_SECRET }}" \
+            --dry-run=client -o yaml | kubectl apply -f -
+
+      # ── Roll out new images to impulsa ────────────────────────────────────
+      - name: Deploy to impulsa
         run: |
           TAG="${{ steps.tag.outputs.IMAGE_TAG }}"
-          ACR="${{ secrets.ACR_LOGIN_SERVER }}"
-
-          kubectl set image deployment/api-service \
-            api-service="${ACR}/impulsaedu-api-service:${TAG}" \
-            -n "$NAMESPACE"
-
-          kubectl set image deployment/auth-service \
-            auth-service="${ACR}/impulsaedu-auth-service:${TAG}" \
-            -n "$NAMESPACE"
-
-          kubectl set image deployment/frontend \
-            frontend="${ACR}/impulsaedu-frontend:${TAG}" \
-            -n "$NAMESPACE"
+          cd k8s/overlays/prod
+          kustomize edit set image \
+            acrimpulsaedu.azurecr.io/impulsaedu-api-service:${TAG} \
+            acrimpulsaedu.azurecr.io/impulsaedu-auth-service:${TAG} \
+            acrimpulsaedu.azurecr.io/impulsaedu-frontend:${TAG}
+          kubectl apply -k . -n "$NAMESPACE"
 
       # ── Wait for rollouts to complete ─────────────────────────────────────
       - name: Verify rollout
