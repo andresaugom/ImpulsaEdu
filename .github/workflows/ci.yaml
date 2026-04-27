@@ -16,7 +16,7 @@ env:
   DB_NAME: test
   DB_USER: test
   DB_PASSWORD: test
-  PGPASSWORD: test 
+  PGPASSWORD: test
 
 jobs:
   # ── api-service: integration & migration ───────────────────────────────────
