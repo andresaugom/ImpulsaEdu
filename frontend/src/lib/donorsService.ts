@@ -29,6 +29,19 @@ interface ApiDonor {
   donation_count: number;
 }
 
+interface ApiDonorDonation {
+  id: string;
+  school_name: string;
+  type: 'monetary' | 'material';
+  amount: number | null;
+  state: string;
+  registered_at: string;
+}
+
+export interface ApiDonorDetail extends ApiDonor {
+  donations: ApiDonorDonation[];
+}
+
 interface ApiDonorsResponse {
   items: ApiDonor[];
   total: number;
@@ -135,4 +148,12 @@ export async function deactivateDonor(id: string): Promise<void> {
   await apiRequest<{ message: string }>(`${APP_BASE}/donors/${id}/deactivate`, {
     method: 'PATCH',
   });
+}
+
+/**
+ * Fetches a single donor by id including the full donation history.
+ * Requires authentication.
+ */
+export async function getDonor(id: string): Promise<ApiDonorDetail> {
+  return apiRequest<ApiDonorDetail>(`${APP_BASE}/donors/${id}`);
 }

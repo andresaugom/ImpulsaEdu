@@ -92,7 +92,10 @@ export async function apiFetch(
 ): Promise<Response> {
   const token = getAccessToken();
   const headers = new Headers(options.headers);
-  if (!headers.has('Content-Type')) headers.set('Content-Type', 'application/json');
+  // Skip Content-Type for FormData — the browser must set it with the multipart boundary.
+  if (!headers.has('Content-Type') && !(options.body instanceof FormData)) {
+    headers.set('Content-Type', 'application/json');
+  }
   if (token) headers.set('Authorization', `Bearer ${token}`);
 
   const res = await fetch(url, { ...options, headers });
