@@ -6,7 +6,7 @@ import {
   AccountCircle,
   Logout,
 } from '@mui/icons-material';
-import { useEffect, useState } from 'react';
+
 import { useRouter } from 'next/navigation';
 
 const ImpulsaLogo = '/ImpulsaEduLogoRevised.png';

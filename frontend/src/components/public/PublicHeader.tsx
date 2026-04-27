@@ -5,12 +5,9 @@ import {
   Toolbar,
   Box,
   Button,
-  Container,
   useTheme,
   useMediaQuery,
 } from '@mui/material';
-import Link from 'next/link';
-import { useState } from 'react';
 
 export default function PublicHeader() {
   const theme = useTheme();

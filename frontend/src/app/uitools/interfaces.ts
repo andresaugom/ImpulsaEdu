@@ -3,7 +3,7 @@
 export interface ColumnDefinition<T> {
     key: keyof T;
     label: string;
-    render?: (value: any, row: T) => React.ReactNode;
+    render?: (value: T[keyof T], row: T) => React.ReactNode;
     sortable?: boolean;
     filterable?: boolean;
     filterOptions?: string[];
@@ -31,7 +31,7 @@ export interface DetailPanelProps<T> {
     editable: T | null;
     editableFields: EditableField<T>[];
     isNew: boolean;
-    onEditField?: (key: keyof T, value: any) => void;
+    onEditField?: (key: keyof T, value: T[keyof T]) => void;
     onSaveChanges?: () => void;
     onDelete?: () => void;
     readOnly?: boolean;
