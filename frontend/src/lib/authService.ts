@@ -2,9 +2,10 @@
  * Authentication service for ImpulsaEdu.
  *
  * Wraps the auth microservice endpoints:
- *  - POST /auth/login   – exchange credentials for tokens
- *  - POST /auth/logout  – revoke refresh token
- *  - GET  /auth/me      – fetch current user profile
+ *  - POST /auth/register – create a new user account
+ *  - POST /auth/login    – exchange credentials for tokens
+ *  - POST /auth/logout   – revoke refresh token
+ *  - GET  /auth/me       – fetch current user profile
  *
  * Tokens are persisted in localStorage via the apiClient helpers.
  */
@@ -25,6 +26,28 @@ export interface AuthUser {
   email: string;
   role: 'admin' | 'staff';
   created_at: string;
+}
+
+export interface RegisterPayload {
+  email: string;
+  password: string;
+  firstname: string;
+  lastname: string;
+}
+
+/**
+ * Creates a new user account.
+ * Role is auto-assigned by the server based on the email domain.
+ * Throws ApiError (status 400) if fields are missing or email is already taken.
+ */
+export async function register(payload: RegisterPayload): Promise<{ message: string; user: { id: string; role: string } }> {
+  return apiRequest<{ message: string; user: { id: string; role: string } }>(
+    `${AUTH_BASE}/auth/register`,
+    {
+      method: 'POST',
+      body: JSON.stringify(payload),
+    }
+  );
 }
 
 /**

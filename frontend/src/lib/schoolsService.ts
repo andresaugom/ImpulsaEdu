@@ -115,3 +115,11 @@ export async function archiveSchool(id: string): Promise<void> {
     method: 'PATCH',
   });
 }
+
+/**
+ * Fetches a single school by id.
+ * This endpoint is public and does not require authentication.
+ */
+export async function getSchool(id: string): Promise<ApiSchool> {
+  return apiRequest<ApiSchool>(`${APP_BASE}/schools/${id}`);
+}
