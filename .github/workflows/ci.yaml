@@ -12,6 +12,10 @@ on:
     branches:
       - main
       - feature/my-azure-images-endpoint-fix-v*
+  push:
+    branches:
+      - main
+      - feature/my-azure-images-endpoint-fix-v*
 
 jobs:
   # ── api-service: unit tests ────────────────────────────────────────────────
