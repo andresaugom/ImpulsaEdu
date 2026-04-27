@@ -26,9 +26,9 @@ jobs:
       postgres:
         image: postgres:15
         env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgrespassword
-          POSTGRES_DB: impulsaedu
+          POSTGRES_USER: ${{ secrets.DB_USER }}
+          POSTGRES_PASSWORD: ${{ secrets.DB_PASSWORD }}
+          POSTGRES_DB: ${{ secrets.DB_NAME }}
         ports:
           - 5432:5432
         options: >-
@@ -54,18 +54,18 @@ jobs:
 
       - name: Start Database and Run Migrations
         run: |
-          psql -h localhost -U postgres -d impulsaedu -f ../../db/schema.sql
+          psql -h localhost -U ${{ secrets.DB_USER }} -d ${{ secrets.DB_NAME }} -f ../../db/schema.sql
         env:
-          PGPASSWORD: postgrespassword
+          PGPASSWORD: ${{ secrets.DB_PASSWORD }}
 
       - name: Run tests
         run: npm test
         env:
           DB_HOST: localhost
           DB_PORT: "5432"
-          DB_NAME: impulsaedu
-          DB_USER: postgres
-          DB_PASSWORD: postgrespassword
+          DB_NAME: ${{ secrets.DB_NAME }}
+          DB_USER: ${{ secrets.DB_USER }}
+          DB_PASSWORD: ${{ secrets.DB_PASSWORD }}
           JWT_SECRET: test-secret-for-ci
           # Mock connections for other services
           AZURE_STORAGE_CONNECTION_STRING: "DefaultEndpointsProtocol=https;AccountName=fake;AccountKey=fake;EndpointSuffix=core.windows.net"
