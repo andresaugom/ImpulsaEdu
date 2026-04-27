@@ -98,6 +98,12 @@ jobs:
       # ── Wait for rollouts to complete ─────────────────────────────────────
       - name: Verify rollout
         run: |
-          kubectl rollout status deployment/api-service  -n "$NAMESPACE" --timeout=5m
-          kubectl rollout status deployment/auth-service -n "$NAMESPACE" --timeout=5m
-          kubectl rollout status deployment/frontend     -n "$NAMESPACE" --timeout=5m
+          for svc in api-service auth-service frontend; do
+            if ! kubectl rollout status deployment/$svc -n "$NAMESPACE" --timeout=5m; then
+              echo "::error::Rollout failed for $svc — cluster diagnostics:"
+              kubectl describe deployment/$svc -n "$NAMESPACE"
+              kubectl get pods -n "$NAMESPACE" -l "app=$svc" -o wide
+              kubectl get events -n "$NAMESPACE" --sort-by=.lastTimestamp | tail -30
+              exit 1
+            fi
+          done
