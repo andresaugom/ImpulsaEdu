@@ -10,13 +10,11 @@ import {
   Button,
   Chip,
   useTheme,
-  useMediaQuery,
 } from "@mui/material";
 import Link from "next/link";
 
 export default function MainCards() {
   const theme = useTheme();
-  const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
 
   return (
     <>
