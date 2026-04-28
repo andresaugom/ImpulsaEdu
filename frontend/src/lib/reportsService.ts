@@ -4,8 +4,8 @@
  * Wraps the app_api report endpoints (admin only):
  *  - GET /api/v1/reports/donations-by-school   – aggregated stats grouped by school
  *  - GET /api/v1/reports/donations-by-donor    – aggregated stats grouped by donor
- *  - GET /api/v1/reports/pending-deliveries    – donations in approved or in_delivery state
- *  - GET /api/v1/reports/completed             – donations in completed state
+ *  - GET /api/v1/reports/pending-deliveries    – donations in Aprobado or Entregando state
+ *  - GET /api/v1/reports/completed             – donations in Finalizado state
  *  - GET /api/v1/reports/export?report=<type>  – download report as CSV
  *
  * Note: exportReport returns a raw CSV string. Use apiFetch + res.text() internally.
@@ -20,7 +20,7 @@ export interface DonationsBySchoolRow {
   school_id: string;
   school_name: string;
   total_monetary: number;
-  total_material_value: number;
+  total_material: number;
   total_donations: number;
   pending: number;
   completed: number;

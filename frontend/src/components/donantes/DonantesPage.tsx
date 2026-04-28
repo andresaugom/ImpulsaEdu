@@ -60,7 +60,8 @@ export default function DonantesPage() {
   const [editingDonor, setEditingDonor] = useState<Donor | null>(null);
   const [formData, setFormData] = useState({
     name: '',
-    type: 'individual',
+    donor_type: 'Fisica' as 'Fisica' | 'Moral',
+    region: '',
     email: '',
     phone: '',
   });
@@ -102,13 +103,14 @@ export default function DonantesPage() {
       setEditingDonor(donor);
       setFormData({
         name: donor.name,
-        type: donor.type,
-        email: donor.email,
-        phone: donor.phone,
+        donor_type: donor.donor_type,
+        region: donor.region,
+        email: donor.email ?? '',
+        phone: donor.phone ?? '',
       });
     } else {
       setEditingDonor(null);
-      setFormData({ name: '', type: 'individual', email: '', phone: '' });
+      setFormData({ name: '', donor_type: 'Fisica', region: '', email: '', phone: '' });
     }
     setOpenDialog(true);
   };
@@ -125,23 +127,23 @@ export default function DonantesPage() {
     setSaving(true);
     try {
       if (editingDonor) {
-        // PUT /api/v1/donors/:id
         const updated = await updateDonor(editingDonor.id, {
-          full_name: formData.name,
-          type: formData.type as 'individual' | 'corporate',
-          email: formData.email,
-          phone: formData.phone,
+          name: formData.name,
+          donor_type: formData.donor_type,
+          region: formData.region,
+          email: formData.email || undefined,
+          phone: formData.phone || undefined,
         });
         setDonors((prev) =>
           prev.map((d) => (d.id === editingDonor.id ? updated : d))
         );
       } else {
-        // POST /api/v1/donors
         const created = await createDonor({
-          full_name: formData.name,
-          type: formData.type as 'individual' | 'corporate',
-          email: formData.email,
-          phone: formData.phone,
+          name: formData.name,
+          donor_type: formData.donor_type,
+          region: formData.region,
+          email: formData.email || undefined,
+          phone: formData.phone || undefined,
         });
         setDonors((prev) => [...prev, created]);
       }
@@ -179,7 +181,7 @@ export default function DonantesPage() {
     const matchesSearch = donor.name
       .toLowerCase()
       .includes(searchQuery.toLowerCase());
-    const matchesType = !typeFilter || donor.type === typeFilter;
+    const matchesType = !typeFilter || donor.donor_type === typeFilter;
     const matchesStatus = !statusFilter || donor.status === statusFilter;
     return matchesSearch && matchesType && matchesStatus;
   });
@@ -242,8 +244,8 @@ export default function DonantesPage() {
               size="small"
             >
               <MenuItem value="">Todos los Tipos</MenuItem>
-              <MenuItem value="individual">Persona Física</MenuItem>
-              <MenuItem value="corporate">Persona Moral</MenuItem>
+              <MenuItem value="Fisica">Persona Física</MenuItem>
+              <MenuItem value="Moral">Persona Moral</MenuItem>
             </Select>
           </Grid>
           <Grid size={{ xs: 12, sm: 6, md: 3 }}>
@@ -340,9 +342,9 @@ export default function DonantesPage() {
                       sx={{ '&:hover': { backgroundColor: '#f8fafb' } }}
                     >
                       <TableCell sx={{ fontWeight: 600 }}>{donor.name}</TableCell>
-                      <TableCell sx={{ color: '#4a5f8f' }}>{getTypeLabel(donor.type)}</TableCell>
-                      <TableCell sx={{ color: '#4a5f8f' }}>{donor.email}</TableCell>
-                      <TableCell sx={{ color: '#4a5f8f' }}>{donor.phone}</TableCell>
+                      <TableCell sx={{ color: '#4a5f8f' }}>{getTypeLabel(donor.donor_type)}</TableCell>
+                      <TableCell sx={{ color: '#4a5f8f' }}>{donor.email ?? '—'}</TableCell>
+                      <TableCell sx={{ color: '#4a5f8f' }}>{donor.phone ?? '—'}</TableCell>
                       <TableCell>{donor.totalDonations}</TableCell>
                       <TableCell>
                         <Chip
@@ -412,17 +414,28 @@ export default function DonantesPage() {
               fullWidth
               label="Tipo"
               select
-              value={formData.type}
-              onChange={(e) => setFormData({ ...formData, type: e.target.value })}
+              value={formData.donor_type}
+              onChange={(e) =>
+                setFormData({ ...formData, donor_type: e.target.value as 'Fisica' | 'Moral' })
+              }
               disabled={saving}
             >
-              <MenuItem value="individual">Persona Física</MenuItem>
-              <MenuItem value="corporate">Persona Moral</MenuItem>
+              <MenuItem value="Fisica">Persona Física</MenuItem>
+              <MenuItem value="Moral">Persona Moral</MenuItem>
             </TextField>
             <TextField
               fullWidth
+              label="Región / Municipio"
+              value={formData.region}
+              onChange={(e) => setFormData({ ...formData, region: e.target.value })}
+              variant="outlined"
+              disabled={saving}
+            />
+            <TextField
+              fullWidth
               label="Correo Electrónico"
-              type="email"
+              type="text"
+              inputProps={{ inputMode: 'email', autoComplete: 'email' }}
               value={formData.email}
               onChange={(e) => setFormData({ ...formData, email: e.target.value })}
               variant="outlined"
