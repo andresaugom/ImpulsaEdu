@@ -3,12 +3,14 @@
  *
  * Wraps the app_api endpoints:
  *  - GET   /api/v1/schools              – paginated list with filters (public)
+ *  - GET   /api/v1/schools/:id          – get single school (public)
  *  - POST  /api/v1/schools              – create school (authenticated)
  *  - PUT   /api/v1/schools/:id          – update school (authenticated)
  *  - PATCH /api/v1/schools/:id/archive  – archive school (authenticated)
  *
- * The API model includes: id, name, region, category, description,
- * funding_goal, confirmed_value, progress_pct, status.
+ * The API model maps directly to the DB: region, school, name, employees,
+ * students, level, cct, mode, shift, address, location, category, description,
+ * goal, progress, progress_pct, status ('active'|'archived').
  */
 
 import { APP_BASE, apiRequest } from './apiClient';
@@ -17,12 +19,21 @@ import { APP_BASE, apiRequest } from './apiClient';
 
 export interface ApiSchool {
   id: string;
-  name: string;
   region: string;
+  school: string;
+  name: string;
+  employees: number;
+  students: number;
+  level: string;
+  cct: string;
+  mode: string;
+  shift: string;
+  address: string;
+  location: string;
   category: string;
   description: string | null;
-  funding_goal: number;
-  confirmed_value: number;
+  goal: number;
+  progress: number;
   progress_pct: number;
   status: 'active' | 'archived';
 }
@@ -43,11 +54,20 @@ export interface SchoolFilters {
 }
 
 export interface SchoolPayload {
-  name: string;
   region: string;
+  school: string;
+  name: string;
+  employees?: number;
+  students?: number;
+  level: string;
+  cct: string;
+  mode: string;
+  shift: string;
+  address: string;
+  location: string;
   category: string;
   description?: string;
-  funding_goal: number;
+  goal: number;
 }
 
 // ── API calls ─────────────────────────────────────────────────────────────────
@@ -55,6 +75,7 @@ export interface SchoolPayload {
 /**
  * Fetches a paginated, optionally filtered list of schools.
  * This endpoint is public and does not require authentication.
+ * Default: active schools only.
  */
 export async function fetchSchools(filters: SchoolFilters = {}): Promise<{
   schools: ApiSchool[];
@@ -106,7 +127,7 @@ export async function updateSchool(
 }
 
 /**
- * Archives a school (sets status to 'archived').
+ * Archives a school (sets deleted_at on the backend).
  * Requires authentication. Archived schools no longer appear in the
  * default active listing.
  */

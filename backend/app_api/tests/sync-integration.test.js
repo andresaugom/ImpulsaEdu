@@ -26,7 +26,7 @@ function createTestExcel(schoolName = TEST_SCHOOL_NAME, cct = TEST_CCT) {
         ['', '', '', '', '', '', '', '', '', '', '', ''],   // row 3
         ['', '', '', '', '', '', '', '', '', '', '', ''],   // row 4
         ['CCT', 'Municipio', 'Nombre de la Escuela', 'Personal escolar', 'Estudiantes', 'Nivel ed.', 'Modalidad', 'Turno', 'Dirección', 'Ubicación', 'Sostenimiento', 'Extra'], // row 5 = header
-        [cct, 'Municipio Test', schoolName, 5, 100, 'Primaria', 'Presencial', 'Matutino', 'Calle Falsa 123', 'Urbana', 'Estatal', ''],
+        [cct, 'Municipio Test', schoolName, 5, 100, 'Primaria', 'SEP-General', 'Matutino', 'Calle Falsa 123', 'Urbana', 'Estatal', ''],
     ];
 
     const schoolsWs = xlsx.utils.aoa_to_sheet(schoolsData);

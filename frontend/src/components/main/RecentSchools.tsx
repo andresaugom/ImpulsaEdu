@@ -13,16 +13,25 @@ import {
   Paper,
   Chip,
   LinearProgress,
+  CircularProgress,
   useTheme,
 } from "@mui/material";
 import Link from "next/link";
-import { mockSchools } from "./sampleData";
-import { getStatusColor, getStatusTextColor } from "./themeFunctions";
+import { useEffect, useState } from "react";
+import { fetchSchools, ApiSchool } from "../../lib/schoolsService";
+import { getStatusColor, getStatusTextColor, getSchoolStatusLabel } from "./themeFunctions";
 
 export default function RecentSchoolsTable() {
   const theme = useTheme();
-  // TODO: Add mobile-specific table behavior in a dedicated follow-up issue.
-  // const isMobile = useMediaQuery(theme.breakpoints.down("sm"));
+  const [schools, setSchools] = useState<ApiSchool[]>([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchSchools({ status: "active", per_page: 5 })
+      .then(({ schools: data }) => setSchools(data))
+      .catch(() => {})
+      .finally(() => setLoading(false));
+  }, []);
 
   return (
     <>
@@ -52,108 +61,81 @@ export default function RecentSchoolsTable() {
           </Link>
         </Box>
 
-        <TableContainer
-          component={Paper}
-          sx={{ boxShadow: "0 1px 3px rgba(0, 0, 0, 0.1)" }}
-        >
-          <Table>
-            <TableHead sx={{ backgroundColor: "#f8fafb" }}>
-              <TableRow>
-                <TableCell
-                  sx={{
-                    fontWeight: 700,
-                    textTransform: "uppercase",
-                    fontSize: "13px",
-                  }}
-                >
-                  Nombre de la Escuela
-                </TableCell>
-                <TableCell
-                  sx={{
-                    fontWeight: 700,
-                    textTransform: "uppercase",
-                    fontSize: "13px",
-                  }}
-                >
-                  Región
-                </TableCell>
-                <TableCell
-                  sx={{
-                    fontWeight: 700,
-                    textTransform: "uppercase",
-                    fontSize: "13px",
-                  }}
-                >
-                  Estado
-                </TableCell>
-                <TableCell
-                  sx={{
-                    fontWeight: 700,
-                    textTransform: "uppercase",
-                    fontSize: "13px",
-                  }}
-                >
-                  Progreso
-                </TableCell>
-                <TableCell></TableCell>
-              </TableRow>
-            </TableHead>
-            <TableBody>
-              {mockSchools.map((school) => (
-                <TableRow
-                  key={school.id}
-                  sx={{
-                    "&:hover": {
-                      backgroundColor: "#f8fafb",
-                    },
-                  }}
-                >
-                  <TableCell sx={{ fontWeight: 600 }}>{school.name}</TableCell>
-                  <TableCell sx={{ color: "#4a5f8f", fontSize: "14px" }}>
-                    {school.region}
+        {loading ? (
+          <Box sx={{ display: "flex", justifyContent: "center", py: 4 }}>
+            <CircularProgress />
+          </Box>
+        ) : (
+          <TableContainer
+            component={Paper}
+            sx={{ boxShadow: "0 1px 3px rgba(0, 0, 0, 0.1)" }}
+          >
+            <Table>
+              <TableHead sx={{ backgroundColor: "#f8fafb" }}>
+                <TableRow>
+                  <TableCell sx={{ fontWeight: 700, textTransform: "uppercase", fontSize: "13px" }}>
+                    Nombre de la Escuela
                   </TableCell>
-                  <TableCell>
-                    <Chip
-                      label={school.status}
-                      size="small"
-                      sx={{
-                        backgroundColor: getStatusColor(school.status),
-                        color: getStatusTextColor(school.status),
-                        fontWeight: 600,
-                        fontSize: "12px",
-                      }}
-                    />
+                  <TableCell sx={{ fontWeight: 700, textTransform: "uppercase", fontSize: "13px" }}>
+                    Región
                   </TableCell>
-                  <TableCell sx={{ width: "150px" }}>
-                    <LinearProgress
-                      variant="determinate"
-                      value={school.progress}
-                      sx={{
-                        height: 8,
-                        borderRadius: 4,
-                        backgroundColor: "#e5e7eb",
-                        "& .MuiLinearProgress-bar": {
-                          backgroundColor: "#10b981",
-                          borderRadius: 4,
-                        },
-                      }}
-                    />
+                  <TableCell sx={{ fontWeight: 700, textTransform: "uppercase", fontSize: "13px" }}>
+                    Estado
                   </TableCell>
-                  <TableCell
-                    sx={{ color: theme.palette.primary.main, fontSize: "12px" }}
-                  >
-                    <Link
-                      href="#"
-                      style={{ textDecoration: "none", color: "inherit" }}
-                    >
-                      Ver →
-                    </Link>
+                  <TableCell sx={{ fontWeight: 700, textTransform: "uppercase", fontSize: "13px" }}>
+                    Progreso
                   </TableCell>
+                  <TableCell></TableCell>
                 </TableRow>
-              ))}
-            </TableBody>
-          </Table>
-        </TableContainer>
+              </TableHead>
+              <TableBody>
+                {schools.map((school) => (
+                  <TableRow
+                    key={school.id}
+                    sx={{ "&:hover": { backgroundColor: "#f8fafb" } }}
+                  >
+                    <TableCell sx={{ fontWeight: 600 }}>{school.name}</TableCell>
+                    <TableCell sx={{ color: "#4a5f8f", fontSize: "14px" }}>
+                      {school.region}
+                    </TableCell>
+                    <TableCell>
+                      <Chip
+                        label={getSchoolStatusLabel(school.status)}
+                        size="small"
+                        sx={{
+                          backgroundColor: getStatusColor(school.status),
+                          color: getStatusTextColor(school.status),
+                          fontWeight: 600,
+                          fontSize: "12px",
+                        }}
+                      />
+                    </TableCell>
+                    <TableCell sx={{ width: "150px" }}>
+                      <LinearProgress
+                        variant="determinate"
+                        value={school.progress_pct}
+                        sx={{
+                          height: 8,
+                          borderRadius: 4,
+                          backgroundColor: "#e5e7eb",
+                          "& .MuiLinearProgress-bar": {
+                            backgroundColor: "#10b981",
+                            borderRadius: 4,
+                          },
+                        }}
+                      />
+                    </TableCell>
+                    <TableCell sx={{ color: theme.palette.primary.main, fontSize: "12px" }}>
+                      <Link href="#" style={{ textDecoration: "none", color: "inherit" }}>
+                        Ver →
+                      </Link>
+                    </TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </TableContainer>
+        )}
       </Box>
     </>
   );
