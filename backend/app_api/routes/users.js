@@ -2,10 +2,13 @@
 
 const router = require('express').Router();
 const bcrypt = require('bcryptjs');
+const jwt = require('jsonwebtoken'); // Added for login
 const { rateLimit } = require('express-rate-limit');
 const pool = require('../db/pool');
 const { authenticateToken, requireAdmin } = require('../middleware/auth');
 const { errBody } = require('../utils/errors');
+
+const JWT_SECRET = process.env.JWT_SECRET || 'your-secret-key';
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
@@ -19,10 +22,6 @@ function formatUser(row) {
     };
 }
 
-/**
- * Splits "First Middle Last" into { firstname, lastname }.
- * Everything before the last space becomes firstname.
- */
 function splitFullName(full_name) {
     const trimmed = full_name.trim();
     const idx = trimmed.lastIndexOf(' ');
@@ -48,7 +47,84 @@ const userWriteRateLimit = rateLimit({
     message: errBody('TOO_MANY_REQUESTS', 'Too many requests')
 });
 
-// ── GET /api/v1/users  (admin only) ──────────────────────────────────────────
+// ── AUTH ROUTES (Added for auth-integration.test.js) ─────────────────────────
+
+/**
+ * Public Register
+ * Responds to POST /api/v1/auth/register (when mounted at /api/v1/auth)
+ */
+router.post('/register', userWriteRateLimit, async (req, res) => {
+    const { email, password, firstname, lastname, role } = req.body;
+
+    if (!email || !password || !firstname || !lastname) {
+        return res.status(400).json(errBody('MISSING_FIELDS', 'firstname, lastname, email, and password are required'));
+    }
+
+    try {
+        const existing = await pool.query('SELECT id FROM users WHERE email = $1', [email]);
+        if (existing.rowCount > 0) {
+            return res.status(409).json(errBody('EMAIL_CONFLICT', 'Email already exists'));
+        }
+
+        const password_hash = await bcrypt.hash(password, 10);
+        const userRole = role || 'staff'; // Default to staff
+
+        const result = await pool.query(
+            `INSERT INTO users (firstname, lastname, email, password_hash, role)
+             VALUES ($1, $2, $3, $4, $5)
+             RETURNING id, firstname, lastname, email, role, deleted_at`,
+            [firstname, lastname, email, password_hash, userRole]
+        );
+
+        res.status(201).json(formatUser(result.rows[0]));
+    } catch (err) {
+        console.error(err);
+        res.status(500).json(errBody('SERVER_ERROR', 'Internal server error'));
+    }
+});
+
+/**
+ * Public Login
+ * Responds to POST /api/v1/auth/login (when mounted at /api/v1/auth)
+ */
+router.post('/login', userWriteRateLimit, async (req, res) => {
+    const { email, password } = req.body;
+
+    if (!email || !password) {
+        return res.status(400).json(errBody('MISSING_FIELDS', 'Email and password required'));
+    }
+
+    try {
+        const result = await pool.query(
+            'SELECT id, email, role, password_hash FROM users WHERE email = $1 AND deleted_at IS NULL',
+            [email]
+        );
+
+        if (result.rowCount === 0) {
+            return res.status(401).json(errBody('INVALID_CREDENTIALS', 'Invalid email or password'));
+        }
+
+        const user = result.rows[0];
+        const valid = await bcrypt.compare(password, user.password_hash);
+
+        if (!valid) {
+            return res.status(401).json(errBody('INVALID_CREDENTIALS', 'Invalid email or password'));
+        }
+
+        const token = jwt.sign(
+            { sub: user.id, email: user.email, role: user.role },
+            JWT_SECRET,
+            { expiresIn: '24h' }
+        );
+
+        res.json({ token, user: { id: user.id, email: user.email, role: user.role } });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json(errBody('SERVER_ERROR', 'Internal server error'));
+    }
+});
+
+// ── GET /api/v1/users (admin only) ──────────────────────────────────────────
 
 router.get('/', userReadRateLimit, authenticateToken, requireAdmin, async (req, res) => {
     const { role, is_active } = req.query;
@@ -84,7 +160,7 @@ router.get('/', userReadRateLimit, authenticateToken, requireAdmin, async (req, 
     }
 });
 
-// ── POST /api/v1/users  (admin only) ─────────────────────────────────────────
+// ── POST /api/v1/users (admin only) ─────────────────────────────────────────
 
 router.post('/', userWriteRateLimit, authenticateToken, requireAdmin, async (req, res) => {
     const { email, password, full_name, role } = req.body;
@@ -119,7 +195,6 @@ router.post('/', userWriteRateLimit, authenticateToken, requireAdmin, async (req
 });
 
 // ── GET /api/v1/users/:id ──────────────────────────────────────────────────────
-// Admin can read any user; staff can only read their own profile.
 
 router.get('/:id', userReadRateLimit, authenticateToken, async (req, res) => {
     const { id } = req.params;
@@ -146,7 +221,6 @@ router.get('/:id', userReadRateLimit, authenticateToken, async (req, res) => {
 });
 
 // ── PUT /api/v1/users/:id ─────────────────────────────────────────────────────
-// Admin can update any user; staff can only update their own profile.
 
 router.put('/:id', userWriteRateLimit, authenticateToken, async (req, res) => {
     const { id } = req.params;
@@ -200,7 +274,7 @@ router.put('/:id', userWriteRateLimit, authenticateToken, async (req, res) => {
     }
 });
 
-// ── PATCH /api/v1/users/:id/deactivate  (admin only) ─────────────────────────
+// ── PATCH /api/v1/users/:id/deactivate (admin only) ─────────────────────────
 
 router.patch('/:id/deactivate', userWriteRateLimit, authenticateToken, requireAdmin, async (req, res) => {
     const { id } = req.params;
