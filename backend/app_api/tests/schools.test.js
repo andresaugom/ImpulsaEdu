@@ -95,10 +95,10 @@ describe('GET /api/v1/schools', () => {
             .mockResolvedValueOnce({ rows: [{ count: '0' }] })
             .mockResolvedValueOnce({ rows: [] });
 
-        await request(app).get('/api/v1/schools?region=Jalisco&category=Infrastructure');
+        await request(app).get('/api/v1/schools?region=Zapopan&category=Estatal');
         const params = pool.query.mock.calls[0][1];
-        expect(params).toContain('Jalisco');
-        expect(params).toContain('Infrastructure');
+        expect(params).toContain('Zapopan');
+        expect(params).toContain('Estatal');
     });
 
     it('caps per_page at 100', async () => {
@@ -137,7 +137,7 @@ describe('POST /api/v1/schools', () => {
     it('returns 401 without token', async () => {
         const res = await request(app)
             .post('/api/v1/schools')
-            .send({ name: 'School', region: 'Jalisco', category: 'Infrastructure', funding_goal: 1000 });
+            .send({ name: 'School', region: 'Zapopan', category: 'Estatal', goal: 1000 });
         expect(res.status).toBe(401);
     });
 
