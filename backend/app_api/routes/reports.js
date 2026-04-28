@@ -27,26 +27,26 @@ function toCSV(headers, rows) {
 
 function donationSummaryRow(row) {
     return {
-        id:              row.id,
-        donor:           { id: row.donor_id,  full_name: row.donor_name },
-        school:          { id: row.school_id, name:      row.school_name },
-        type:            row.type,
-        amount:          row.amount          ? parseFloat(row.amount)          : null,
-        estimated_value: row.estimated_value ? parseFloat(row.estimated_value) : null,
-        state:           row.state,
-        delivery_mode:   row.delivery_mode   || null,
-        registered_at:   row.registered_at
+        id:            row.id,
+        donor:         { id: row.donor_id, name: row.donor_name },
+        school:        { id: row.school_id, name: row.school_name },
+        donation_type: row.donation_type,
+        amount:        row.amount ? parseFloat(row.amount) : null,
+        status:        row.status,
+        description:   row.description || null,
+        created_at:    row.created_at
     };
 }
 
 const DONATION_SUMMARY_SELECT = `
-    SELECT dn.id, dn.donor_id, d.full_name AS donor_name,
+    SELECT dn.id, dn.donor_id, d.name AS donor_name,
            dn.school_id, s.name AS school_name,
-           dn.type, dn.amount, dn.estimated_value, dn.state,
-           dn.delivery_mode, dn.registered_at
+           dn.donation_type, dn.amount, dn.status,
+           dn.description, dn.created_at
     FROM   donations dn
     JOIN   donors  d ON d.id = dn.donor_id
     JOIN   schools s ON s.id = dn.school_id
+    WHERE  dn.deleted_at IS NULL
 `;
 
 // ── GET /api/v1/reports/donations-by-school ───────────────────────────────────
@@ -57,7 +57,7 @@ router.get('/donations-by-school', async (req, res) => {
     let   where  = '';
 
     if (school_id) {
-        where = 'WHERE dn.school_id = $1';
+        where = 'AND dn.school_id = $1';
         params.push(school_id);
     }
 
@@ -66,27 +66,25 @@ router.get('/donations-by-school', async (req, res) => {
             `SELECT
                 s.id   AS school_id,
                 s.name AS school_name,
-                COALESCE(SUM(CASE WHEN dn.type = 'monetary' THEN dn.amount ELSE 0 END), 0)          AS total_monetary,
-                COALESCE(SUM(CASE WHEN dn.type = 'material' THEN dn.estimated_value ELSE 0 END), 0) AS total_material_value,
-                COUNT(dn.id)                                                                          AS total_donations,
-                COUNT(dn.id) FILTER (WHERE dn.state IN ('registered','approved','in_delivery','delivered')) AS pending,
-                COUNT(dn.id) FILTER (WHERE dn.state = 'completed')                                   AS completed
+                COALESCE(SUM(CASE WHEN dn.donation_type = 'Monetaria' THEN dn.amount ELSE 0 END), 0) AS total_monetary,
+                COUNT(dn.id)                                                                           AS total_donations,
+                COUNT(dn.id) FILTER (WHERE dn.status IN ('Registrado','Aprobado','Entregando','Entregado')) AS pending,
+                COUNT(dn.id) FILTER (WHERE dn.status = 'Finalizado')                                   AS completed
              FROM   schools s
-             LEFT   JOIN donations dn ON dn.school_id = s.id
-             ${where}
+             LEFT   JOIN donations dn ON dn.school_id = s.id AND dn.deleted_at IS NULL
+             WHERE  s.deleted_at IS NULL ${where}
              GROUP  BY s.id, s.name
              ORDER  BY s.name`,
             params
         );
 
         res.json(result.rows.map(row => ({
-            school_id:            row.school_id,
-            school_name:          row.school_name,
-            total_monetary:       parseFloat(row.total_monetary),
-            total_material_value: parseFloat(row.total_material_value),
-            total_donations:      parseInt(row.total_donations),
-            pending:              parseInt(row.pending),
-            completed:            parseInt(row.completed)
+            school_id:       row.school_id,
+            school_name:     row.school_name,
+            total_monetary:  parseFloat(row.total_monetary),
+            total_donations: parseInt(row.total_donations),
+            pending:         parseInt(row.pending),
+            completed:       parseInt(row.completed)
         })));
     } catch (err) {
         console.error(err);
@@ -102,7 +100,7 @@ router.get('/donations-by-donor', async (req, res) => {
     let   where  = '';
 
     if (donor_id) {
-        where = 'WHERE dn.donor_id = $1';
+        where = 'AND dn.donor_id = $1';
         params.push(donor_id);
     }
 
@@ -110,15 +108,15 @@ router.get('/donations-by-donor', async (req, res) => {
         const result = await pool.query(
             `SELECT
                 d.id   AS donor_id,
-                d.full_name AS donor_name,
-                COUNT(dn.id)                                                                AS total_donations,
-                COALESCE(SUM(COALESCE(dn.amount, 0) + COALESCE(dn.estimated_value, 0)), 0) AS total_value,
-                COUNT(DISTINCT dn.school_id)                                                AS schools_supported
+                d.name AS donor_name,
+                COUNT(dn.id)                         AS total_donations,
+                COALESCE(SUM(dn.amount), 0)          AS total_value,
+                COUNT(DISTINCT dn.school_id)         AS schools_supported
              FROM   donors d
-             LEFT   JOIN donations dn ON dn.donor_id = d.id
-             ${where}
-             GROUP  BY d.id, d.full_name
-             ORDER  BY d.full_name`,
+             LEFT   JOIN donations dn ON dn.donor_id = d.id AND dn.deleted_at IS NULL
+             WHERE  d.deleted_at IS NULL ${where}
+             GROUP  BY d.id, d.name
+             ORDER  BY d.name`,
             params
         );
 
@@ -141,8 +139,8 @@ router.get('/pending-deliveries', async (req, res) => {
     try {
         const result = await pool.query(
             `${DONATION_SUMMARY_SELECT}
-             WHERE  dn.state IN ('approved', 'in_delivery')
-             ORDER  BY dn.registered_at`
+             AND dn.status IN ('Aprobado', 'Entregando')
+             ORDER BY dn.created_at`
         );
         res.json(result.rows.map(donationSummaryRow));
     } catch (err) {
@@ -157,8 +155,8 @@ router.get('/completed', async (req, res) => {
     try {
         const result = await pool.query(
             `${DONATION_SUMMARY_SELECT}
-             WHERE  dn.state = 'completed'
-             ORDER  BY dn.registered_at`
+             AND dn.status = 'Finalizado'
+             ORDER BY dn.created_at`
         );
         res.json(result.rows.map(donationSummaryRow));
     } catch (err) {
@@ -185,26 +183,29 @@ router.get('/export', async (req, res) => {
         if (report === 'donations-by-school') {
             const result = await pool.query(
                 `SELECT s.id AS school_id, s.name AS school_name,
-                        COALESCE(SUM(CASE WHEN dn.type='monetary' THEN dn.amount ELSE 0 END),0)          AS total_monetary,
-                        COALESCE(SUM(CASE WHEN dn.type='material' THEN dn.estimated_value ELSE 0 END),0) AS total_material_value,
-                        COUNT(dn.id)                                                                       AS total_donations,
-                        COUNT(dn.id) FILTER (WHERE dn.state IN ('registered','approved','in_delivery','delivered')) AS pending,
-                        COUNT(dn.id) FILTER (WHERE dn.state = 'completed')                                AS completed
-                 FROM   schools s LEFT JOIN donations dn ON dn.school_id = s.id
+                        COALESCE(SUM(CASE WHEN dn.donation_type='Monetaria' THEN dn.amount ELSE 0 END),0) AS total_monetary,
+                        COUNT(dn.id)                                                                        AS total_donations,
+                        COUNT(dn.id) FILTER (WHERE dn.status IN ('Registrado','Aprobado','Entregando','Entregado')) AS pending,
+                        COUNT(dn.id) FILTER (WHERE dn.status = 'Finalizado')                               AS completed
+                 FROM   schools s
+                 LEFT JOIN donations dn ON dn.school_id = s.id AND dn.deleted_at IS NULL
+                 WHERE  s.deleted_at IS NULL
                  GROUP  BY s.id, s.name ORDER BY s.name`
             );
             csvData = toCSV(
-                ['school_id', 'school_name', 'total_monetary', 'total_material_value', 'total_donations', 'pending', 'completed'],
+                ['school_id', 'school_name', 'total_monetary', 'total_donations', 'pending', 'completed'],
                 result.rows
             );
         } else if (report === 'donations-by-donor') {
             const result = await pool.query(
-                `SELECT d.id AS donor_id, d.full_name AS donor_name,
-                        COUNT(dn.id)                                                                AS total_donations,
-                        COALESCE(SUM(COALESCE(dn.amount,0)+COALESCE(dn.estimated_value,0)),0)      AS total_value,
-                        COUNT(DISTINCT dn.school_id)                                                AS schools_supported
-                 FROM   donors d LEFT JOIN donations dn ON dn.donor_id = d.id
-                 GROUP  BY d.id, d.full_name ORDER BY d.full_name`
+                `SELECT d.id AS donor_id, d.name AS donor_name,
+                        COUNT(dn.id)                AS total_donations,
+                        COALESCE(SUM(dn.amount),0)  AS total_value,
+                        COUNT(DISTINCT dn.school_id) AS schools_supported
+                 FROM   donors d
+                 LEFT JOIN donations dn ON dn.donor_id = d.id AND dn.deleted_at IS NULL
+                 WHERE  d.deleted_at IS NULL
+                 GROUP  BY d.id, d.name ORDER BY d.name`
             );
             csvData = toCSV(
                 ['donor_id', 'donor_name', 'total_donations', 'total_value', 'schools_supported'],
@@ -212,18 +213,18 @@ router.get('/export', async (req, res) => {
             );
         } else if (report === 'pending-deliveries') {
             const result = await pool.query(
-                `${DONATION_SUMMARY_SELECT} WHERE dn.state IN ('approved','in_delivery') ORDER BY dn.registered_at`
+                `${DONATION_SUMMARY_SELECT} AND dn.status IN ('Aprobado','Entregando') ORDER BY dn.created_at`
             );
             csvData = toCSV(
-                ['id', 'donor_name', 'school_name', 'type', 'amount', 'estimated_value', 'state', 'delivery_mode', 'registered_at'],
+                ['id', 'donor_name', 'school_name', 'donation_type', 'amount', 'status', 'created_at'],
                 result.rows
             );
         } else if (report === 'completed') {
             const result = await pool.query(
-                `${DONATION_SUMMARY_SELECT} WHERE dn.state = 'completed' ORDER BY dn.registered_at`
+                `${DONATION_SUMMARY_SELECT} AND dn.status = 'Finalizado' ORDER BY dn.created_at`
             );
             csvData = toCSV(
-                ['id', 'donor_name', 'school_name', 'type', 'amount', 'estimated_value', 'state', 'delivery_mode', 'registered_at'],
+                ['id', 'donor_name', 'school_name', 'donation_type', 'amount', 'status', 'created_at'],
                 result.rows
             );
         }

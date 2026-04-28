@@ -6,8 +6,9 @@
  * Fetches the school list from the backend on mount and reflects create,
  * edit, and archive operations through the API in real time.
  *
- * The API model exposes: id, name, region, category, description,
- * funding_goal, confirmed_value, progress_pct, status.
+ * The API model exposes all DB fields: region, school, name, employees,
+ * students, level, cct, mode, shift, address, location, category,
+ * description, goal, progress, progress_pct, status.
  */
 
 import {
@@ -44,6 +45,23 @@ import {
 } from '@/lib/schoolsService';
 import { ApiError } from '@/lib/apiClient';
 
+const emptyForm = {
+  school: '',
+  name: '',
+  region: '',
+  level: '',
+  cct: '',
+  mode: '',
+  shift: '',
+  address: '',
+  location: '',
+  category: '',
+  description: '',
+  employees: '',
+  students: '',
+  goal: '',
+};
+
 export default function EscuelasPage() {
   // ── Data & async state ──────────────────────────────────────────────────────
   const [schools, setSchools] = useState<ApiSchool[]>([]);
@@ -59,13 +77,7 @@ export default function EscuelasPage() {
   // ── Dialog state ────────────────────────────────────────────────────────────
   const [openDialog, setOpenDialog] = useState(false);
   const [editingSchool, setEditingSchool] = useState<ApiSchool | null>(null);
-  const [formData, setFormData] = useState({
-    name: '',
-    region: '',
-    category: '',
-    description: '',
-    funding_goal: '',
-  });
+  const [formData, setFormData] = useState(emptyForm);
 
   // ── Load schools from API ───────────────────────────────────────────────────
 
@@ -100,15 +112,24 @@ export default function EscuelasPage() {
     if (school) {
       setEditingSchool(school);
       setFormData({
+        school: school.school,
         name: school.name,
         region: school.region,
+        level: school.level,
+        cct: school.cct,
+        mode: school.mode,
+        shift: school.shift,
+        address: school.address,
+        location: school.location,
         category: school.category,
         description: school.description ?? '',
-        funding_goal: String(school.funding_goal),
+        employees: String(school.employees),
+        students: String(school.students),
+        goal: String(school.goal),
       });
     } else {
       setEditingSchool(null);
-      setFormData({ name: '', region: '', category: '', description: '', funding_goal: '' });
+      setFormData(emptyForm);
     }
     setOpenDialog(true);
   };
@@ -121,9 +142,21 @@ export default function EscuelasPage() {
   // ── Save school (create or update) ─────────────────────────────────────────
 
   const handleSaveSchool = async () => {
-    const fundingGoal = parseFloat(formData.funding_goal);
-    if (!formData.name || !formData.region || !formData.category || isNaN(fundingGoal)) {
-      setSaveError('Nombre, región, categoría y meta de financiamiento son obligatorios.');
+    const goal = parseFloat(formData.goal);
+    if (
+      !formData.school ||
+      !formData.name ||
+      !formData.region ||
+      !formData.level ||
+      !formData.cct ||
+      !formData.mode ||
+      !formData.shift ||
+      !formData.address ||
+      !formData.location ||
+      !formData.category ||
+      isNaN(goal)
+    ) {
+      setSaveError('Todos los campos obligatorios deben completarse.');
       return;
     }
 
@@ -131,28 +164,35 @@ export default function EscuelasPage() {
     setSaving(true);
     try {
       const payload = {
+        school: formData.school,
         name: formData.name,
         region: formData.region,
+        level: formData.level,
+        cct: formData.cct,
+        mode: formData.mode,
+        shift: formData.shift,
+        address: formData.address,
+        location: formData.location,
         category: formData.category,
         description: formData.description || undefined,
-        funding_goal: fundingGoal,
+        employees: formData.employees ? parseInt(formData.employees, 10) : undefined,
+        students: formData.students ? parseInt(formData.students, 10) : undefined,
+        goal,
       };
 
       if (editingSchool) {
-        // PUT /api/v1/schools/:id
         const updated = await updateSchool(editingSchool.id, payload);
         setSchools((prev) =>
           prev.map((s) => (s.id === editingSchool.id ? updated : s))
         );
       } else {
-        // POST /api/v1/schools
         const created = await createSchool(payload);
         setSchools((prev) => [...prev, created]);
       }
       handleCloseDialog();
     } catch (err) {
       if (err instanceof ApiError && err.status === 409) {
-        setSaveError('Ya existe una escuela con ese nombre en esa región.');
+        setSaveError('Ya existe una escuela con ese CCT.');
       } else {
         setSaveError('No se pudo guardar la escuela. Inténtalo de nuevo.');
       }
@@ -165,7 +205,6 @@ export default function EscuelasPage() {
 
   const handleArchive = async (school: ApiSchool) => {
     try {
-      // PATCH /api/v1/schools/:id/archive
       await archiveSchool(school.id);
       setSchools((prev) => prev.filter((s) => s.id !== school.id));
     } catch {
@@ -183,6 +222,9 @@ export default function EscuelasPage() {
       school.category.toLowerCase().includes(query)
     );
   });
+
+  const f = (key: keyof typeof emptyForm, value: string) =>
+    setFormData((prev) => ({ ...prev, [key]: value }));
 
   // ── Render ──────────────────────────────────────────────────────────────────
 
@@ -242,11 +284,10 @@ export default function EscuelasPage() {
               size="small"
             >
               <MenuItem value="">Todas las Regiones</MenuItem>
-              <MenuItem value="Guadalajara">Guadalajara</MenuItem>
-              <MenuItem value="Puerto Vallarta">Puerto Vallarta</MenuItem>
+              <MenuItem value="Arandas">Arandas</MenuItem>
+              <MenuItem value="San Juan de los Lagos">San Juan de los Lagos</MenuItem>
+              <MenuItem value="San Pedro Tlaquepaque">San Pedro Tlaquepaque</MenuItem>
               <MenuItem value="Zapopan">Zapopan</MenuItem>
-              <MenuItem value="Tlaquepaque">Tlaquepaque</MenuItem>
-              <MenuItem value="Tonalá">Tonalá</MenuItem>
             </Select>
           </Grid>
           <Grid size={{ xs: 12, sm: 6, md: 4 }}>
@@ -303,9 +344,6 @@ export default function EscuelasPage() {
                   Meta
                 </TableCell>
                 <TableCell sx={{ fontWeight: 700, textTransform: 'uppercase', fontSize: '13px' }}>
-                  Confirmado
-                </TableCell>
-                <TableCell sx={{ fontWeight: 700, textTransform: 'uppercase', fontSize: '13px' }}>
                   Progreso
                 </TableCell>
                 <TableCell sx={{ fontWeight: 700, textTransform: 'uppercase', fontSize: '13px' }}>
@@ -319,7 +357,7 @@ export default function EscuelasPage() {
             <TableBody>
               {filteredSchools.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={8} sx={{ textAlign: 'center', color: 'text.secondary', py: 4 }}>
+                  <TableCell colSpan={7} sx={{ textAlign: 'center', color: 'text.secondary', py: 4 }}>
                     No se encontraron escuelas.
                   </TableCell>
                 </TableRow>
@@ -332,8 +370,7 @@ export default function EscuelasPage() {
                     <TableCell sx={{ fontWeight: 600 }}>{school.name}</TableCell>
                     <TableCell sx={{ color: '#4a5f8f' }}>{school.region}</TableCell>
                     <TableCell sx={{ color: '#4a5f8f' }}>{school.category}</TableCell>
-                    <TableCell>${school.funding_goal.toLocaleString()}</TableCell>
-                    <TableCell>${school.confirmed_value.toLocaleString()}</TableCell>
+                    <TableCell>${school.goal.toLocaleString()}</TableCell>
                     <TableCell sx={{ width: '140px' }}>
                       <Box sx={{ display: 'flex', alignItems: 'center', gap: 1 }}>
                         <LinearProgress
@@ -400,7 +437,7 @@ export default function EscuelasPage() {
       )}
 
       {/* Add/Edit Dialog */}
-      <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="sm" fullWidth>
+      <Dialog open={openDialog} onClose={handleCloseDialog} maxWidth="md" fullWidth>
         <DialogTitle sx={{ fontWeight: 700, fontSize: '18px' }}>
           {editingSchool ? 'Editar Escuela' : 'Agregar Nueva Escuela'}
         </DialogTitle>
@@ -411,59 +448,117 @@ export default function EscuelasPage() {
             </Alert>
           )}
           <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
-            <TextField
-              fullWidth
-              label="Nombre de la Escuela"
-              value={formData.name}
-              onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-              variant="outlined"
-              required
-              disabled={saving}
-            />
-            <TextField
-              fullWidth
-              label="Región"
-              select
-              value={formData.region}
-              onChange={(e) => setFormData({ ...formData, region: e.target.value })}
-              required
-              disabled={saving}
-            >
-              <MenuItem value="Guadalajara">Guadalajara</MenuItem>
-              <MenuItem value="Puerto Vallarta">Puerto Vallarta</MenuItem>
-              <MenuItem value="Zapopan">Zapopan</MenuItem>
-              <MenuItem value="Tlaquepaque">Tlaquepaque</MenuItem>
-              <MenuItem value="Tonalá">Tonalá</MenuItem>
-            </TextField>
-            <TextField
-              fullWidth
-              label="Categoría"
-              value={formData.category}
-              onChange={(e) => setFormData({ ...formData, category: e.target.value })}
-              variant="outlined"
-              required
-              disabled={saving}
-            />
-            <TextField
-              fullWidth
-              label="Meta de Financiamiento ($)"
-              type="number"
-              value={formData.funding_goal}
-              onChange={(e) => setFormData({ ...formData, funding_goal: e.target.value })}
-              variant="outlined"
-              required
-              disabled={saving}
-            />
-            <TextField
-              fullWidth
-              label="Descripción (opcional)"
-              value={formData.description}
-              onChange={(e) => setFormData({ ...formData, description: e.target.value })}
-              variant="outlined"
-              multiline
-              minRows={2}
-              disabled={saving}
-            />
+            <Grid container spacing={2}>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <TextField
+                  fullWidth label="Plantel (clave)" value={formData.school}
+                  onChange={(e) => f('school', e.target.value)} required disabled={saving}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <TextField
+                  fullWidth label="Nombre de la Escuela" value={formData.name}
+                  onChange={(e) => f('name', e.target.value)} required disabled={saving}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <TextField
+                  fullWidth label="Región" select value={formData.region}
+                  onChange={(e) => f('region', e.target.value)} required disabled={saving}
+                >
+                  <MenuItem value="Arandas">Arandas</MenuItem>
+                  <MenuItem value="San Juan de los Lagos">San Juan de los Lagos</MenuItem>
+                  <MenuItem value="San Pedro Tlaquepaque">San Pedro Tlaquepaque</MenuItem>
+                  <MenuItem value="Zapopan">Zapopan</MenuItem>
+                </TextField>
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <TextField
+                  fullWidth label="CCT" value={formData.cct}
+                  onChange={(e) => f('cct', e.target.value)} required disabled={saving}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <TextField
+                  fullWidth label="Nivel Educativo" select value={formData.level}
+                  onChange={(e) => f('level', e.target.value)} required disabled={saving}
+                >
+                  <MenuItem value="Preescolar">Preescolar</MenuItem>
+                  <MenuItem value="Primaria">Primaria</MenuItem>
+                  <MenuItem value="Secundaria">Secundaria</MenuItem>
+                  <MenuItem value="Preparatoria">Preparatoria</MenuItem>
+                </TextField>
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <TextField
+                  fullWidth label="Modalidad" select value={formData.mode}
+                  onChange={(e) => f('mode', e.target.value)} required disabled={saving}
+                >
+                  <MenuItem value="SEP-General">SEP-General</MenuItem>
+                  <MenuItem value="SEP-Multigrado">SEP-Multigrado</MenuItem>
+                  <MenuItem value="CONAFE">CONAFE</MenuItem>
+                  <MenuItem value="Particular">Particular</MenuItem>
+                  <MenuItem value="Otro">Otro</MenuItem>
+                </TextField>
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <TextField
+                  fullWidth label="Turno" select value={formData.shift}
+                  onChange={(e) => f('shift', e.target.value)} required disabled={saving}
+                >
+                  <MenuItem value="Matutino">Matutino</MenuItem>
+                  <MenuItem value="Vespertino">Vespertino</MenuItem>
+                  <MenuItem value="Mixto">Mixto</MenuItem>
+                </TextField>
+              </Grid>
+              <Grid size={{ xs: 12, sm: 6 }}>
+                <TextField
+                  fullWidth label="Categoría" select value={formData.category}
+                  onChange={(e) => f('category', e.target.value)} required disabled={saving}
+                >
+                  <MenuItem value="Estatal">Estatal</MenuItem>
+                  <MenuItem value="Federal">Federal</MenuItem>
+                  <MenuItem value="Federalizado">Federalizado</MenuItem>
+                </TextField>
+              </Grid>
+              <Grid size={{ xs: 12 }}>
+                <TextField
+                  fullWidth label="Dirección" value={formData.address}
+                  onChange={(e) => f('address', e.target.value)} required disabled={saving}
+                />
+              </Grid>
+              <Grid size={{ xs: 12 }}>
+                <TextField
+                  fullWidth label="Ubicación (enlace/mapa)" value={formData.location}
+                  onChange={(e) => f('location', e.target.value)} required disabled={saving}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 4 }}>
+                <TextField
+                  fullWidth label="Personal Escolar" type="number" value={formData.employees}
+                  onChange={(e) => f('employees', e.target.value)} disabled={saving}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 4 }}>
+                <TextField
+                  fullWidth label="Estudiantes" type="number" value={formData.students}
+                  onChange={(e) => f('students', e.target.value)} disabled={saving}
+                />
+              </Grid>
+              <Grid size={{ xs: 12, sm: 4 }}>
+                <TextField
+                  fullWidth label="Meta ($)" type="number" value={formData.goal}
+                  onChange={(e) => f('goal', e.target.value)} required disabled={saving}
+                />
+              </Grid>
+              <Grid size={{ xs: 12 }}>
+                <TextField
+                  fullWidth label="Descripción (opcional)" value={formData.description}
+                  onChange={(e) => f('description', e.target.value)}
+                  multiline minRows={2} disabled={saving}
+                />
+              </Grid>
+            </Grid>
           </Box>
         </DialogContent>
         <DialogActions>

@@ -7,9 +7,10 @@ CREATE TYPE donor_type AS ENUM ('Fisica', 'Moral');
 CREATE TYPE donation_status AS ENUM ('Registrado','Aprobado','Entregando','Entregado','Finalizado','Cancelado');
 CREATE TYPE donation_type AS ENUM ('Material','Monetaria');
 CREATE TYPE school_level AS ENUM ('Preescolar','Primaria','Secundaria','Preparatoria','Universidad');
-CREATE TYPE school_mode AS ENUM ('Presencial','Semi-presencial','En linea');
+CREATE TYPE school_mode AS ENUM ('SEP-Multigrado','SEP-General','CONAFE', 'Particular', 'Otro');
 CREATE TYPE school_shift AS ENUM ('Matutino','Vespertino','Mixto');
 CREATE TYPE school_category AS ENUM ('Estatal','Federal','Federalizado');
+CREATE TYPE school_need_status AS ENUM ('Cubierto', 'Aun no cubierto');
 CREATE TYPE entity_type AS ENUM ('donor','donation','school');
 CREATE TYPE audit_action AS ENUM ('create','update','archive','state_change');
 
@@ -48,7 +49,7 @@ CREATE TABLE donors (
   name TEXT NOT NULL,
   region TEXT NOT NULL,
   donor_type donor_type NOT NULL,
-  notes TEXT,
+  description TEXT,
 
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   created_by UUID REFERENCES users(id),
@@ -64,7 +65,7 @@ CREATE TABLE donors (
 CREATE TABLE schools (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   region TEXT NOT NULL,
-  school TEXT NOT NULL,
+  school TEXT NOT NULL, -- plantel
   name TEXT NOT NULL,
   employees INT NOT NULL DEFAULT 0,
   students INT NOT NULL DEFAULT 0,
@@ -75,7 +76,7 @@ CREATE TABLE schools (
   address TEXT NOT NULL,
   location TEXT NOT NULL,
   category school_category NOT NULL,
-  notes TEXT,
+  description TEXT,
   goal NUMERIC(12,2) NOT NULL CHECK (goal > 0),
   progress NUMERIC(12,2) NOT NULL DEFAULT 0 CHECK (progress >= 0),
 
@@ -93,10 +94,14 @@ CREATE TABLE schools (
 CREATE TABLE schools_needs (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   school_id UUID NOT NULL REFERENCES schools(id),
+  category TEXT NOT NULL,
+  subcategory TEXT NOT NULL,
   item_name TEXT NOT NULL,
   quantity INT,
   unit TEXT,
   amount NUMERIC(12,2) NOT NULL,
+  status school_need_status NOT NULL DEFAULT 'Aun no cubierto',
+  description TEXT,
 
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   created_by UUID REFERENCES users(id),
@@ -115,7 +120,6 @@ CREATE TABLE donations (
   donation_type donation_type NOT NULL,
   status donation_status NOT NULL DEFAULT 'Registrado',
   description TEXT,
-  notes TEXT,
 
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
   created_by UUID REFERENCES users(id),

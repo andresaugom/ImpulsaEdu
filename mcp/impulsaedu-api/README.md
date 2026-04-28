@@ -49,10 +49,37 @@ In the GitHub UI: **Repository Settings → Copilot → Coding agent → MCP ser
 }
 ```
 
-## Configuring for local Copilot CLI / VS Code
+## Configuring for GitHub Copilot CLI
 
-Add to your project's `.vscode/mcp.json` (VS Code Copilot) or your MCP client
-configuration:
+Use the `/mcp add` slash command inside an active Copilot CLI session and fill
+in the prompted fields, then press **Ctrl+S** to save.
+
+Alternatively, edit `~/.copilot/mcp-config.json` directly (create the file if
+it doesn't exist):
+
+```json
+{
+  "mcpServers": {
+    "impulsaedu-api": {
+      "type": "stdio",
+      "command": "node",
+      "args": ["/absolute/path/to/ImpulsaEdu/mcp/impulsaedu-api/server.js"],
+      "description": "ImpulsaEdu API documentation and implementation status"
+    }
+  }
+}
+```
+
+Replace `/absolute/path/to/ImpulsaEdu` with the actual path to your local
+clone (e.g. `$HOME/git/ImpulsaEdu`). The default config directory is
+`~/.copilot/`; override it with the `COPILOT_HOME` environment variable if
+needed.
+
+Verify the server is loaded by running `/mcp` inside a Copilot CLI session.
+
+## Configuring for VS Code Copilot
+
+Add to your project's `.vscode/mcp.json`:
 
 ```json
 {

@@ -4,7 +4,8 @@ export const mockDonors: Donor[] = [
   {
     id: "1",
     name: "María García López",
-    type: "individual",
+    region: "Guadalajara",
+    donor_type: "Fisica",
     email: "maria@ejemplo.com",
     phone: "+52 (33) 1234-5678",
     totalDonations: 3500,
@@ -13,7 +14,8 @@ export const mockDonors: Donor[] = [
   {
     id: "2",
     name: "Corporativo Educativo Jalisco",
-    type: "corporate",
+    region: "Zapopan",
+    donor_type: "Moral",
     email: "contacto@corporativo.com",
     phone: "+52 (33) 9876-5432",
     totalDonations: 15000,
@@ -22,7 +24,8 @@ export const mockDonors: Donor[] = [
   {
     id: "3",
     name: "Carlos Hernández Rodríguez",
-    type: "individual",
+    region: "Tlaquepaque",
+    donor_type: "Fisica",
     email: "carlos@ejemplo.com",
     phone: "+52 (33) 5555-1234",
     totalDonations: 2000,

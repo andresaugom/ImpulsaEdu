@@ -2,71 +2,63 @@
  * Donations service for ImpulsaEdu.
  *
  * Wraps the app_api endpoints:
- *  - GET   /api/v1/donations            – paginated list with filters (staff)
- *  - GET   /api/v1/donations/:id        – get full donation detail (staff)
- *  - POST  /api/v1/donations            – create a donation record (staff)
- *  - PUT   /api/v1/donations/:id        – update description/observations/delivery (staff)
- *  - PATCH /api/v1/donations/:id/state  – advance or cancel workflow state (staff)
+ *  - GET   /api/v1/donations              – paginated list with filters (staff)
+ *  - GET   /api/v1/donations/:id          – get full donation detail (staff)
+ *  - POST  /api/v1/donations              – create a donation record (staff)
+ *  - PUT   /api/v1/donations/:id          – update description (staff)
+ *  - PATCH /api/v1/donations/:id/status   – advance or cancel workflow status (staff)
  *
- * State machine transitions:
- *  registered → approved | cancelled
- *  approved   → in_delivery | cancelled
- *  in_delivery → delivered | cancelled
- *  delivered  → completed
- *  completed  → (terminal)
- *  cancelled  → (terminal)
+ * Status machine transitions (Spanish DB enum values):
+ *  Registrado → Aprobado | Cancelado
+ *  Aprobado   → Entregando | Cancelado
+ *  Entregando → Entregado | Cancelado
+ *  Entregado  → Finalizado
+ *  Finalizado → (terminal)
+ *  Cancelado  → (terminal)
  */
 
 import { APP_BASE, apiRequest } from './apiClient';
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
-export type DonationState =
-  | 'registered'
-  | 'approved'
-  | 'in_delivery'
-  | 'delivered'
-  | 'completed'
-  | 'cancelled';
+export type DonationStatus =
+  | 'Registrado'
+  | 'Aprobado'
+  | 'Entregando'
+  | 'Entregado'
+  | 'Finalizado'
+  | 'Cancelado';
 
-export type DonationType = 'monetary' | 'material';
+export type DonationType = 'Material' | 'Monetaria';
+
+export interface DonationItem {
+  id?: string;
+  item_name: string;
+  quantity: number;
+  amount: number | null;
+}
 
 export interface ApiDonationSummary {
   id: string;
-  donor: { id: string; full_name: string };
+  donor: { id: string; name: string };
   school: { id: string; name: string };
-  type: DonationType;
+  donation_type: DonationType;
   amount: number | null;
-  estimated_value: number | null;
-  state: DonationState;
-  delivery_mode: string | null;
-  registered_at: string;
+  status: DonationStatus;
+  created_at: string;
 }
 
 export interface ApiDonationDetail {
   id: string;
-  donor: { id: string; full_name: string; type: 'individual' | 'corporate' };
+  donor: { id: string; name: string; donor_type: 'Fisica' | 'Moral' };
   school: { id: string; name: string; region: string };
-  type: DonationType;
+  donation_type: DonationType;
   description: string | null;
   amount: number | null;
-  estimated_value: number | null;
-  state: DonationState;
-  observations: string | null;
-  delivery: {
-    mode: string | null;
-    shipping_address: string | null;
-    tracking_info: string | null;
-    notes: string | null;
-  };
-  timeline: {
-    registered_at: string | null;
-    approved_at: string | null;
-    in_delivery_at: string | null;
-    delivered_at: string | null;
-    completed_at: string | null;
-    cancelled_at: string | null;
-  };
+  status: DonationStatus;
+  items: DonationItem[];
+  created_at: string;
+  updated_at: string | null;
 }
 
 interface ApiDonationsListResponse {
@@ -79,8 +71,8 @@ interface ApiDonationsListResponse {
 export interface DonationFilters {
   school_id?: string;
   donor_id?: string;
-  state?: DonationState;
-  type?: DonationType;
+  status?: DonationStatus;
+  donation_type?: DonationType;
   page?: number;
   per_page?: number;
 }
@@ -88,39 +80,26 @@ export interface DonationFilters {
 export interface CreateDonationPayload {
   donor_id: string;
   school_id: string;
-  type: DonationType;
+  donation_type: DonationType;
   description?: string;
   amount?: number;
-  estimated_value?: number;
-  observations?: string;
-  delivery?: {
-    mode?: string;
-    shipping_address?: string;
-    tracking_info?: string;
-    notes?: string;
-  };
+  items?: Omit<DonationItem, 'id'>[];
 }
 
 export interface UpdateDonationPayload {
   description?: string;
-  observations?: string;
-  delivery?: {
-    mode?: string;
-    shipping_address?: string;
-    tracking_info?: string;
-    notes?: string;
-  };
+  amount?: number;
+  items?: Omit<DonationItem, 'id'>[];
 }
 
-export interface UpdateDonationStatePayload {
-  state: DonationState;
-  observations?: string;
+export interface UpdateDonationStatusPayload {
+  status: DonationStatus;
 }
 
-export interface DonationStateUpdateResponse {
+export interface DonationStatusUpdateResponse {
   id: string;
-  state: DonationState;
-  approved_at: string | null;
+  status: DonationStatus;
+  updated_at: string | null;
 }
 
 // ── API calls ─────────────────────────────────────────────────────────────────
@@ -135,12 +114,12 @@ export async function fetchDonations(filters: DonationFilters = {}): Promise<{
   page: number;
 }> {
   const params = new URLSearchParams();
-  if (filters.school_id) params.set('school_id', filters.school_id);
-  if (filters.donor_id)  params.set('donor_id',  filters.donor_id);
-  if (filters.state)     params.set('state',      filters.state);
-  if (filters.type)      params.set('type',       filters.type);
-  if (filters.page)      params.set('page',       String(filters.page));
-  if (filters.per_page)  params.set('per_page',   String(filters.per_page));
+  if (filters.school_id)    params.set('school_id',    filters.school_id);
+  if (filters.donor_id)     params.set('donor_id',     filters.donor_id);
+  if (filters.status)       params.set('status',       filters.status);
+  if (filters.donation_type) params.set('donation_type', filters.donation_type);
+  if (filters.page)         params.set('page',         String(filters.page));
+  if (filters.per_page)     params.set('per_page',     String(filters.per_page));
 
   const query = params.toString();
   const data = await apiRequest<ApiDonationsListResponse>(
@@ -150,7 +129,7 @@ export async function fetchDonations(filters: DonationFilters = {}): Promise<{
 }
 
 /**
- * Fetches the full detail of a single donation, including delivery info and timeline.
+ * Fetches the full detail of a single donation, including items.
  * Requires authentication.
  */
 export async function getDonation(id: string): Promise<ApiDonationDetail> {
@@ -161,7 +140,9 @@ export async function getDonation(id: string): Promise<ApiDonationDetail> {
  * Creates a new donation record.
  * Requires authentication. The school must be active (not archived).
  */
-export async function createDonation(payload: CreateDonationPayload): Promise<ApiDonationDetail> {
+export async function createDonation(
+  payload: CreateDonationPayload
+): Promise<ApiDonationDetail> {
   return apiRequest<ApiDonationDetail>(`${APP_BASE}/donations`, {
     method: 'POST',
     body: JSON.stringify(payload),
@@ -169,8 +150,8 @@ export async function createDonation(payload: CreateDonationPayload): Promise<Ap
 }
 
 /**
- * Updates editable fields (description, observations, delivery) on a donation.
- * Does NOT change the donation state — use updateDonationState for state transitions.
+ * Updates editable fields (description, amount, items) on a donation.
+ * Does NOT change the donation status — use updateDonationStatus for transitions.
  */
 export async function updateDonation(
   id: string,
@@ -183,21 +164,24 @@ export async function updateDonation(
 }
 
 /**
- * Advances or cancels the donation workflow state.
- * Returns a minimal object with id, state, and approved_at — NOT the full detail.
+ * Advances or cancels the donation workflow status.
+ * Returns a minimal object with id, status, and updated_at.
  *
  * Valid transitions:
- *  registered → approved | cancelled
- *  approved   → in_delivery | cancelled
- *  in_delivery → delivered | cancelled
- *  delivered  → completed
+ *  Registrado → Aprobado | Cancelado
+ *  Aprobado   → Entregando | Cancelado
+ *  Entregando → Entregado | Cancelado
+ *  Entregado  → Finalizado
  */
-export async function updateDonationState(
+export async function updateDonationStatus(
   id: string,
-  payload: UpdateDonationStatePayload
-): Promise<DonationStateUpdateResponse> {
-  return apiRequest<DonationStateUpdateResponse>(`${APP_BASE}/donations/${id}/state`, {
-    method: 'PATCH',
-    body: JSON.stringify(payload),
-  });
+  payload: UpdateDonationStatusPayload
+): Promise<DonationStatusUpdateResponse> {
+  return apiRequest<DonationStatusUpdateResponse>(
+    `${APP_BASE}/donations/${id}/status`,
+    {
+      method: 'PATCH',
+      body: JSON.stringify(payload),
+    }
+  );
 }

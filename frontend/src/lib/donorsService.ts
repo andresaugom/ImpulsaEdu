@@ -2,13 +2,13 @@
  * Donors service for ImpulsaEdu.
  *
  * Wraps the app_api endpoints:
- *  - GET   /api/v1/donors          – paginated list with filters
- *  - POST  /api/v1/donors          – create donor
- *  - PUT   /api/v1/donors/:id      – update donor fields
- *  - PATCH /api/v1/donors/:id/deactivate – deactivate donor
+ *  - GET   /api/v1/donors                    – paginated list with filters
+ *  - GET   /api/v1/donors/:id                – get donor detail with donation history
+ *  - POST  /api/v1/donors                    – create donor
+ *  - PUT   /api/v1/donors/:id                – update donor fields
+ *  - PATCH /api/v1/donors/:id/deactivate     – soft-delete donor
  *
- * Adapts the backend field names (full_name, is_active, donation_count)
- * to the frontend Donor interface (name, status, totalDonations).
+ * donor_type values match the DB enum: 'Fisica' | 'Moral'
  */
 
 import { APP_BASE, apiRequest } from './apiClient';
@@ -18,13 +18,12 @@ import { Donor } from '../components/donantes/donantesInterfaces';
 
 interface ApiDonor {
   id: string;
-  full_name: string;
-  email: string;
+  name: string;
+  region: string;
+  donor_type: 'Fisica' | 'Moral';
+  description: string | null;
+  email: string | null;
   phone: string | null;
-  type: 'individual' | 'corporate';
-  tax_id: string | null;
-  organization_name: string | null;
-  notes: string | null;
   is_active: boolean;
   donation_count: number;
 }
@@ -32,10 +31,10 @@ interface ApiDonor {
 interface ApiDonorDonation {
   id: string;
   school_name: string;
-  type: 'monetary' | 'material';
+  donation_type: 'Material' | 'Monetaria';
   amount: number | null;
-  state: string;
-  registered_at: string;
+  status: string;
+  created_at: string;
 }
 
 export interface ApiDonorDetail extends ApiDonor {
@@ -51,20 +50,19 @@ interface ApiDonorsResponse {
 
 export interface DonorFilters {
   name?: string;
-  type?: string;
+  donor_type?: 'Fisica' | 'Moral';
   is_active?: boolean;
   page?: number;
   per_page?: number;
 }
 
 export interface CreateDonorPayload {
-  full_name: string;
-  email: string;
-  type: 'individual' | 'corporate';
+  name: string;
+  region: string;
+  donor_type: 'Fisica' | 'Moral';
+  description?: string;
+  email?: string;
   phone?: string;
-  organization_name?: string;
-  tax_id?: string;
-  notes?: string;
 }
 
 // ── Adapter ───────────────────────────────────────────────────────────────────
@@ -73,10 +71,11 @@ export interface CreateDonorPayload {
 function toFrontendDonor(d: ApiDonor): Donor {
   return {
     id: d.id,
-    name: d.full_name,
-    type: d.type,
+    name: d.name,
+    region: d.region,
+    donor_type: d.donor_type,
     email: d.email,
-    phone: d.phone ?? '',
+    phone: d.phone,
     totalDonations: d.donation_count,
     status: d.is_active ? 'active' : 'inactive',
   };
@@ -95,7 +94,7 @@ export async function fetchDonors(filters: DonorFilters = {}): Promise<{
 }> {
   const params = new URLSearchParams();
   if (filters.name) params.set('name', filters.name);
-  if (filters.type) params.set('type', filters.type);
+  if (filters.donor_type) params.set('donor_type', filters.donor_type);
   if (filters.is_active !== undefined)
     params.set('is_active', String(filters.is_active));
   if (filters.page) params.set('page', String(filters.page));
@@ -141,7 +140,7 @@ export async function updateDonor(
 }
 
 /**
- * Deactivates a donor (sets is_active = false on the backend).
+ * Soft-deletes a donor by setting deleted_at on the backend.
  * This is a soft delete — the donor record is not removed.
  */
 export async function deactivateDonor(id: string): Promise<void> {
