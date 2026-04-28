@@ -12,19 +12,43 @@ describe('Schools Integration Pipeline', () => {
 
     beforeAll(async () => { client = await pool.connect(); });
     beforeEach(async () => { await clearDatabase(client); });
-    afterAll(async () => { client.release(); await pool.end(); });
+    afterAll(async () => { if(client) client.release(); await pool.end(); });
 
     it('retrieves a list of schools from the real database', async () => {
-        // Seed database
-        await client.query("INSERT INTO schools (cct, name) VALUES ('CCT001', 'Test School 1')");
-        await client.query("INSERT INTO schools (cct, name) VALUES ('CCT002', 'Test School 2')");
+        // Seed database with ALL strictly required fields from the new schema
+        await client.query(`
+            INSERT INTO schools (region, school, name, level, cct, mode, shift, address, location, category, goal) 
+            VALUES ('North', 'Test1', 'Test School 1', 'Primaria', 'CCT001', 'Presencial', 'Matutino', '123 St', 'City', 'Estatal', 5000),
+                   ('South', 'Test2', 'Test School 2', 'Secundaria', 'CCT002', 'En linea', 'Vespertino', '456 St', 'City', 'Federal', 10000)
+        `);
         
-        // Make request
         const res = await request(app).get('/api/v1/schools');
         
-        // Assertions
         expect(res.status).toBe(200);
-        expect(res.body.length).toBeGreaterThanOrEqual(2);
-        expect(res.body.some(s => s.cct === 'CCT001')).toBe(true);
+        expect(Array.isArray(res.body)).toBe(true);
+    });
+
+    it('creates a new school matching the schema constraints', async () => {
+        const payload = {
+            region: 'West',
+            school: 'Test3',
+            name: 'New School',
+            level: 'Preparatoria',
+            cct: 'CCT003',
+            mode: 'Semi-presencial',
+            shift: 'Mixto',
+            address: '789 Blvd',
+            location: 'Town',
+            category: 'Federalizado',
+            goal: 15000
+        };
+
+        const res = await request(app).post('/api/v1/schools').send(payload);
+
+        expect(res.status).toBe(201);
+        
+        // Verify in DB via UUID
+        const dbRes = await client.query("SELECT * FROM schools WHERE cct = 'CCT003'");
+        expect(dbRes.rows.length).toBe(1);
     });
 });

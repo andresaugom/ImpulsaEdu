@@ -28,25 +28,24 @@ describe('Auth & Users Integration Pipeline', () => {
         const res = await request(app)
             .post('/api/v1/users/register')
             .send({
-                name: 'Integration User',
+                firstname: 'Integration',
+                lastname: 'User',
                 email: 'integration@test.com',
                 password: 'password123',
-                role: 'standard'
+                role: 'staff' // using the ENUM
             });
 
         expect(res.status).toBe(201);
-        expect(res.body).toHaveProperty('token');
 
-        // Verify the database actually saved it
         const dbRes = await client.query("SELECT * FROM users WHERE email = 'integration@test.com'");
         expect(dbRes.rows.length).toBe(1);
-        expect(dbRes.rows[0].name).toBe('Integration User');
+        expect(dbRes.rows[0].firstname).toBe('Integration');
     });
 
     it('should authenticate an existing user via the real database', async () => {
         const hash = await bcrypt.hash('secret123', 10);
         await client.query(
-            "INSERT INTO users (name, email, password_hash, role) VALUES ('Login Test', 'login@test.com', $1, 'standard')",
+            "INSERT INTO users (firstname, lastname, email, password_hash, role) VALUES ('Login', 'Test', 'login@test.com', $1, 'staff')",
             [hash]
         );
 

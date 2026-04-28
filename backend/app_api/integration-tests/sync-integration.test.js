@@ -18,28 +18,27 @@ const TEST_FILE = path.join(__dirname, 'test-sync-integration.xlsx');
 function createTestExcel(schoolName = TEST_SCHOOL_NAME, cct = TEST_CCT) {
     const workbook = xlsx.utils.book_new();
 
-    // Sheet: "Datos de las escuelas" — headers at row 5 (range: 4 means skip 4 rows)
-    // We pad with 4 empty rows before the header row.
+    // Sheet: "Datos de las escuelas" 
     const schoolsData = [
-        ['', '', '', '', '', '', '', '', '', '', '', ''],   // row 1
-        ['', '', '', '', '', '', '', '', '', '', '', ''],   // row 2
-        ['', '', '', '', '', '', '', '', '', '', '', ''],   // row 3
-        ['', '', '', '', '', '', '', '', '', '', '', ''],   // row 4
-        ['CCT', 'Municipio', 'Nombre de la Escuela', 'Personal escolar', 'Estudiantes', 'Nivel ed.', 'Modalidad', 'Turno', 'Dirección', 'Ubicación', 'Sostenimiento', 'Extra'], // row 5 = header
-        [cct, 'Municipio Test', schoolName, 5, 100, 'Primaria', 'Presencial', 'Matutino', 'Calle Falsa 123', 'Urbana', 'Estatal', ''],
+        ['', '', '', '', '', '', '', '', '', '', '', '', '', ''],   
+        ['', '', '', '', '', '', '', '', '', '', '', '', '', ''],   
+        ['', '', '', '', '', '', '', '', '', '', '', '', '', ''],   
+        ['', '', '', '', '', '', '', '', '', '', '', '', '', ''],   
+        ['CCT', 'Clave Escuela', 'Municipio', 'Nombre de la Escuela', 'Personal escolar', 'Estudiantes', 'Nivel ed.', 'Modalidad', 'Turno', 'Dirección', 'Ubicación', 'Sostenimiento', 'Meta', 'Extra'], 
+        [cct, 'SCH-123', 'Municipio Test', schoolName, 5, 100, 'Primaria', 'Presencial', 'Matutino', 'Calle Falsa 123', 'Urbana', 'Estatal', 5000, ''],
     ];
 
     const schoolsWs = xlsx.utils.aoa_to_sheet(schoolsData);
     xlsx.utils.book_append_sheet(workbook, schoolsWs, 'Datos de las escuelas');
 
-    // Sheet: "Necesidades" — headers at row 4 (range: 3 means skip 3 rows)
+    // Sheet: "Necesidades" 
     const needsData = [
-        ['', '', '', ''],   // row 1
-        ['', '', '', ''],   // row 2
-        ['', '', '', ''],   // row 3
-        ['Propuesta', 'Escuela', 'Cantidad', 'Unidad'], // row 4 = header
-        ['Sillas', schoolName, 10, 'Pza'],
-        ['Mesas', schoolName, 5, 'Pza'],
+        ['', '', '', '', ''],   
+        ['', '', '', '', ''],   
+        ['', '', '', '', ''],   
+        ['Propuesta', 'Escuela', 'Cantidad', 'Unidad', 'Monto'], 
+        ['Sillas', schoolName, 10, 'Pza', 1500.00],
+        ['Mesas', schoolName, 5, 'Pza', 2000.00],
     ];
 
     const needsWs = xlsx.utils.aoa_to_sheet(needsData);
