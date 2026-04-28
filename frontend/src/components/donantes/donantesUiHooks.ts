@@ -10,5 +10,5 @@ export const getStatusColor = (status: string) => {
 };
 
 export const getTypeLabel = (type: string) => {
-  return type === "individual" ? "Persona Física" : "Persona Moral";
+  return type === "Fisica" ? "Persona Física" : "Persona Moral";
 };

@@ -7,62 +7,62 @@ const { errBody } = require('../utils/errors');
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
-/**
- * Subquery that computes confirmed_value for a school:
- * sum of amount + estimated_value for donations in active states.
- */
-const CONFIRMED_VALUE_SQL = `
-    COALESCE((
-        SELECT SUM(COALESCE(d.amount, 0) + COALESCE(d.estimated_value, 0))
-        FROM   donations d
-        WHERE  d.school_id = s.id
-          AND  d.state IN ('approved', 'in_delivery', 'delivered', 'completed')
-    ), 0)
-`;
-
 function formatSchool(row) {
-    const goal      = parseFloat(row.funding_goal) || 0;
-    const confirmed = parseFloat(row.confirmed_value) || 0;
+    const goal     = parseFloat(row.goal) || 0;
+    const progress = parseFloat(row.progress) || 0;
     return {
-        id:              row.id,
-        name:            row.name,
-        region:          row.region,
-        category:        row.category,
-        description:     row.description || null,
-        funding_goal:    goal,
-        confirmed_value: confirmed,
-        progress_pct:    goal > 0 ? Math.round(confirmed / goal * 10000) / 100 : 0,
-        status:          row.status
+        id:           row.id,
+        region:       row.region,
+        school:       row.school,
+        name:         row.name,
+        employees:    row.employees,
+        students:     row.students,
+        level:        row.level,
+        cct:          row.cct,
+        mode:         row.mode,
+        shift:        row.shift,
+        address:      row.address,
+        location:     row.location,
+        category:     row.category,
+        description:  row.description || null,
+        goal:         goal,
+        progress:     progress,
+        progress_pct: goal > 0 ? Math.round(progress / goal * 10000) / 100 : 0,
+        status:       row.deleted_at ? 'archived' : 'active'
     };
 }
+
+const REQUIRED_FIELDS = ['region', 'school', 'name', 'level', 'cct', 'mode', 'shift', 'address', 'location', 'category', 'goal'];
 
 // ── GET /api/v1/schools  (public) ─────────────────────────────────────────────
 
 router.get('/', async (req, res) => {
-    const { region, category, status = 'active' } = req.query;
+    const { region, category, status } = req.query;
     const perPage = Math.min(parseInt(req.query.per_page) || 20, 100);
     const page    = Math.max(parseInt(req.query.page)     || 1, 1);
     const offset  = (page - 1) * perPage;
 
-    const conditions = ['s.status = $1'];
-    const params     = [status];
-    let   i          = 2;
+    const conditions = [];
+    const params     = [];
+    let   i          = 1;
 
-    if (region)   { conditions.push(`s.region = $${i++}`);   params.push(region); }
+    // Default to active unless explicitly requesting archived
+    if (status === 'archived') {
+        conditions.push('s.deleted_at IS NOT NULL');
+    } else {
+        conditions.push('s.deleted_at IS NULL');
+    }
+
+    if (region)   { conditions.push(`s.region   = $${i++}`); params.push(region); }
     if (category) { conditions.push(`s.category = $${i++}`); params.push(category); }
 
-    const where = conditions.join(' AND ');
+    const where = `WHERE ${conditions.join(' AND ')}`;
 
     try {
         const [countRes, dataRes] = await Promise.all([
-            pool.query(`SELECT COUNT(*) FROM schools s WHERE ${where}`, params),
+            pool.query(`SELECT COUNT(*) FROM schools s ${where}`, params),
             pool.query(
-                `SELECT s.id, s.name, s.region, s.category, s.description,
-                        s.funding_goal, s.status, ${CONFIRMED_VALUE_SQL} AS confirmed_value
-                 FROM   schools s
-                 WHERE  ${where}
-                 ORDER  BY s.name
-                 LIMIT  $${i} OFFSET $${i + 1}`,
+                `SELECT * FROM schools s ${where} ORDER BY s.name LIMIT $${i} OFFSET $${i + 1}`,
                 [...params, perPage, offset]
             )
         ]);
@@ -84,10 +84,7 @@ router.get('/', async (req, res) => {
 router.get('/:id', async (req, res) => {
     try {
         const result = await pool.query(
-            `SELECT s.id, s.name, s.region, s.category, s.description,
-                    s.funding_goal, s.status, ${CONFIRMED_VALUE_SQL} AS confirmed_value
-             FROM   schools s
-             WHERE  s.id = $1`,
+            'SELECT * FROM schools WHERE id = $1',
             [req.params.id]
         );
         if (result.rowCount === 0) {
@@ -103,24 +100,37 @@ router.get('/:id', async (req, res) => {
 // ── POST /api/v1/schools  (staff+) ───────────────────────────────────────────
 
 router.post('/', authenticateToken, async (req, res) => {
-    const { name, region, category, description, funding_goal } = req.body;
+    const {
+        region, school, name, employees, students,
+        level, cct, mode, shift, address, location,
+        category, description, goal
+    } = req.body;
 
-    if (!name || !region || !category || !funding_goal) {
-        return res.status(400).json(errBody('MISSING_FIELDS', 'name, region, category, and funding_goal are required'));
+    const missing = REQUIRED_FIELDS.filter(f => req.body[f] === undefined || req.body[f] === null || req.body[f] === '');
+    if (missing.length > 0) {
+        return res.status(400).json(errBody('MISSING_FIELDS', `Required fields: ${missing.join(', ')}`));
     }
 
     try {
         const result = await pool.query(
-            `INSERT INTO schools (name, region, category, description, funding_goal)
-             VALUES ($1, $2, $3, $4, $5)
-             RETURNING id, name, region, category, description, funding_goal, status`,
-            [name, region, category, description || null, funding_goal]
+            `INSERT INTO schools
+                (region, school, name, employees, students, level, cct, mode, shift,
+                 address, location, category, description, goal, created_by)
+             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14,$15)
+             RETURNING *`,
+            [
+                region, school, name,
+                employees ?? 0, students ?? 0,
+                level, cct, mode, shift,
+                address, location, category,
+                description || null, goal,
+                req.user.sub
+            ]
         );
-        const row = result.rows[0];
-        res.status(201).json(formatSchool({ ...row, confirmed_value: 0 }));
+        res.status(201).json(formatSchool(result.rows[0]));
     } catch (err) {
         if (err.code === '23505') {
-            return res.status(409).json(errBody('CONFLICT', 'A school with that name already exists in that region'));
+            return res.status(409).json(errBody('CONFLICT', 'A school with that region/school/name combination already exists'));
         }
         console.error(err);
         res.status(500).json(errBody('SERVER_ERROR', 'Internal server error'));
@@ -131,14 +141,17 @@ router.post('/', authenticateToken, async (req, res) => {
 
 router.put('/:id', authenticateToken, async (req, res) => {
     const { id } = req.params;
-    const { name, region, category, description, funding_goal } = req.body;
-
-    if (!name && !region && !category && description === undefined && !funding_goal) {
-        return res.status(400).json(errBody('MISSING_FIELDS', 'Provide at least one field to update'));
-    }
+    const {
+        region, school, name, employees, students,
+        level, cct, mode, shift, address, location,
+        category, description, goal
+    } = req.body;
 
     try {
-        const existing = await pool.query('SELECT id FROM schools WHERE id = $1', [id]);
+        const existing = await pool.query(
+            'SELECT id FROM schools WHERE id = $1 AND deleted_at IS NULL',
+            [id]
+        );
         if (existing.rowCount === 0) {
             return res.status(404).json(errBody('NOT_FOUND', 'School not found'));
         }
@@ -147,36 +160,30 @@ router.put('/:id', authenticateToken, async (req, res) => {
         const params = [];
         let   i      = 1;
 
-        if (name)              { sets.push(`name = $${i++}`);         params.push(name); }
-        if (region)            { sets.push(`region = $${i++}`);       params.push(region); }
-        if (category)          { sets.push(`category = $${i++}`);     params.push(category); }
-        if (description !== undefined) { sets.push(`description = $${i++}`); params.push(description); }
-        if (funding_goal)      { sets.push(`funding_goal = $${i++}`); params.push(funding_goal); }
-        sets.push(`updated_at = NOW()`);
+        const fields = { region, school, name, employees, students, level, cct, mode, shift, address, location, category, description, goal };
+        for (const [key, val] of Object.entries(fields)) {
+            if (val !== undefined) {
+                sets.push(`${key} = $${i++}`);
+                params.push(val);
+            }
+        }
+
+        if (sets.length === 0) {
+            return res.status(400).json(errBody('MISSING_FIELDS', 'Provide at least one field to update'));
+        }
+
+        sets.push(`updated_at = NOW()`, `updated_by = $${i++}`);
+        params.push(req.user.sub);
         params.push(id);
 
         const result = await pool.query(
-            `UPDATE schools SET ${sets.join(', ')}
-             WHERE  id = $${i}
-             RETURNING id, name, region, category, description, funding_goal, status`,
+            `UPDATE schools SET ${sets.join(', ')} WHERE id = $${i} RETURNING *`,
             params
         );
-
-        const row = result.rows[0];
-        // Re-fetch confirmed_value for the updated school
-        const cvRes = await pool.query(
-            `SELECT COALESCE((
-                SELECT SUM(COALESCE(d.amount, 0) + COALESCE(d.estimated_value, 0))
-                FROM   donations d
-                WHERE  d.school_id = $1
-                  AND  d.state IN ('approved', 'in_delivery', 'delivered', 'completed')
-             ), 0) AS confirmed_value`,
-            [id]
-        );
-        res.json(formatSchool({ ...row, confirmed_value: cvRes.rows[0]?.confirmed_value || 0 }));
+        res.json(formatSchool(result.rows[0]));
     } catch (err) {
         if (err.code === '23505') {
-            return res.status(409).json(errBody('CONFLICT', 'A school with that name already exists in that region'));
+            return res.status(409).json(errBody('CONFLICT', 'A school with that region/school/name combination already exists'));
         }
         console.error(err);
         res.status(500).json(errBody('SERVER_ERROR', 'Internal server error'));
@@ -188,10 +195,11 @@ router.put('/:id', authenticateToken, async (req, res) => {
 router.patch('/:id/archive', authenticateToken, async (req, res) => {
     try {
         const result = await pool.query(
-            `UPDATE schools SET status = 'archived', updated_at = NOW()
-             WHERE  id = $1
+            `UPDATE schools
+             SET deleted_at = NOW(), deleted_by = $1, updated_at = NOW(), updated_by = $1
+             WHERE id = $2 AND deleted_at IS NULL
              RETURNING id`,
-            [req.params.id]
+            [req.user.sub, req.params.id]
         );
         if (result.rowCount === 0) {
             return res.status(404).json(errBody('NOT_FOUND', 'School not found'));

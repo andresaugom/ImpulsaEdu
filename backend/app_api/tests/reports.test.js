@@ -32,13 +32,12 @@ describe('GET /api/v1/reports/donations-by-school', () => {
     it('returns aggregated report for admin', async () => {
         pool.query.mockResolvedValueOnce({
             rows: [{
-                school_id:            'school-1',
-                school_name:          'Escuela Juárez',
-                total_monetary:       '30000',
-                total_material_value: '60000',
-                total_donations:      '5',
-                pending:              '2',
-                completed:            '3'
+                school_id:       'school-1',
+                school_name:     'Escuela Juárez',
+                total_monetary:  '30000',
+                total_donations: '5',
+                pending:         '2',
+                completed:       '3'
             }]
         });
 
@@ -49,13 +48,12 @@ describe('GET /api/v1/reports/donations-by-school', () => {
         expect(res.status).toBe(200);
         expect(res.body).toHaveLength(1);
         expect(res.body[0]).toMatchObject({
-            school_id:            'school-1',
-            school_name:          'Escuela Juárez',
-            total_monetary:       30000,
-            total_material_value: 60000,
-            total_donations:      5,
-            pending:              2,
-            completed:            3
+            school_id:       'school-1',
+            school_name:     'Escuela Juárez',
+            total_monetary:  30000,
+            total_donations: 5,
+            pending:         2,
+            completed:       3
         });
     });
 
@@ -125,19 +123,18 @@ describe('GET /api/v1/reports/pending-deliveries', () => {
         expect(res.status).toBe(403);
     });
 
-    it('returns donations in approved and in_delivery states', async () => {
+    it('returns donations in Aprobado and Entregando states', async () => {
         const row = {
-            id:              'don-1',
-            donor_id:        'donor-1',
-            donor_name:      'Juan',
-            school_id:       'school-1',
-            school_name:     'Escuela',
-            type:            'monetary',
-            amount:          '5000',
-            estimated_value: null,
-            state:           'approved',
-            delivery_mode:   'donor_to_ngo',
-            registered_at:   '2026-01-01T00:00:00Z'
+            id:            'don-1',
+            donor_id:      'donor-1',
+            donor_name:    'Juan',
+            school_id:     'school-1',
+            school_name:   'Escuela',
+            donation_type: 'Monetaria',
+            amount:        '5000',
+            status:        'Aprobado',
+            description:   null,
+            created_at:    '2026-01-01T00:00:00Z'
         };
         pool.query.mockResolvedValueOnce({ rows: [row] });
 
@@ -147,10 +144,10 @@ describe('GET /api/v1/reports/pending-deliveries', () => {
 
         expect(res.status).toBe(200);
         expect(res.body).toHaveLength(1);
-        expect(res.body[0].state).toBe('approved');
+        expect(res.body[0].status).toBe('Aprobado');
     });
 
-    it('queries only approved and in_delivery states', async () => {
+    it("queries only 'Aprobado' and 'Entregando' statuses", async () => {
         pool.query.mockResolvedValueOnce({ rows: [] });
 
         await request(app)
@@ -158,7 +155,7 @@ describe('GET /api/v1/reports/pending-deliveries', () => {
             .set('Authorization', `Bearer ${adminToken}`);
 
         const sql = pool.query.mock.calls[0][0];
-        expect(sql).toContain("'approved', 'in_delivery'");
+        expect(sql).toContain("'Aprobado', 'Entregando'");
     });
 });
 
@@ -168,17 +165,16 @@ describe('GET /api/v1/reports/completed', () => {
     it('returns completed donations', async () => {
         pool.query.mockResolvedValueOnce({
             rows: [{
-                id:              'don-2',
-                donor_id:        'donor-1',
-                donor_name:      'Juan',
-                school_id:       'school-1',
-                school_name:     'Escuela',
-                type:            'monetary',
-                amount:          '10000',
-                estimated_value: null,
-                state:           'completed',
-                delivery_mode:   null,
-                registered_at:   '2026-01-01T00:00:00Z'
+                id:            'don-2',
+                donor_id:      'donor-1',
+                donor_name:    'Juan',
+                school_id:     'school-1',
+                school_name:   'Escuela',
+                donation_type: 'Monetaria',
+                amount:        '10000',
+                status:        'Finalizado',
+                description:   null,
+                created_at:    '2026-01-01T00:00:00Z'
             }]
         });
 
@@ -187,10 +183,10 @@ describe('GET /api/v1/reports/completed', () => {
             .set('Authorization', `Bearer ${adminToken}`);
 
         expect(res.status).toBe(200);
-        expect(res.body[0].state).toBe('completed');
+        expect(res.body[0].status).toBe('Finalizado');
     });
 
-    it('queries only completed state', async () => {
+    it("queries only 'Finalizado' status", async () => {
         pool.query.mockResolvedValueOnce({ rows: [] });
 
         await request(app)
@@ -198,7 +194,7 @@ describe('GET /api/v1/reports/completed', () => {
             .set('Authorization', `Bearer ${adminToken}`);
 
         const sql = pool.query.mock.calls[0][0];
-        expect(sql).toContain("'completed'");
+        expect(sql).toContain("'Finalizado'");
     });
 });
 
@@ -224,7 +220,7 @@ describe('GET /api/v1/reports/export', () => {
         pool.query.mockResolvedValueOnce({
             rows: [{
                 school_id: 'school-1', school_name: 'Escuela',
-                total_monetary: '30000', total_material_value: '0',
+                total_monetary: '30000',
                 total_donations: '3', pending: '1', completed: '2'
             }]
         });
@@ -284,7 +280,7 @@ describe('GET /api/v1/reports/export', () => {
         pool.query.mockResolvedValueOnce({
             rows: [{
                 school_id: 'school-1', school_name: 'Escuela, Del Valle',
-                total_monetary: '0', total_material_value: '0',
+                total_monetary: '0',
                 total_donations: '0', pending: '0', completed: '0'
             }]
         });

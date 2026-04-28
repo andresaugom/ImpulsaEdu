@@ -8,21 +8,12 @@ const { errBody } = require('../utils/errors');
 // ── State machine ─────────────────────────────────────────────────────────────
 
 const ALLOWED_TRANSITIONS = {
-    registered:  ['approved', 'cancelled'],
-    approved:    ['in_delivery', 'cancelled'],
-    in_delivery: ['delivered', 'cancelled'],
-    delivered:   ['completed'],
-    completed:   [],
-    cancelled:   []
-};
-
-/** Column name for the timestamp when entering a given state. */
-const STATE_TIMESTAMP = {
-    approved:    'approved_at',
-    in_delivery: 'in_delivery_at',
-    delivered:   'delivered_at',
-    completed:   'completed_at',
-    cancelled:   'cancelled_at'
+    'Registrado': ['Aprobado', 'Cancelado'],
+    'Aprobado':   ['Entregando', 'Cancelado'],
+    'Entregando': ['Entregado', 'Cancelado'],
+    'Entregado':  ['Finalizado'],
+    'Finalizado': [],
+    'Cancelado':  []
 };
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -30,68 +21,59 @@ const STATE_TIMESTAMP = {
 function formatDonationSummary(row) {
     return {
         id:            row.id,
-        donor:         { id: row.donor_id,  full_name: row.donor_name },
-        school:        { id: row.school_id, name:      row.school_name },
-        type:          row.type,
-        amount:        row.amount          ? parseFloat(row.amount)          : null,
-        estimated_value: row.estimated_value ? parseFloat(row.estimated_value) : null,
-        state:         row.state,
-        delivery_mode: row.delivery_mode || null,
-        registered_at: row.registered_at
+        donor:         { id: row.donor_id, name: row.donor_name },
+        school:        { id: row.school_id, name: row.school_name },
+        donation_type: row.donation_type,
+        amount:        row.amount ? parseFloat(row.amount) : null,
+        status:        row.status,
+        description:   row.description || null,
+        created_at:    row.created_at
     };
 }
 
-function formatDonationDetail(row) {
+function formatDonationDetail(row, items) {
     return {
-        id:     row.id,
-        donor:  { id: row.donor_id,  full_name: row.donor_name,   type: row.donor_type },
-        school: { id: row.school_id, name:      row.school_name,  region: row.school_region },
-        type:             row.type,
-        description:      row.description      || null,
-        amount:           row.amount           ? parseFloat(row.amount)          : null,
-        estimated_value:  row.estimated_value  ? parseFloat(row.estimated_value) : null,
-        state:            row.state,
-        observations:     row.observations     || null,
-        delivery: {
-            mode:             row.delivery_mode    || null,
-            shipping_address: row.shipping_address || null,
-            tracking_info:    row.tracking_info    || null,
-            notes:            row.delivery_notes   || null
-        },
-        timeline: {
-            registered_at:  row.registered_at  || null,
-            approved_at:    row.approved_at    || null,
-            in_delivery_at: row.in_delivery_at || null,
-            delivered_at:   row.delivered_at   || null,
-            completed_at:   row.completed_at   || null,
-            cancelled_at:   row.cancelled_at   || null
-        }
+        id:            row.id,
+        donor:         { id: row.donor_id, name: row.donor_name, donor_type: row.donor_type },
+        school:        { id: row.school_id, name: row.school_name, region: row.school_region },
+        donation_type: row.donation_type,
+        amount:        row.amount ? parseFloat(row.amount) : null,
+        status:        row.status,
+        description:   row.description || null,
+        items:         items.map(i => ({
+            id:        i.id,
+            item_name: i.item_name,
+            quantity:  i.quantity,
+            amount:    parseFloat(i.amount)
+        }))
     };
 }
 
 const SUMMARY_SELECT = `
-    SELECT dn.id, dn.donor_id, d.full_name AS donor_name,
+    SELECT dn.id, dn.donor_id, d.name AS donor_name,
            dn.school_id, s.name AS school_name,
-           dn.type, dn.amount, dn.estimated_value, dn.state,
-           dn.delivery_mode, dn.registered_at
+           dn.donation_type, dn.amount, dn.status,
+           dn.description, dn.created_at
     FROM   donations dn
     JOIN   donors  d ON d.id = dn.donor_id
     JOIN   schools s ON s.id = dn.school_id
+    WHERE  dn.deleted_at IS NULL
 `;
 
 const DETAIL_SELECT = `
     SELECT dn.*,
-           d.full_name AS donor_name, d.type AS donor_type,
+           d.name AS donor_name, d.donor_type AS donor_type,
            s.name AS school_name, s.region AS school_region
     FROM   donations dn
     JOIN   donors  d ON d.id = dn.donor_id
     JOIN   schools s ON s.id = dn.school_id
+    WHERE  dn.deleted_at IS NULL
 `;
 
 // ── GET /api/v1/donations  (staff+) ──────────────────────────────────────────
 
 router.get('/', authenticateToken, async (req, res) => {
-    const { school_id, donor_id, state, type } = req.query;
+    const { school_id, donor_id, status, donation_type } = req.query;
     const parsedPerPage = Number.parseInt(req.query.per_page, 10);
     const parsedPage    = Number.parseInt(req.query.page, 10);
     const perPage = Number.isNaN(parsedPerPage)
@@ -100,27 +82,27 @@ router.get('/', authenticateToken, async (req, res) => {
     const page = Number.isNaN(parsedPage)
         ? 1
         : Math.max(parsedPage, 1);
-    const offset  = (page - 1) * perPage;
+    const offset = (page - 1) * perPage;
 
     const conditions = [];
     const params     = [];
     let   i          = 1;
 
-    if (school_id) { conditions.push(`dn.school_id = $${i++}`); params.push(school_id); }
-    if (donor_id)  { conditions.push(`dn.donor_id  = $${i++}`); params.push(donor_id); }
-    if (state)     { conditions.push(`dn.state     = $${i++}`); params.push(state); }
-    if (type)      { conditions.push(`dn.type      = $${i++}`); params.push(type); }
+    if (school_id)     { conditions.push(`dn.school_id    = $${i++}`); params.push(school_id); }
+    if (donor_id)      { conditions.push(`dn.donor_id     = $${i++}`); params.push(donor_id); }
+    if (status)        { conditions.push(`dn.status       = $${i++}`); params.push(status); }
+    if (donation_type) { conditions.push(`dn.donation_type = $${i++}`); params.push(donation_type); }
 
-    const where = conditions.length ? `WHERE ${conditions.join(' AND ')}` : '';
+    const extraWhere = conditions.length ? `AND ${conditions.join(' AND ')}` : '';
 
     try {
         const [countRes, dataRes] = await Promise.all([
             pool.query(
-                `SELECT COUNT(*) FROM donations dn ${where}`,
+                `SELECT COUNT(*) FROM donations dn WHERE dn.deleted_at IS NULL ${extraWhere}`,
                 params
             ),
             pool.query(
-                `${SUMMARY_SELECT} ${where} ORDER BY dn.registered_at DESC LIMIT $${i} OFFSET $${i + 1}`,
+                `${SUMMARY_SELECT} ${extraWhere} ORDER BY dn.created_at DESC LIMIT $${i} OFFSET $${i + 1}`,
                 [...params, perPage, offset]
             )
         ]);
@@ -141,14 +123,20 @@ router.get('/', authenticateToken, async (req, res) => {
 
 router.get('/:id', authenticateToken, async (req, res) => {
     try {
-        const result = await pool.query(
-            `${DETAIL_SELECT} WHERE dn.id = $1`,
-            [req.params.id]
-        );
-        if (result.rowCount === 0) {
+        const [donationRes, itemsRes] = await Promise.all([
+            pool.query(`${DETAIL_SELECT} AND dn.id = $1`, [req.params.id]),
+            pool.query(
+                `SELECT id, item_name, quantity, amount
+                 FROM   donation_items
+                 WHERE  donation_id = $1 AND deleted_at IS NULL
+                 ORDER  BY id`,
+                [req.params.id]
+            )
+        ]);
+        if (donationRes.rowCount === 0) {
             return res.status(404).json(errBody('NOT_FOUND', 'Donation not found'));
         }
-        res.json(formatDonationDetail(result.rows[0]));
+        res.json(formatDonationDetail(donationRes.rows[0], itemsRes.rows));
     } catch (err) {
         console.error(err);
         res.status(500).json(errBody('SERVER_ERROR', 'Internal server error'));
@@ -158,61 +146,75 @@ router.get('/:id', authenticateToken, async (req, res) => {
 // ── POST /api/v1/donations  (staff+) ─────────────────────────────────────────
 
 router.post('/', authenticateToken, async (req, res) => {
-    const { donor_id, school_id, type, description, amount, estimated_value, observations, delivery } = req.body;
+    const { donor_id, school_id, donation_type, description, amount, items } = req.body;
 
-    if (!donor_id || !school_id || !type || !delivery) {
-        return res.status(400).json(errBody('MISSING_FIELDS', 'donor_id, school_id, type, and delivery are required'));
+    if (!donor_id || !school_id || !donation_type) {
+        return res.status(400).json(errBody('MISSING_FIELDS', 'donor_id, school_id, and donation_type are required'));
     }
-    if (type === 'monetary' && (amount === undefined || amount === null)) {
-        return res.status(400).json(errBody('MISSING_AMOUNT', 'amount is required for monetary donations'));
+    if (!['Material', 'Monetaria'].includes(donation_type)) {
+        return res.status(400).json(errBody('INVALID_TYPE', 'donation_type must be "Material" or "Monetaria"'));
     }
-    if (type === 'material' && (estimated_value === undefined || estimated_value === null)) {
-        return res.status(400).json(errBody('MISSING_ESTIMATED_VALUE', 'estimated_value is required for material donations'));
+    if (donation_type === 'Monetaria' && (amount === undefined || amount === null)) {
+        return res.status(400).json(errBody('MISSING_AMOUNT', 'amount is required for Monetaria donations'));
     }
 
+    const client = await pool.connect();
     try {
-        // Verify donor exists
-        const donorRes = await pool.query('SELECT id FROM donors WHERE id = $1', [donor_id]);
+        await client.query('BEGIN');
+
+        const donorRes = await client.query(
+            'SELECT id FROM donors WHERE id = $1 AND deleted_at IS NULL',
+            [donor_id]
+        );
         if (donorRes.rowCount === 0) {
+            await client.query('ROLLBACK');
             return res.status(404).json(errBody('NOT_FOUND', 'Donor not found'));
         }
 
-        // Verify school exists and is active
-        const schoolRes = await pool.query('SELECT id, status FROM schools WHERE id = $1', [school_id]);
+        const schoolRes = await client.query(
+            'SELECT id FROM schools WHERE id = $1 AND deleted_at IS NULL',
+            [school_id]
+        );
         if (schoolRes.rowCount === 0) {
+            await client.query('ROLLBACK');
             return res.status(404).json(errBody('NOT_FOUND', 'School not found'));
         }
-        if (schoolRes.rows[0].status === 'archived') {
-            return res.status(422).json(errBody('SCHOOL_ARCHIVED', 'Cannot create donation for an archived school'));
+
+        const result = await client.query(
+            `INSERT INTO donations (donor_id, school_id, donation_type, description, amount, created_by)
+             VALUES ($1, $2, $3, $4, $5, $6)
+             RETURNING id`,
+            [donor_id, school_id, donation_type, description || null, amount ?? 0, req.user.sub]
+        );
+        const donationId = result.rows[0].id;
+
+        if (Array.isArray(items) && items.length > 0) {
+            for (const item of items) {
+                if (!item.item_name || item.amount === undefined) continue;
+                await client.query(
+                    `INSERT INTO donation_items (donation_id, item_name, quantity, amount, created_by)
+                     VALUES ($1, $2, $3, $4, $5)`,
+                    [donationId, item.item_name, item.quantity ?? null, item.amount, req.user.sub]
+                );
+            }
         }
 
-        const result = await pool.query(
-            `INSERT INTO donations
-                (donor_id, school_id, type, description, amount, estimated_value,
-                 observations, delivery_mode, shipping_address, tracking_info, delivery_notes)
-             VALUES ($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11)
-             RETURNING id`,
-            [
-                donor_id, school_id, type,
-                description      || null,
-                amount           ?? null,
-                estimated_value  ?? null,
-                observations     || null,
-                delivery?.mode             || null,
-                delivery?.shipping_address || null,
-                delivery?.tracking_info    || null,
-                delivery?.notes            || null
-            ]
-        );
+        await client.query('COMMIT');
 
-        const detailRes = await pool.query(
-            `${DETAIL_SELECT} WHERE dn.id = $1`,
-            [result.rows[0].id]
-        );
-        res.status(201).json(formatDonationDetail(detailRes.rows[0]));
+        const [donationRes2, itemsRes] = await Promise.all([
+            pool.query(`${DETAIL_SELECT} AND dn.id = $1`, [donationId]),
+            pool.query(
+                'SELECT id, item_name, quantity, amount FROM donation_items WHERE donation_id = $1 AND deleted_at IS NULL ORDER BY id',
+                [donationId]
+            )
+        ]);
+        res.status(201).json(formatDonationDetail(donationRes2.rows[0], itemsRes.rows));
     } catch (err) {
+        await client.query('ROLLBACK');
         console.error(err);
         res.status(500).json(errBody('SERVER_ERROR', 'Internal server error'));
+    } finally {
+        client.release();
     }
 });
 
@@ -220,102 +222,105 @@ router.post('/', authenticateToken, async (req, res) => {
 
 router.put('/:id', authenticateToken, async (req, res) => {
     const { id } = req.params;
-    const { description, observations, delivery } = req.body;
+    const { description, items } = req.body;
 
+    if (description === undefined && items === undefined) {
+        return res.status(400).json(errBody('MISSING_FIELDS', 'Provide description or items to update'));
+    }
+
+    const client = await pool.connect();
     try {
-        const existing = await pool.query('SELECT id FROM donations WHERE id = $1', [id]);
+        await client.query('BEGIN');
+
+        const existing = await client.query(
+            'SELECT id FROM donations WHERE id = $1 AND deleted_at IS NULL',
+            [id]
+        );
         if (existing.rowCount === 0) {
+            await client.query('ROLLBACK');
             return res.status(404).json(errBody('NOT_FOUND', 'Donation not found'));
         }
 
-        const sets   = [];
-        const params = [];
-        let   i      = 1;
-
-        if (description  !== undefined) { sets.push(`description      = $${i++}`); params.push(description); }
-        if (observations !== undefined) { sets.push(`observations     = $${i++}`); params.push(observations); }
-        if (delivery) {
-            if (delivery.mode             !== undefined) { sets.push(`delivery_mode    = $${i++}`); params.push(delivery.mode); }
-            if (delivery.shipping_address !== undefined) { sets.push(`shipping_address = $${i++}`); params.push(delivery.shipping_address); }
-            if (delivery.tracking_info    !== undefined) { sets.push(`tracking_info    = $${i++}`); params.push(delivery.tracking_info); }
-            if (delivery.notes            !== undefined) { sets.push(`delivery_notes   = $${i++}`); params.push(delivery.notes); }
+        if (description !== undefined) {
+            await client.query(
+                `UPDATE donations SET description = $1, updated_at = NOW(), updated_by = $2 WHERE id = $3`,
+                [description, req.user.sub, id]
+            );
         }
 
-        if (sets.length === 0) {
-            return res.status(400).json(errBody('MISSING_FIELDS', 'Provide at least one field to update'));
+        if (Array.isArray(items)) {
+            // Replace all items
+            await client.query(
+                'UPDATE donation_items SET deleted_at = NOW(), deleted_by = $1 WHERE donation_id = $2 AND deleted_at IS NULL',
+                [req.user.sub, id]
+            );
+            for (const item of items) {
+                if (!item.item_name || item.amount === undefined) continue;
+                await client.query(
+                    `INSERT INTO donation_items (donation_id, item_name, quantity, amount, created_by)
+                     VALUES ($1, $2, $3, $4, $5)`,
+                    [id, item.item_name, item.quantity ?? null, item.amount, req.user.sub]
+                );
+            }
         }
 
-        sets.push(`updated_at = NOW()`);
-        params.push(id);
+        await client.query('COMMIT');
 
-        await pool.query(
-            `UPDATE donations SET ${sets.join(', ')} WHERE id = $${i}`,
-            params
-        );
-
-        const detailRes = await pool.query(`${DETAIL_SELECT} WHERE dn.id = $1`, [id]);
-        res.json(formatDonationDetail(detailRes.rows[0]));
+        const [donationRes, itemsRes] = await Promise.all([
+            pool.query(`${DETAIL_SELECT} AND dn.id = $1`, [id]),
+            pool.query(
+                'SELECT id, item_name, quantity, amount FROM donation_items WHERE donation_id = $1 AND deleted_at IS NULL ORDER BY id',
+                [id]
+            )
+        ]);
+        res.json(formatDonationDetail(donationRes.rows[0], itemsRes.rows));
     } catch (err) {
+        await client.query('ROLLBACK');
         console.error(err);
         res.status(500).json(errBody('SERVER_ERROR', 'Internal server error'));
+    } finally {
+        client.release();
     }
 });
 
-// ── PATCH /api/v1/donations/:id/state  (staff+) ──────────────────────────────
+// ── PATCH /api/v1/donations/:id/status  (staff+) ─────────────────────────────
 
-router.patch('/:id/state', authenticateToken, async (req, res) => {
+router.patch('/:id/status', authenticateToken, async (req, res) => {
     const { id } = req.params;
-    const { state: newState, observations } = req.body;
+    const { status: newStatus } = req.body;
 
-    if (!newState) {
-        return res.status(400).json(errBody('MISSING_FIELDS', 'state is required'));
+    if (!newStatus) {
+        return res.status(400).json(errBody('MISSING_FIELDS', 'status is required'));
     }
 
     try {
         const result = await pool.query(
-            'SELECT id, state FROM donations WHERE id = $1',
+            'SELECT id, status FROM donations WHERE id = $1 AND deleted_at IS NULL',
             [id]
         );
         if (result.rowCount === 0) {
             return res.status(404).json(errBody('NOT_FOUND', 'Donation not found'));
         }
 
-        const currentState = result.rows[0].state;
-        const allowed = ALLOWED_TRANSITIONS[currentState] || [];
+        const currentStatus = result.rows[0].status;
+        const allowed = ALLOWED_TRANSITIONS[currentStatus] || [];
 
-        if (!allowed.includes(newState)) {
+        if (!allowed.includes(newStatus)) {
             return res.status(422).json(errBody(
-                'INVALID_STATE_TRANSITION',
-                `Cannot transition from '${currentState}' to '${newState}'`
+                'INVALID_STATUS_TRANSITION',
+                `Cannot transition from '${currentStatus}' to '${newStatus}'`
             ));
         }
 
-        const tsCol  = STATE_TIMESTAMP[newState];
-        const sets   = [`state = $1`, `updated_at = NOW()`];
-        const params = [newState];
-        let   i      = 2;
-
-        if (tsCol) {
-            sets.push(`${tsCol} = NOW()`);
-        }
-        if (observations !== undefined) {
-            sets.push(`observations = $${i++}`);
-            params.push(observations);
-        }
-        params.push(id);
-
         const updated = await pool.query(
-            `UPDATE donations SET ${sets.join(', ')}
-             WHERE  id = $${i}
-             RETURNING id, state, approved_at`,
-            params
+            `UPDATE donations
+             SET status = $1, updated_at = NOW(), updated_by = $2
+             WHERE id = $3
+             RETURNING id, status`,
+            [newStatus, req.user.sub, id]
         );
 
-        res.json({
-            id:          updated.rows[0].id,
-            state:       updated.rows[0].state,
-            approved_at: updated.rows[0].approved_at || null
-        });
+        res.json({ id: updated.rows[0].id, status: updated.rows[0].status });
     } catch (err) {
         console.error(err);
         res.status(500).json(errBody('SERVER_ERROR', 'Internal server error'));

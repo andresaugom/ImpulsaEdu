@@ -12,8 +12,12 @@ import {
   Switch,
   MenuItem,
   FormGroup,
+  Alert,
+  CircularProgress,
 } from '@mui/material';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { getMe, AuthUser } from '../../lib/authService';
+import { updateUser } from '../../lib/usersService';
 
 interface TabPanelProps {
   children?: React.ReactNode;
@@ -33,12 +37,15 @@ function TabPanel(props: TabPanelProps) {
 
 export default function PreferenciasPage() {
   const [tabValue, setTabValue] = useState(0);
+  const [currentUser, setCurrentUser] = useState<AuthUser | null>(null);
   const [profileData, setProfileData] = useState({
-    fullName: 'Juan Mockup',
-    email: 'juan@impulsaedu.com',
-    phone: '+52 (33) 5555-1234',
-    organization: 'ImpulsaEdu',
+    fullName: '',
+    email: '',
   });
+  const [profileLoading, setProfileLoading] = useState(true);
+  const [profileSaving, setProfileSaving] = useState(false);
+  const [profileError, setProfileError] = useState<string | null>(null);
+  const [profileSuccess, setProfileSuccess] = useState(false);
   const [notifications, setNotifications] = useState({
     emailNotifications: true,
     donationUpdates: true,
@@ -53,12 +60,21 @@ export default function PreferenciasPage() {
     dataCollection: true,
   });
 
+  useEffect(() => {
+    getMe()
+      .then((user) => {
+        setCurrentUser(user);
+        setProfileData({
+          fullName: `${user.firstname} ${user.lastname}`.trim(),
+          email: user.email,
+        });
+      })
+      .catch(() => setProfileError('No se pudo cargar el perfil.'))
+      .finally(() => setProfileLoading(false));
+  }, []);
+
   const handleTabChange = (event: React.SyntheticEvent, newValue: number) => {
     setTabValue(newValue);
-  };
-
-  const handleProfileChange = (field: string, value: string) => {
-    setProfileData({ ...profileData, [field]: value });
   };
 
   const handleNotificationChange = (field: string) => {
@@ -72,19 +88,27 @@ export default function PreferenciasPage() {
     setPreferences({ ...preferences, [field]: value });
   };
 
-  const handleSaveProfile = () => {
-    console.log('Saving profile:', profileData);
-    // API call would happen here
+  const handleSaveProfile = async () => {
+    if (!currentUser) return;
+    setProfileSaving(true);
+    setProfileError(null);
+    setProfileSuccess(false);
+    try {
+      await updateUser(currentUser.id, { full_name: profileData.fullName });
+      setProfileSuccess(true);
+    } catch {
+      setProfileError('Error al guardar el perfil.');
+    } finally {
+      setProfileSaving(false);
+    }
   };
 
   const handleSaveNotifications = () => {
     console.log('Saving notifications:', notifications);
-    // API call would happen here
   };
 
   const handleSavePreferences = () => {
     console.log('Saving preferences:', preferences);
-    // API call would happen here
   };
 
   return (
@@ -129,46 +153,53 @@ export default function PreferenciasPage() {
               Información del Perfil
             </Typography>
 
-            <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, marginBottom: 3 }}>
-              <TextField
-                fullWidth
-                label="Nombre Completo"
-                value={profileData.fullName}
-                onChange={(e) => handleProfileChange('fullName', e.target.value)}
-                variant="outlined"
-              />
-              <TextField
-                fullWidth
-                label="Correo Electrónico"
-                type="email"
-                value={profileData.email}
-                onChange={(e) => handleProfileChange('email', e.target.value)}
-                variant="outlined"
-              />
-              <TextField
-                fullWidth
-                label="Número de Teléfono"
-                value={profileData.phone}
-                onChange={(e) => handleProfileChange('phone', e.target.value)}
-                variant="outlined"
-              />
-              <TextField
-                fullWidth
-                label="Organización"
-                value={profileData.organization}
-                onChange={(e) => handleProfileChange('organization', e.target.value)}
-                variant="outlined"
-              />
-            </Box>
+            {profileLoading ? (
+              <Box sx={{ display: 'flex', justifyContent: 'center', py: 4 }}>
+                <CircularProgress />
+              </Box>
+            ) : (
+              <>
+                {profileError && (
+                  <Alert severity="error" sx={{ mb: 2 }}>{profileError}</Alert>
+                )}
+                {profileSuccess && (
+                  <Alert severity="success" sx={{ mb: 2 }}>Perfil guardado correctamente.</Alert>
+                )}
 
-            <Box sx={{ display: 'flex', gap: 2 }}>
-              <Button variant="contained" color="primary" onClick={handleSaveProfile}>
-                Guardar Cambios
-              </Button>
-              <Button variant="outlined" color="primary">
-                Cambiar Contraseña
-              </Button>
-            </Box>
+                <Box sx={{ display: 'flex', flexDirection: 'column', gap: 2, marginBottom: 3 }}>
+                  <TextField
+                    fullWidth
+                    label="Nombre Completo"
+                    value={profileData.fullName}
+                    onChange={(e) => setProfileData({ ...profileData, fullName: e.target.value })}
+                    variant="outlined"
+                  />
+                  <TextField
+                    fullWidth
+                    label="Correo Electrónico"
+                    type="email"
+                    value={profileData.email}
+                    variant="outlined"
+                    disabled
+                    helperText="El correo no puede modificarse desde aquí."
+                  />
+                </Box>
+
+                <Box sx={{ display: 'flex', gap: 2 }}>
+                  <Button
+                    variant="contained"
+                    color="primary"
+                    onClick={handleSaveProfile}
+                    disabled={profileSaving}
+                  >
+                    {profileSaving ? 'Guardando...' : 'Guardar Cambios'}
+                  </Button>
+                  <Button variant="outlined" color="primary">
+                    Cambiar Contraseña
+                  </Button>
+                </Box>
+              </>
+            )}
           </Box>
         </TabPanel>
 
