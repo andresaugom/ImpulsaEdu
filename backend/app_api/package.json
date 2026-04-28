@@ -25,6 +25,7 @@
     "xlsx": "^0.18.5"
   },
   "devDependencies": {
+    "jest": "^30.3.0",
     "supertest": "^6.3.4"
   },
   "jest": {
