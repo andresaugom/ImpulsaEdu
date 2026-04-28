@@ -26,7 +26,7 @@ describe('Database Triggers & Constraints Integration', () => {
     });
 
     it('cascading deletes wipe orphaned needs', async () => {
-        // Insert school and grab its UUID
+        // Insert school and grab its UUID with all strictly required NOT NULL fields
         const schoolRes = await client.query(`
             INSERT INTO schools (region, school, name, level, cct, mode, shift, address, location, category, goal) 
             VALUES ('North', 'DelSch', 'DeleteMe', 'Primaria', 'DEL1', 'Presencial', 'Matutino', 'A', 'B', 'Estatal', 100) 

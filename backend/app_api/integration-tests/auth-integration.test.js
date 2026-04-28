@@ -6,7 +6,8 @@ const bcrypt = require('bcryptjs');
 
 const app = express();
 app.use(express.json());
-app.use('/api/v1/users', usersRouter);
+// Mount correctly at /api/v1/auth
+app.use('/api/v1/auth', usersRouter);
 
 describe('Auth & Users Integration Pipeline', () => {
     let client;
@@ -20,13 +21,13 @@ describe('Auth & Users Integration Pipeline', () => {
     });
 
     afterAll(async () => {
-        client.release();
+        if (client) client.release();
         await pool.end();
     });
 
     it('should register a new user in the real database', async () => {
         const res = await request(app)
-            .post('/api/v1/users/register')
+            .post('/api/v1/auth/register')
             .send({
                 firstname: 'Integration',
                 lastname: 'User',
@@ -50,7 +51,7 @@ describe('Auth & Users Integration Pipeline', () => {
         );
 
         const res = await request(app)
-            .post('/api/v1/users/login')
+            .post('/api/v1/auth/login')
             .send({
                 email: 'login@test.com',
                 password: 'secret123'

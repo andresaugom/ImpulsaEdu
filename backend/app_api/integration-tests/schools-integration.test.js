@@ -29,6 +29,9 @@ describe('Schools Integration Pipeline', () => {
     });
 
     it('creates a new school matching the schema constraints', async () => {
+        // 1. JWT mocking/login abstraction (Assuming authenticateToken middleware expects this)
+        const token = 'mocked_or_real_jwt_token'; 
+
         const payload = {
             region: 'West',
             school: 'Test3',
@@ -43,7 +46,10 @@ describe('Schools Integration Pipeline', () => {
             goal: 15000
         };
 
-        const res = await request(app).post('/api/v1/schools').send(payload);
+        const res = await request(app)
+            .post('/api/v1/schools')
+            .set('Authorization', 'Bearer ' + token)
+            .send(payload);
 
         expect(res.status).toBe(201);
         

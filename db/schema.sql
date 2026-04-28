@@ -92,7 +92,7 @@ CREATE TABLE schools (
 -- SCHOOL NEEDS
 CREATE TABLE schools_needs (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-  school_id UUID NOT NULL REFERENCES schools(id),
+  school_id UUID NOT NULL REFERENCES schools(id) ON DELETE CASCADE,
   item_name TEXT NOT NULL,
   quantity INT,
   unit TEXT,

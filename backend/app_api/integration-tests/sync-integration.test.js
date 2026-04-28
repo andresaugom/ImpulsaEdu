@@ -48,6 +48,7 @@ function createTestExcel(schoolName = TEST_SCHOOL_NAME, cct = TEST_CCT) {
 }
 
 async function cleanupTestData(client) {
+    if (!client) return;
     const { rows } = await client.query('SELECT id FROM schools WHERE cct = $1', [TEST_CCT]);
     for (const row of rows) {
         await client.query('DELETE FROM schools_needs WHERE school_id = $1', [row.id]);

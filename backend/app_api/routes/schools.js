@@ -203,4 +203,29 @@ router.patch('/:id/archive', authenticateToken, async (req, res) => {
     }
 });
 
+// ── GET /api/v1/schools/by_region  (public) ─────────────────────────────────
+
+router.get('/by_region', async (req, res) => {
+    const { region } = req.query;
+
+    if (!region) {
+        return res.status(400).json(errBody('MISSING_FIELDS', 'Region is required'));
+    }
+
+    try {
+        // Remove any reference to 'status' in schools query
+        const query = `
+          SELECT id, region, school, name, level, cct, mode, shift, address, location, category, goal
+          FROM schools
+          WHERE region = $1
+        `;
+        const result = await pool.query(query, [region]);
+
+        res.json(result.rows);
+    } catch (err) {
+        console.error(err);
+        res.status(500).json(errBody('SERVER_ERROR', 'Internal server error'));
+    }
+});
+
 module.exports = router;
