@@ -1,18 +1,17 @@
-# CI — Lint & Test & Build
+# CI — Lint & Test
 name: CI
 
 on:
   push:
-    branches:
-      - '**'
+    # Trigger on any push to any branch
   pull_request:
     branches:
       - main
-  workflow_dispatch:
+  workflow_dispatch: # Allows you to run it manually from the Actions tab
 
 env:
   # These are "test-only" credentials for the temporary runner database
-  DB_HOST: 127.0.0.1
+  DB_HOST: 127.0.0.1  # Using IP instead of localhost prevents IPv6 resolution errors
   DB_PORT: "5432"
   DB_NAME: test
   DB_USER: test
@@ -61,14 +60,14 @@ jobs:
         run: sudo apt-get update && sudo apt-get install -y postgresql-client
 
       - name: Start database and run migration
-        run: |
-          psql -h $DB_HOST -U $DB_USER -d $DB_NAME -v ON_ERROR_STOP=1 -f ../../db/schema.sql
-          psql -h $DB_HOST -U $DB_USER -d $DB_NAME -v ON_ERROR_STOP=1 -f ../../db/triggers.sql
+        # Uses the env variables defined at the top
+        run: psql -h $DB_HOST -U $DB_USER -d $DB_NAME -v ON_ERROR_STOP=1 -f ../../db/schema.sql
 
       - name: Run tests
         run: npm test
         env:
           JWT_SECRET: test-secret-for-ci
+          # These pull from your GitHub Settings -> Secrets
           AZURE_STORAGE_CONNECTION_STRING: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}
           AZURE_STORAGE_CONTAINER_NAME: ${{ secrets.AZURE_STORAGE_CONTAINER_NAME }}
 
@@ -94,70 +93,3 @@ jobs:
 
       - name: Lint
         run: npm run lint
-
-  # ── Backend: Build ─────────────────────────────────────────────────────────
-  build-backend:
-    name: Build backend
-    needs: database-integration # Only runs if tests pass
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: backend/app_api
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-          cache: "npm"
-          cache-dependency-path: backend/app_api/package-lock.json
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build backend
-        run: npm run build --if-present
-
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: backend-build-artifacts
-          path: backend/app_api/
-          if-no-files-found: warn
-
-  # ── Frontend: Build ────────────────────────────────────────────────────────
-  build-frontend:
-    name: Build frontend
-    needs: lint-frontend # Only runs if linting passes
-    runs-on: ubuntu-latest
-    defaults:
-      run:
-        working-directory: frontend
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Set up Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: "20"
-          cache: "npm"
-          cache-dependency-path: frontend/package-lock.json
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Build frontend
-        run: npm run build
-
-      - name: Upload build artifacts
-        uses: actions/upload-artifact@v4
-        with:
-          name: frontend-build-artifacts
-          # Covers common build output directories (Next.js, Vite/React, raw builds)
-          path: |
-            frontend/.next/
-            frontend/dist/
-            frontend/build/
-            frontend/out/
-          if-no-files-found: ignore

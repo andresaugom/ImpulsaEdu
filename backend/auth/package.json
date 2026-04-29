@@ -1,23 +1,33 @@
 {
-  "name": "reto-test",
+  "name": "auth",
   "version": "1.0.0",
-  "description": "",
+  "description": "Authentication service for ImpulsaEdu platform",
+  "license": "ISC",
+  "author": "",
+  "type": "commonjs",
   "main": "server.js",
   "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "start": "node server.js"
+    "start": "node server.js",
+    "dev": "node --watch server.js",
+    "test": "jest --forceExit --runInBand"
   },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "commonjs",
   "dependencies": {
-    "bcryptjs": "^3.0.3",
+    "bcryptjs": "^2.4.3",
     "cors": "^2.8.6",
-    "dotenv": "^17.4.2",
-    "express": "^5.2.1",
+    "dotenv": "^16.4.5",
+    "express": "^4.18.2",
     "express-rate-limit": "^8.3.2",
-    "jsonwebtoken": "^9.0.3",
-    "pg": "^8.20.0"
+    "jsonwebtoken": "^9.0.2",
+    "pg": "^8.11.3"
+  },
+  "devDependencies": {
+    "jest": "^29.7.0",
+    "supertest": "^6.3.4"
+  },
+  "jest": {
+    "testEnvironment": "node",
+    "testMatch": [
+      "**/tests/**/*.test.js"
+    ]
   }
 }

@@ -2,16 +2,18 @@
  * Central HTTP client for ImpulsaEdu APIs.
  *
  * Handles:
- *  - Base URL resolution for the auth service (port 3000) and app_api (port 4000)
+ *  - Base URL resolution via Next.js API proxy routes (same-origin, browser-safe)
  *  - JWT attachment via Authorization: Bearer header
  *  - Automatic token refresh on 401 responses (single retry)
  *  - Typed error responses via ApiError
+ *
+ * All requests are routed through /api/proxy/* so the browser never needs to
+ * reach cluster-internal URLs. The proxy routes read AUTH_API_URL and
+ * APP_API_URL from server-side env (no NEXT_PUBLIC_ prefix needed).
  */
 
-export const AUTH_BASE =
-  process.env.NEXT_PUBLIC_AUTH_API_URL ?? 'http://localhost:3000';
-export const APP_BASE =
-  `${process.env.NEXT_PUBLIC_APP_API_URL ?? 'http://localhost:4000'}/api/v1`;
+export const AUTH_BASE = '/api/proxy/auth';
+export const APP_BASE = '/api/proxy/app/api/v1';
 
 // ── Token helpers ─────────────────────────────────────────────────────────────
 
@@ -92,7 +94,10 @@ export async function apiFetch(
 ): Promise<Response> {
   const token = getAccessToken();
   const headers = new Headers(options.headers);
-  if (!headers.has('Content-Type')) headers.set('Content-Type', 'application/json');
+  // Skip Content-Type for FormData — the browser must set it with the multipart boundary.
+  if (!headers.has('Content-Type') && !(options.body instanceof FormData)) {
+    headers.set('Content-Type', 'application/json');
+  }
   if (token) headers.set('Authorization', `Bearer ${token}`);
 
   const res = await fetch(url, { ...options, headers });

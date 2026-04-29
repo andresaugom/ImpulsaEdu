@@ -1,13 +1,19 @@
+'use strict';
+
 const { Client } = require('pg');
 
+/**
+ * Initialises all tables owned by the auth service.
+ * Safe to run on every startup (IF NOT EXISTS / DO $$ EXCEPTION $$).
+ */
 async function initDatabase(config) {
     const client = new Client({
-        host: config.host,
-        user: config.user,
+        host:     config.host || 'localhost',
+        user:     config.user,
         password: config.password,
         database: config.database,
-        port: Number(config.port),
-        ssl: config.ssl
+        port:     parseInt(config.port) || 5432,
+        ssl:      config.ssl === 'true' ? { rejectUnauthorized: false } : false
     });
 
     try {
@@ -35,7 +41,10 @@ async function initDatabase(config) {
                 password_hash TEXT NOT NULL,
                 created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
                 updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-                deleted_at TIMESTAMPTZ
+                deleted_at TIMESTAMPTZ,
+                created_by UUID,
+                updated_by UUID,
+                deleted_by UUID
             );
         `);
 
@@ -50,9 +59,9 @@ async function initDatabase(config) {
             );
         `);
 
-        console.log("Base de datos PostgreSQL (ImpulsaEdu) inicializada.");
+        console.log('auth: database initialised.');
     } catch (err) {
-        console.error("Error inicializando base de datos:", err);
+        console.error('auth: database init error:', err);
         throw err;
     } finally {
         await client.end();

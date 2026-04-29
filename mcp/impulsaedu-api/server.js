@@ -5,11 +5,12 @@
  * backend API contracts without parsing a large markdown file.
  *
  * Tools:
- *   list_endpoints          – list all available endpoints
- *   get_endpoint_details    – full spec for a single endpoint
- *   get_typescript_types    – TypeScript interfaces for a resource
- *   get_implementation_status – what is already built in frontend/src/lib/
- *   get_service_pattern     – code template + example for a new service file
+ *   list_endpoints               – list all available endpoints
+ *   get_endpoint_details         – full spec for a single endpoint
+ *   get_typescript_types         – TypeScript interfaces for a resource
+ *   get_implementation_status    – what is already built in frontend/src/lib/
+ *   get_service_pattern          – code template + example for a new service file
+ *   get_frontend_component_status – which UI components are wired to real services vs mock data
  */
 
 'use strict';
@@ -308,7 +309,7 @@ const ENDPOINTS = [
       body: 'ApiDonorDetail (ApiDonor + donations: [{ id, school_name, type, amount, state, registered_at }])',
     },
     errors: [{ code: 'NOT_FOUND', http: 404 }],
-    notes: ['Defined in donorsService.ts — already implemented (GET list only; GET /:id not yet added).'],
+    notes: ['Defined in donorsService.ts — fully implemented including getDonor(id) returning ApiDonorDetail.'],
   },
   {
     id: 'donors.create',
@@ -373,7 +374,7 @@ const ENDPOINTS = [
     requestBody: null,
     response: { status: 200, body: '{ items: ApiDonationSummary[], total, page, per_page }' },
     errors: [{ code: 'UNAUTHORIZED', http: 401 }],
-    notes: ['⚠️ NOT yet implemented in frontend. Needs donationsService.ts.'],
+    notes: ['Defined in donationsService.ts — fully implemented.'],
   },
   {
     id: 'donations.get',
@@ -385,7 +386,7 @@ const ENDPOINTS = [
     requestBody: null,
     response: { status: 200, body: 'ApiDonationDetail (full detail with timeline object)' },
     errors: [{ code: 'NOT_FOUND', http: 404 }],
-    notes: ['⚠️ NOT yet implemented in frontend. Needs donationsService.ts.'],
+    notes: ['Defined in donationsService.ts — fully implemented.'],
   },
   {
     id: 'donations.create',
@@ -412,7 +413,7 @@ const ENDPOINTS = [
       { code: 'NOT_FOUND', http: 404, reason: 'donor_id or school_id not found' },
       { code: 'SCHOOL_ARCHIVED', http: 422 },
     ],
-    notes: ['⚠️ NOT yet implemented in frontend. Needs donationsService.ts.'],
+    notes: ['Defined in donationsService.ts — fully implemented.'],
   },
   {
     id: 'donations.update',
@@ -428,7 +429,7 @@ const ENDPOINTS = [
     },
     response: { status: 200, body: 'ApiDonationDetail' },
     errors: [{ code: 'MISSING_FIELDS', http: 400 }, { code: 'NOT_FOUND', http: 404 }],
-    notes: ['⚠️ NOT yet implemented in frontend. Needs donationsService.ts.'],
+    notes: ['Defined in donationsService.ts — fully implemented.'],
   },
   {
     id: 'donations.updateState',
@@ -457,7 +458,7 @@ const ENDPOINTS = [
       { code: 'INVALID_STATE_TRANSITION', http: 422 },
     ],
     notes: [
-      '⚠️ NOT yet implemented in frontend. Needs donationsService.ts.',
+      'Defined in donationsService.ts — fully implemented.',
       'Response is a minimal object — NOT ApiDonationDetail.',
     ],
   },
@@ -477,7 +478,7 @@ const ENDPOINTS = [
       body: 'DonationsBySchoolRow[]  — [{ school_id, school_name, total_monetary, total_material_value, total_donations, pending, completed }]',
     },
     errors: [{ code: 'FORBIDDEN', http: 403 }],
-    notes: ['⚠️ NOT yet implemented in frontend. Needs reportsService.ts.'],
+    notes: ['Defined in reportsService.ts — fully implemented.'],
   },
   {
     id: 'reports.donationsByDonor',
@@ -493,7 +494,7 @@ const ENDPOINTS = [
       body: 'DonationsByDonorRow[]  — [{ donor_id, donor_name, total_donations, total_value, schools_supported }]',
     },
     errors: [{ code: 'FORBIDDEN', http: 403 }],
-    notes: ['⚠️ NOT yet implemented in frontend. Needs reportsService.ts.'],
+    notes: ['Defined in reportsService.ts — fully implemented.'],
   },
   {
     id: 'reports.pendingDeliveries',
@@ -505,7 +506,7 @@ const ENDPOINTS = [
     requestBody: null,
     response: { status: 200, body: 'ApiDonationSummary[]' },
     errors: [{ code: 'FORBIDDEN', http: 403 }],
-    notes: ['⚠️ NOT yet implemented in frontend. Needs reportsService.ts.'],
+    notes: ['Defined in reportsService.ts — fully implemented.'],
   },
   {
     id: 'reports.completed',
@@ -517,7 +518,7 @@ const ENDPOINTS = [
     requestBody: null,
     response: { status: 200, body: 'ApiDonationSummary[]' },
     errors: [{ code: 'FORBIDDEN', http: 403 }],
-    notes: ['⚠️ NOT yet implemented in frontend. Needs reportsService.ts.'],
+    notes: ['Defined in reportsService.ts — fully implemented.'],
   },
   {
     id: 'reports.export',
@@ -541,7 +542,7 @@ const ENDPOINTS = [
     },
     errors: [{ code: 'INVALID_REPORT', http: 400 }],
     notes: [
-      '⚠️ NOT yet implemented in frontend. Needs reportsService.ts.',
+      'Defined in reportsService.ts — fully implemented.',
       'Returns CSV, NOT JSON. Call apiFetch directly and use res.text().',
     ],
   },
@@ -562,7 +563,7 @@ const ENDPOINTS = [
       { code: 'UPLOAD_ERROR', http: 500 },
     ],
     notes: [
-      '⚠️ NOT yet implemented in frontend. Needs xlsxService.ts.',
+      'Defined in xlsxService.ts — fully implemented.',
       'Uses multipart/form-data. Use apiFetch directly — do NOT set Content-Type header (browser handles boundary).',
     ],
   },
@@ -581,7 +582,7 @@ const ENDPOINTS = [
     },
     errors: [{ code: 'DOWNLOAD_ERROR', http: 500 }],
     notes: [
-      '⚠️ NOT yet implemented in frontend. Needs xlsxService.ts.',
+      'Defined in xlsxService.ts — fully implemented.',
       'Returns binary. Use apiFetch + res.blob(), NOT apiRequest.',
     ],
   },
@@ -902,55 +903,125 @@ const IMPLEMENTATION_STATUS = {
     },
     {
       file: 'frontend/src/lib/authService.ts',
-      exports: ['AuthUser', 'login', 'getMe', 'logout', 'isAuthenticated'],
-      description: 'Auth endpoints: login, logout, me. Missing: register.',
-    },
-    {
-      file: 'frontend/src/lib/donorsService.ts',
-      exports: ['DonorFilters', 'CreateDonorPayload', 'fetchDonors', 'createDonor', 'updateDonor', 'deactivateDonor'],
-      description: 'All list/create/update/deactivate. Missing: GET /donors/:id detail endpoint.',
+      exports: ['AuthUser', 'RegisterPayload', 'register', 'login', 'getMe', 'logout', 'isAuthenticated'],
+      description: 'All auth endpoints fully implemented: register, login, logout, me.',
     },
     {
       file: 'frontend/src/lib/schoolsService.ts',
-      exports: ['ApiSchool', 'SchoolFilters', 'SchoolPayload', 'fetchSchools', 'createSchool', 'updateSchool', 'archiveSchool'],
+      exports: ['ApiSchool', 'SchoolFilters', 'SchoolPayload', 'fetchSchools', 'getSchool', 'createSchool', 'updateSchool', 'archiveSchool'],
       description: 'All school endpoints fully implemented including GET by id.',
-    },
-  ],
-  missing: [
-    {
-      file: 'frontend/src/lib/usersService.ts',
-      endpointIds: ['users.list', 'users.get', 'users.create', 'users.update', 'users.deactivate'],
-      description: 'Full CRUD for users (admin-only except GET/:id and PUT/:id for own profile).',
-    },
-    {
-      file: 'frontend/src/lib/donationsService.ts',
-      endpointIds: ['donations.list', 'donations.get', 'donations.create', 'donations.update', 'donations.updateState'],
-      description: 'Full CRUD for donations including state machine transitions.',
-    },
-    {
-      file: 'frontend/src/lib/reportsService.ts',
-      endpointIds: ['reports.donationsBySchool', 'reports.donationsByDonor', 'reports.pendingDeliveries', 'reports.completed', 'reports.export'],
-      description: 'All report endpoints. Note: export returns CSV (use apiFetch + res.text()).',
-    },
-    {
-      file: 'frontend/src/lib/xlsxService.ts',
-      endpointIds: ['xlsx.upload', 'xlsx.download'],
-      description: 'Excel upload (multipart/form-data) and download (binary blob).',
-    },
-  ],
-  partiallyImplemented: [
-    {
-      file: 'frontend/src/lib/authService.ts',
-      missing: ['POST /auth/register'],
-      description: 'register() function not yet implemented.',
     },
     {
       file: 'frontend/src/lib/donorsService.ts',
-      missing: ['GET /api/v1/donors/:id'],
-      description: 'getDonor(id) returning ApiDonorDetail not yet implemented.',
+      exports: ['ApiDonorDetail', 'DonorFilters', 'CreateDonorPayload', 'fetchDonors', 'getDonor', 'createDonor', 'updateDonor', 'deactivateDonor'],
+      description: 'All donor endpoints fully implemented including GET /donors/:id detail.',
+    },
+    {
+      file: 'frontend/src/lib/donationsService.ts',
+      exports: ['DonationState', 'DonationType', 'ApiDonationSummary', 'ApiDonationDetail', 'DonationFilters', 'CreateDonationPayload', 'UpdateDonationPayload', 'UpdateDonationStatePayload', 'DonationStateUpdateResponse', 'fetchDonations', 'getDonation', 'createDonation', 'updateDonation', 'updateDonationState'],
+      description: 'All donation endpoints fully implemented including state machine transitions.',
+    },
+    {
+      file: 'frontend/src/lib/usersService.ts',
+      exports: ['ApiUser', 'UserFilters', 'CreateUserPayload', 'UpdateUserPayload', 'fetchUsers', 'getUser', 'createUser', 'updateUser', 'deactivateUser'],
+      description: 'All user endpoints fully implemented (admin-only except GET/:id and PUT/:id for own profile).',
+    },
+    {
+      file: 'frontend/src/lib/reportsService.ts',
+      exports: ['DonationsBySchoolRow', 'DonationsByDonorRow', 'ReportType', 'donationsBySchool', 'donationsByDonor', 'pendingDeliveries', 'completedDonations', 'exportReport'],
+      description: 'All report endpoints fully implemented. exportReport returns raw CSV string via apiFetch + res.text().',
+    },
+    {
+      file: 'frontend/src/lib/xlsxService.ts',
+      exports: ['XlsxUploadResult', 'uploadXlsx', 'downloadXlsx'],
+      description: 'Excel upload (multipart/form-data via FormData) and download (binary blob) fully implemented.',
     },
   ],
+  missing: [],
+  partiallyImplemented: [],
 };
+
+const FRONTEND_COMPONENT_STATUS = [
+  // ── Page components ───────────────────────────────────────────────────────
+  {
+    component: 'frontend/src/app/login/page.tsx',
+    serviceIntegrated: true,
+    servicesUsed: ['authService.ts → login()'],
+    mockDataFiles: [],
+    notes: 'Fully wired to real auth service.',
+  },
+  {
+    component: 'frontend/src/components/escuelas/EscuelasPage.tsx',
+    serviceIntegrated: true,
+    servicesUsed: ['schoolsService.ts → fetchSchools(), createSchool(), updateSchool(), archiveSchool()'],
+    mockDataFiles: [],
+    notes: 'Fully wired to real schools service.',
+  },
+  {
+    component: 'frontend/src/components/donantes/DonantesPage.tsx',
+    serviceIntegrated: true,
+    servicesUsed: ['donorsService.ts → fetchDonors(), createDonor(), updateDonor(), deactivateDonor()'],
+    mockDataFiles: [],
+    notes: 'Fully wired to real donors service.',
+  },
+  {
+    component: 'frontend/src/components/donaciones/DonacionesPage.tsx',
+    serviceIntegrated: false,
+    servicesUsed: [],
+    mockDataFiles: ['donacionesSampleData.ts (mockDonations)'],
+    notes: '⚠️ Still using mock data. Must be replaced with donationsService.ts calls: fetchDonations(), createDonation(), updateDonation(), updateDonationState().',
+  },
+  {
+    component: 'frontend/src/components/main/RecentDonations.tsx',
+    serviceIntegrated: false,
+    servicesUsed: [],
+    mockDataFiles: ['sampleData.ts (mockDonations)'],
+    notes: '⚠️ Dashboard widget still using mock data. Should use donationsService.ts → fetchDonations() for a live summary.',
+  },
+  {
+    component: 'frontend/src/components/main/RecentSchools.tsx',
+    serviceIntegrated: false,
+    servicesUsed: [],
+    mockDataFiles: ['sampleData.ts (mockSchools)'],
+    notes: '⚠️ Dashboard widget still using mock data. Should use schoolsService.ts → fetchSchools() for a live summary.',
+  },
+  {
+    component: 'frontend/src/components/main/StatsCards.tsx',
+    serviceIntegrated: false,
+    servicesUsed: [],
+    mockDataFiles: [],
+    notes: '⚠️ Stats are hardcoded. Should be driven by reportsService.ts data (donationsBySchool, donationsByDonor) or dedicated summary endpoints.',
+  },
+  {
+    component: 'frontend/src/components/preferencias/PreferenciasPage.tsx',
+    serviceIntegrated: false,
+    servicesUsed: [],
+    mockDataFiles: [],
+    notes: '⚠️ Settings form is not wired to any service. Profile updates should call usersService.ts → updateUser(); password changes also via updateUser().',
+  },
+  // ── Layout / shell components (no service needed) ─────────────────────────
+  {
+    component: 'frontend/src/components/AdminSidebar.tsx',
+    serviceIntegrated: null,
+    servicesUsed: [],
+    mockDataFiles: [],
+    notes: 'Navigation shell — no API service required.',
+  },
+  {
+    component: 'frontend/src/components/Header.tsx',
+    serviceIntegrated: null,
+    servicesUsed: [],
+    mockDataFiles: [],
+    notes: 'Layout header — no API service required.',
+  },
+  {
+    component: 'frontend/src/components/Footer.tsx',
+    serviceIntegrated: null,
+    servicesUsed: [],
+    mockDataFiles: [],
+    notes: 'Layout footer — no API service required.',
+  },
+];
 
 const SERVICE_PATTERN = `
 // ── Pattern for a new service file ──────────────────────────────────────────
@@ -1091,6 +1162,14 @@ const tools = {
     return { resource, typescript: types.trim() };
   },
 
+  get_frontend_component_status(args) {
+    const { integrated_only, not_integrated_only } = args ?? {};
+    let results = FRONTEND_COMPONENT_STATUS;
+    if (integrated_only)     results = results.filter(c => c.serviceIntegrated === true);
+    if (not_integrated_only) results = results.filter(c => c.serviceIntegrated === false);
+    return results;
+  },
+
   get_implementation_status() {
     return IMPLEMENTATION_STATUS;
   },
@@ -1116,7 +1195,7 @@ const tools = {
 // ── MCP server ────────────────────────────────────────────────────────────────
 
 const server = new Server(
-  { name: 'impulsaedu-api', version: '1.0.0' },
+  { name: 'impulsaedu-api', version: '1.1.0' },
   { capabilities: { tools: {} } }
 );
 
@@ -1171,6 +1250,23 @@ server.setRequestHandler(ListToolsRequestSchema, async () => ({
           },
         },
         required: ['resource'],
+      },
+    },
+    {
+      name: 'get_frontend_component_status',
+      description: 'Get the integration status of each frontend UI component — which ones are wired to real API services vs still using mock/sample data.',
+      inputSchema: {
+        type: 'object',
+        properties: {
+          integrated_only: {
+            type: 'boolean',
+            description: 'If true, return only components that are already wired to a real service.',
+          },
+          not_integrated_only: {
+            type: 'boolean',
+            description: 'If true, return only components that still use mock data and need service integration.',
+          },
+        },
       },
     },
     {

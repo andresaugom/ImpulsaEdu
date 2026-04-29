@@ -20,12 +20,12 @@ function createTestExcel(schoolName = TEST_SCHOOL_NAME, cct = TEST_CCT) {
 
     // Sheet: "Datos de las escuelas" 
     const schoolsData = [
-        ['', '', '', '', '', '', '', '', '', '', '', '', '', ''],   
-        ['', '', '', '', '', '', '', '', '', '', '', '', '', ''],   
-        ['', '', '', '', '', '', '', '', '', '', '', '', '', ''],   
-        ['', '', '', '', '', '', '', '', '', '', '', '', '', ''],   
-        ['CCT', 'Clave Escuela', 'Municipio', 'Nombre de la Escuela', 'Personal escolar', 'Estudiantes', 'Nivel ed.', 'Modalidad', 'Turno', 'Dirección', 'Ubicación', 'Sostenimiento', 'Meta', 'Extra'], 
-        [cct, 'SCH-123', 'Municipio Test', schoolName, 5, 100, 'Primaria', 'Presencial', 'Matutino', 'Calle Falsa 123', 'Urbana', 'Estatal', 5000, ''],
+        ['', '', '', '', '', '', '', '', '', '', '', ''],   // row 1
+        ['', '', '', '', '', '', '', '', '', '', '', ''],   // row 2
+        ['', '', '', '', '', '', '', '', '', '', '', ''],   // row 3
+        ['', '', '', '', '', '', '', '', '', '', '', ''],   // row 4
+        ['CCT', 'Municipio', 'Nombre de la Escuela', 'Personal escolar', 'Estudiantes', 'Nivel ed.', 'Modalidad', 'Turno', 'Dirección', 'Ubicación', 'Sostenimiento', 'Extra'], // row 5 = header
+        [cct, 'Municipio Test', schoolName, 5, 100, 'Primaria', 'SEP-General', 'Matutino', 'Calle Falsa 123', 'Urbana', 'Estatal', ''],
     ];
 
     const schoolsWs = xlsx.utils.aoa_to_sheet(schoolsData);

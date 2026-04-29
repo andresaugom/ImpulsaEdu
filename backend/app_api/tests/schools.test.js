@@ -12,26 +12,44 @@ const pool    = require('../db/pool');
 const staffToken = jwt.sign({ sub: 'staff-1', email: 'staff@test.com', role: 'staff' }, 'test-secret');
 
 const SCHOOL_ROW = {
-    id:              'school-uuid-1',
-    name:            'Escuela Primaria Juárez',
-    region:          'Jalisco',
-    category:        'Infrastructure',
-    description:     'Needs new bathrooms.',
-    funding_goal:    '50000.00',
-    status:          'active',
-    confirmed_value: '22500.00'
+    id:          'school-uuid-1',
+    region:      'Zapopan',
+    school:      '14EPR1234A',
+    name:        'Escuela Primaria Juárez',
+    employees:   22,
+    students:    410,
+    level:       'Primaria',
+    cct:         '14EPR1234A',
+    mode:        'SEP-General',
+    shift:       'Matutino',
+    address:     'Av. Reforma 123',
+    location:    'https://maps.example.com',
+    category:    'Estatal',
+    description: 'Needs new bathrooms.',
+    goal:        '50000.00',
+    progress:    '0',
+    deleted_at:  null
 };
 
 const SCHOOL_BODY = {
-    id:              'school-uuid-1',
-    name:            'Escuela Primaria Juárez',
-    region:          'Jalisco',
-    category:        'Infrastructure',
-    description:     'Needs new bathrooms.',
-    funding_goal:    50000,
-    confirmed_value: 22500,
-    progress_pct:    45,
-    status:          'active'
+    id:           'school-uuid-1',
+    region:       'Zapopan',
+    school:       '14EPR1234A',
+    name:         'Escuela Primaria Juárez',
+    employees:    22,
+    students:     410,
+    level:        'Primaria',
+    cct:          '14EPR1234A',
+    mode:         'SEP-General',
+    shift:        'Matutino',
+    address:      'Av. Reforma 123',
+    location:     'https://maps.example.com',
+    category:     'Estatal',
+    description:  'Needs new bathrooms.',
+    goal:         50000,
+    progress:     0,
+    progress_pct: 0,
+    status:       'active'
 };
 
 beforeEach(() => pool.query.mockReset());
@@ -62,13 +80,14 @@ describe('GET /api/v1/schools', () => {
         });
     });
 
-    it('defaults status to active', async () => {
+    it('defaults status to active (filters by deleted_at IS NULL)', async () => {
         pool.query
             .mockResolvedValueOnce({ rows: [{ count: '0' }] })
             .mockResolvedValueOnce({ rows: [] });
 
         await request(app).get('/api/v1/schools');
-        expect(pool.query.mock.calls[0][1]).toContain('active');
+        const sql = pool.query.mock.calls[0][0];
+        expect(sql).toContain('deleted_at IS NULL');
     });
 
     it('respects region and category filters', async () => {
@@ -76,10 +95,10 @@ describe('GET /api/v1/schools', () => {
             .mockResolvedValueOnce({ rows: [{ count: '0' }] })
             .mockResolvedValueOnce({ rows: [] });
 
-        await request(app).get('/api/v1/schools?region=Jalisco&category=Infrastructure');
+        await request(app).get('/api/v1/schools?region=Zapopan&category=Estatal');
         const params = pool.query.mock.calls[0][1];
-        expect(params).toContain('Jalisco');
-        expect(params).toContain('Infrastructure');
+        expect(params).toContain('Zapopan');
+        expect(params).toContain('Estatal');
     });
 
     it('caps per_page at 100', async () => {
@@ -118,7 +137,7 @@ describe('POST /api/v1/schools', () => {
     it('returns 401 without token', async () => {
         const res = await request(app)
             .post('/api/v1/schools')
-            .send({ name: 'School', region: 'Jalisco', category: 'Infrastructure', funding_goal: 1000 });
+            .send({ name: 'School', region: 'Zapopan', category: 'Estatal', goal: 1000 });
         expect(res.status).toBe(401);
     });
 
@@ -138,24 +157,35 @@ describe('POST /api/v1/schools', () => {
             .post('/api/v1/schools')
             .set('Authorization', `Bearer ${staffToken}`)
             .send({
-                name:         'Escuela Primaria Juárez',
-                region:       'Jalisco',
-                category:     'Infrastructure',
-                description:  'Needs new bathrooms.',
-                funding_goal: 50000
+                region:   'Zapopan',
+                school:   '14EPR1234A',
+                name:     'Escuela Primaria Juárez',
+                level:    'Primaria',
+                cct:      '14EPR1234A',
+                mode:     'SEP-General',
+                shift:    'Matutino',
+                address:  'Av. Reforma 123',
+                location: 'https://maps.example.com',
+                category: 'Estatal',
+                goal:     50000
             });
 
         expect(res.status).toBe(201);
         expect(res.body.name).toBe('Escuela Primaria Juárez');
     });
 
-    it('returns 409 on duplicate name/region', async () => {
+    it('returns 409 on duplicate region/school/name', async () => {
         pool.query.mockRejectedValueOnce({ code: '23505' });
 
         const res = await request(app)
             .post('/api/v1/schools')
             .set('Authorization', `Bearer ${staffToken}`)
-            .send({ name: 'Dup School', region: 'Jalisco', category: 'Cat', funding_goal: 1000 });
+            .send({
+                region: 'Zapopan', school: 'DUP', name: 'Dup School',
+                level: 'Primaria', cct: 'DUP', mode: 'SEP-General',
+                shift: 'Matutino', address: 'Addr', location: 'loc',
+                category: 'Estatal', goal: 1000
+            });
 
         expect(res.status).toBe(409);
         expect(res.body.error.code).toBe('CONFLICT');
@@ -177,9 +207,8 @@ describe('PUT /api/v1/schools/:id', () => {
 
     it('updates school successfully', async () => {
         pool.query
-            .mockResolvedValueOnce({ rowCount: 1, rows: [{ id: 'school-uuid-1' }] }) // existence
-            .mockResolvedValueOnce({ rows: [{ ...SCHOOL_ROW, name: 'New Name' }], rowCount: 1 }) // UPDATE
-            .mockResolvedValueOnce({ rows: [{ confirmed_value: '22500' }] }); // confirmed_value
+            .mockResolvedValueOnce({ rowCount: 1, rows: [{ id: 'school-uuid-1' }] }) // existence check
+            .mockResolvedValueOnce({ rows: [{ ...SCHOOL_ROW, name: 'New Name' }], rowCount: 1 }); // UPDATE RETURNING
 
         const res = await request(app)
             .put('/api/v1/schools/school-uuid-1')
