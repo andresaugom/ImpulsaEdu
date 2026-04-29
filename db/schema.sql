@@ -2,17 +2,52 @@
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 -- ENUMS
-CREATE TYPE IF NOT EXISTS user_role AS ENUM ('staff', 'admin');
-CREATE TYPE IF NOT EXISTS donor_type AS ENUM ('Fisica', 'Moral');
-CREATE TYPE IF NOT EXISTS donation_status AS ENUM ('Registrado','Aprobado','Entregando','Entregado','Finalizado','Cancelado');
-CREATE TYPE IF NOT EXISTS donation_type AS ENUM ('Material','Monetaria');
-CREATE TYPE IF NOT EXISTS school_level AS ENUM ('Preescolar','Primaria','Secundaria','Preparatoria','Universidad');
-CREATE TYPE IF NOT EXISTS school_mode AS ENUM ('SEP-Multigrado','SEP-General','CONAFE', 'Particular', 'Otro');
-CREATE TYPE IF NOT EXISTS school_shift AS ENUM ('Matutino','Vespertino','Mixto');
-CREATE TYPE IF NOT EXISTS school_category AS ENUM ('Estatal','Federal','Federalizado');
-CREATE TYPE IF NOT EXISTS school_need_status AS ENUM ('Cubierto', 'Aun no cubierto');
-CREATE TYPE IF NOT EXISTS entity_type AS ENUM ('donor','donation','school');
-CREATE TYPE IF NOT EXISTS audit_action AS ENUM ('create','update','archive','state_change');
+DO $$
+BEGIN
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'user_role') THEN
+        CREATE TYPE user_role AS ENUM ('staff', 'admin');
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'donor_type') THEN
+        CREATE TYPE donor_type AS ENUM ('Fisica', 'Moral');
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'donation_status') THEN
+        CREATE TYPE donation_status AS ENUM ('Registrado','Aprobado','Entregando','Entregado','Finalizado','Cancelado');
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'donation_type') THEN
+        CREATE TYPE donation_type AS ENUM ('Material','Monetaria');
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'school_level') THEN
+        CREATE TYPE school_level AS ENUM ('Preescolar','Primaria','Secundaria','Preparatoria','Universidad');
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'school_mode') THEN
+        CREATE TYPE school_mode AS ENUM ('SEP-Multigrado','SEP-General','CONAFE', 'Particular', 'Otro');
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'school_shift') THEN
+        CREATE TYPE school_shift AS ENUM ('Matutino','Vespertino','Mixto');
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'school_category') THEN
+        CREATE TYPE school_category AS ENUM ('Estatal','Federal','Federalizado');
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'school_need_status') THEN
+        CREATE TYPE school_need_status AS ENUM ('Cubierto', 'Aun no cubierto');
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'entity_type') THEN
+        CREATE TYPE entity_type AS ENUM ('donor','donation','school');
+    END IF;
+
+    IF NOT EXISTS (SELECT 1 FROM pg_type WHERE typname = 'audit_action') THEN
+        CREATE TYPE audit_action AS ENUM ('create','update','archive','state_change');
+    END IF;
+END$$;
 
 -- USERS
 CREATE TABLE IF NOT EXISTS users (
