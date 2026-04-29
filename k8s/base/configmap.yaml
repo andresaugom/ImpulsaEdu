@@ -12,3 +12,5 @@ data:
   AUTH_PORT: "8081"
   DB_SSL: "false"
   APP_DOMAIN: "impulsaedu.sytes.net"
+  NEXT_PUBLIC_APP_API_URL: "http://api-service.impulsa.svc.cluster.local:8080"
+  NEXT_PUBLIC_AUTH_API_URL: "http://auth-service.impulsa.svc.cluster.local:8081"
