@@ -12,36 +12,42 @@ $$ language 'plpgsql';
 --triggers
 
 -- Tabla: users
+DROP TRIGGER IF EXISTS trg_users_updated_at_after ON users;
 CREATE TRIGGER trg_users_updated_at_after
 AFTER UPDATE ON users
 FOR EACH ROW
 EXECUTE FUNCTION update_updated_at_column_after();
 
 --Tabla: donors
+DROP TRIGGER IF EXISTS trg_donors_updated_at_after ON donors;
 CREATE TRIGGER trg_donors_updated_at_after
 AFTER UPDATE ON donors
 FOR EACH ROW
 EXECUTE FUNCTION update_updated_at_column_after();
 
 -- Tabla: schools
+DROP TRIGGER IF EXISTS trg_schools_updated_at_after ON schools;
 CREATE TRIGGER trg_schools_updated_at_after
 AFTER UPDATE ON schools
 FOR EACH ROW
 EXECUTE FUNCTION update_updated_at_column_after();
 
 -- Tabla: schools_needs
+DROP TRIGGER IF EXISTS trg_schools_needs_updated_at_after ON schools_needs;
 CREATE TRIGGER trg_schools_needs_updated_at_after
 AFTER UPDATE ON schools_needs
 FOR EACH ROW
 EXECUTE FUNCTION update_updated_at_column_after();
 
 --Tabla: donations
+DROP TRIGGER IF EXISTS trg_donations_updated_at_after ON donations;
 CREATE TRIGGER trg_donations_updated_at_after
 AFTER UPDATE ON donations
 FOR EACH ROW
 EXECUTE FUNCTION update_updated_at_column_after();
 
 --Tabla: donation_items
+DROP TRIGGER IF EXISTS trg_donation_items_updated_at_after ON donation_items;
 CREATE TRIGGER trg_donation_items_updated_at_after
 AFTER UPDATE ON donation_items
 FOR EACH ROW
@@ -62,11 +68,13 @@ BEGIN
 END;
 $$ LANGUAGE 'plpgsql';
 
+DROP TRIGGER IF EXISTS trg_donations_update_school_progress ON donations;
 CREATE TRIGGER trg_donations_update_school_progress
 AFTER INSERT OR UPDATE OR DELETE ON donations
 FOR EACH ROW
 EXECUTE FUNCTION update_school_progress();
 
+DROP TRIGGER IF EXISTS trg_donation_items_update_school_progress ON donation_items;
 CREATE TRIGGER trg_donation_items_update_school_progress
 AFTER INSERT OR UPDATE OR DELETE ON donation_items
 FOR EACH ROW
@@ -110,21 +118,25 @@ END;
 $$ LANGUAGE 'plpgsql';
 
 -- Create audit triggers for relevant tables
+DROP TRIGGER IF EXISTS trg_audit_donors ON donors;
 CREATE TRIGGER trg_audit_donors
 AFTER INSERT OR UPDATE ON donors
 FOR EACH ROW
 EXECUTE FUNCTION audit_log_changes();
 
+DROP TRIGGER IF EXISTS trg_audit_schools ON schools;
 CREATE TRIGGER trg_audit_schools
 AFTER INSERT OR UPDATE ON schools
 FOR EACH ROW
 EXECUTE FUNCTION audit_log_changes();
 
+DROP TRIGGER IF EXISTS trg_audit_donations ON donations;
 CREATE TRIGGER trg_audit_donations
 AFTER INSERT OR UPDATE ON donations
 FOR EACH ROW
 EXECUTE FUNCTION audit_log_changes();
 
+DROP TRIGGER IF EXISTS trg_audit_schools_needs ON schools_needs;
 CREATE TRIGGER trg_audit_schools_needs
 AFTER INSERT OR UPDATE ON schools_needs
 FOR EACH ROW
