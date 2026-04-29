@@ -2,20 +2,20 @@
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 -- ENUMS
-CREATE TYPE user_role AS ENUM ('staff', 'admin');
-CREATE TYPE donor_type AS ENUM ('Fisica', 'Moral');
-CREATE TYPE donation_status AS ENUM ('Registrado','Aprobado','Entregando','Entregado','Finalizado','Cancelado');
-CREATE TYPE donation_type AS ENUM ('Material','Monetaria');
-CREATE TYPE school_level AS ENUM ('Preescolar','Primaria','Secundaria','Preparatoria','Universidad');
-CREATE TYPE school_mode AS ENUM ('SEP-Multigrado','SEP-General','CONAFE', 'Particular', 'Otro');
-CREATE TYPE school_shift AS ENUM ('Matutino','Vespertino','Mixto');
-CREATE TYPE school_category AS ENUM ('Estatal','Federal','Federalizado');
-CREATE TYPE school_need_status AS ENUM ('Cubierto', 'Aun no cubierto');
-CREATE TYPE entity_type AS ENUM ('donor','donation','school');
-CREATE TYPE audit_action AS ENUM ('create','update','archive','state_change');
+CREATE TYPE IF NOT EXISTS user_role AS ENUM ('staff', 'admin');
+CREATE TYPE IF NOT EXISTS donor_type AS ENUM ('Fisica', 'Moral');
+CREATE TYPE IF NOT EXISTS donation_status AS ENUM ('Registrado','Aprobado','Entregando','Entregado','Finalizado','Cancelado');
+CREATE TYPE IF NOT EXISTS donation_type AS ENUM ('Material','Monetaria');
+CREATE TYPE IF NOT EXISTS school_level AS ENUM ('Preescolar','Primaria','Secundaria','Preparatoria','Universidad');
+CREATE TYPE IF NOT EXISTS school_mode AS ENUM ('SEP-Multigrado','SEP-General','CONAFE', 'Particular', 'Otro');
+CREATE TYPE IF NOT EXISTS school_shift AS ENUM ('Matutino','Vespertino','Mixto');
+CREATE TYPE IF NOT EXISTS school_category AS ENUM ('Estatal','Federal','Federalizado');
+CREATE TYPE IF NOT EXISTS school_need_status AS ENUM ('Cubierto', 'Aun no cubierto');
+CREATE TYPE IF NOT EXISTS entity_type AS ENUM ('donor','donation','school');
+CREATE TYPE IF NOT EXISTS audit_action AS ENUM ('create','update','archive','state_change');
 
 -- USERS
-CREATE TABLE users (
+CREATE TABLE IF NOT EXISTS users (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   firstname TEXT NOT NULL,
   middlename TEXT,
@@ -34,7 +34,7 @@ CREATE TABLE users (
 );
 
 -- REFRESH TOKENS
-CREATE TABLE refresh_tokens (
+CREATE TABLE IF NOT EXISTS refresh_tokens (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID NOT NULL REFERENCES users(id) ON DELETE CASCADE,
   token_hash VARCHAR(64) NOT NULL UNIQUE,
@@ -44,7 +44,7 @@ CREATE TABLE refresh_tokens (
 );
 
 -- DONORS
-CREATE TABLE donors (
+CREATE TABLE IF NOT EXISTS donors (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   name TEXT NOT NULL,
   region TEXT NOT NULL,
@@ -62,7 +62,7 @@ CREATE TABLE donors (
 );
 
 -- SCHOOLS
-CREATE TABLE schools (
+CREATE TABLE IF NOT EXISTS schools (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   region TEXT NOT NULL,
   school TEXT NOT NULL, -- plantel
@@ -91,7 +91,7 @@ CREATE TABLE schools (
 );
 
 -- SCHOOL NEEDS
-CREATE TABLE schools_needs (
+CREATE TABLE IF NOT EXISTS schools_needs (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   school_id UUID NOT NULL REFERENCES schools(id),
   category TEXT NOT NULL,
@@ -112,7 +112,7 @@ CREATE TABLE schools_needs (
 );
 
 -- DONATIONS
-CREATE TABLE donations (
+CREATE TABLE IF NOT EXISTS donations (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   donor_id UUID NOT NULL REFERENCES donors(id),
   school_id UUID NOT NULL REFERENCES schools(id),
@@ -130,7 +130,7 @@ CREATE TABLE donations (
 );
 
 -- DONATION ITEMS
-CREATE TABLE donation_items (
+CREATE TABLE IF NOT EXISTS donation_items (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   donation_id UUID NOT NULL REFERENCES donations(id) ON DELETE CASCADE,
   item_name TEXT NOT NULL,
@@ -146,7 +146,7 @@ CREATE TABLE donation_items (
 );
 
 -- CONTACTS
-CREATE TABLE contacts (
+CREATE TABLE IF NOT EXISTS contacts (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   donor_id UUID REFERENCES donors(id) ON DELETE CASCADE,
   school_id UUID REFERENCES schools(id) ON DELETE CASCADE,
@@ -160,7 +160,7 @@ CREATE TABLE contacts (
 );
 
 -- AUDIT LOGS
-CREATE TABLE audit_logs (
+CREATE TABLE IF NOT EXISTS audit_logs (
   id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
   user_id UUID REFERENCES users(id) ON DELETE SET NULL,
   entity_type entity_type NOT NULL,

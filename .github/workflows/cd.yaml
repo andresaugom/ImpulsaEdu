@@ -84,6 +84,22 @@ jobs:
             --from-literal=JWT_SECRET="${{ secrets.JWT_SECRET }}" \
             --dry-run=client -o yaml | kubectl apply -f -
 
+      # ── Apply database init ConfigMap ─────────────────────────────────────
+      # The ConfigMap is generated from the canonical SQL files in db/.
+      # It is mounted at /docker-entrypoint-initdb.d inside the postgres container
+      # and is executed automatically on first startup (empty PVC).
+      # NOTE: initdb scripts do NOT re-run if the PVC already contains data.
+      #       For schema changes on an existing database use a migration Job or
+      #       kubectl exec into the postgres pod.
+      - name: Apply database init ConfigMap
+        run: |
+          kubectl create configmap postgres-init-sql \
+            -n "$NAMESPACE" \
+            --from-file=01-setup.sql=db/setup.sql \
+            --from-file=02-schema.sql=db/schema.sql \
+            --from-file=03-triggers.sql=db/triggers.sql \
+            --dry-run=client -o yaml | kubectl apply -f -
+
       # ── Roll out new images to impulsa ────────────────────────────────────
       - name: Deploy to impulsa
         run: |
