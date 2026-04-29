@@ -32,7 +32,7 @@ describe('GET /api/v1/reports/donations-by-school', () => {
     it('returns aggregated report for admin', async () => {
         pool.query.mockResolvedValueOnce({
             rows: [{
-                school_id:       'school-1',
+                cct:             'school-1',
                 school_name:     'Escuela Juárez',
                 total_monetary:  '30000',
                 total_donations: '5',
@@ -48,7 +48,7 @@ describe('GET /api/v1/reports/donations-by-school', () => {
         expect(res.status).toBe(200);
         expect(res.body).toHaveLength(1);
         expect(res.body[0]).toMatchObject({
-            school_id:       'school-1',
+            cct:             'school-1',
             school_name:     'Escuela Juárez',
             total_monetary:  30000,
             total_donations: 5,
@@ -219,7 +219,7 @@ describe('GET /api/v1/reports/export', () => {
     it('exports donations-by-school as CSV', async () => {
         pool.query.mockResolvedValueOnce({
             rows: [{
-                school_id: 'school-1', school_name: 'Escuela',
+                cct: 'school-1', school_name: 'Escuela',
                 total_monetary: '30000',
                 total_donations: '3', pending: '1', completed: '2'
             }]
@@ -232,7 +232,7 @@ describe('GET /api/v1/reports/export', () => {
         expect(res.status).toBe(200);
         expect(res.headers['content-type']).toMatch(/text\/csv/);
         expect(res.headers['content-disposition']).toMatch(/attachment/);
-        expect(res.text).toContain('school_id');
+        expect(res.text).toContain('cct');
         expect(res.text).toContain('Escuela');
     });
 
@@ -279,7 +279,7 @@ describe('GET /api/v1/reports/export', () => {
     it('CSV values with commas are quoted', async () => {
         pool.query.mockResolvedValueOnce({
             rows: [{
-                school_id: 'school-1', school_name: 'Escuela, Del Valle',
+                cct: 'school-1', school_name: 'Escuela, Del Valle',
                 total_monetary: '0',
                 total_donations: '0', pending: '0', completed: '0'
             }]
