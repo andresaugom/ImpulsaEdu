@@ -33,12 +33,12 @@ function createTestExcel(schoolName = TEST_SCHOOL_NAME, cct = TEST_CCT) {
 
     // Sheet: "Necesidades" 
     const needsData = [
-        ['', '', '', '', ''],   
-        ['', '', '', '', ''],   
-        ['', '', '', '', ''],   
-        ['Propuesta', 'Escuela', 'Cantidad', 'Unidad', 'Monto'], 
-        ['Sillas', schoolName, 10, 'Pza', 1500.00],
-        ['Mesas', schoolName, 5, 'Pza', 2000.00],
+        ['', '', '', '', '', '', ''],   
+        ['', '', '', '', '', '', ''],   
+        ['', '', '', '', '', '', ''],   
+        ['Categoría', 'Subcategoría', 'Propuesta', 'Escuela', 'Cantidad', 'Unidad', 'Monto'], 
+        ['Mobiliario', 'Aula', 'Sillas', schoolName, 10, 'Pza', 1500.00],
+        ['Mobiliario', 'Aula', 'Mesas', schoolName, 5, 'Pza', 2000.00],
     ];
 
     const needsWs = xlsx.utils.aoa_to_sheet(needsData);
@@ -137,3 +137,25 @@ describe('syncExcelToDB — integration (real DB)', () => {
         }
     });
 });
+
+// Al insertar en schools_needs, asegúrate de incluir category y subcategory correctamente mapeados desde el Excel.
+
+async function insertSchoolNeed(client, need, schoolId) {
+    // Asegúrate de que need.category y need.subcategory existan y estén mapeados
+    await client.query(
+        `INSERT INTO schools_needs
+            (school_id, category, subcategory, item_name, quantity, unit, amount, status, description)
+         VALUES ($1, $2, $3, $4, $5, $6, $7, $8, $9)`,
+        [
+            schoolId,
+            need.category || 'General',      // Valor por defecto si no viene del Excel
+            need.subcategory || 'General',   // Valor por defecto si no viene del Excel
+            need.item_name,
+            need.quantity,
+            need.unit,
+            need.amount,
+            need.status || 'Aun no cubierto',
+            need.description || null
+        ]
+    );
+}
