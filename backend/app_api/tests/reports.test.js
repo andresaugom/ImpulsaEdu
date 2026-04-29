@@ -34,6 +34,14 @@ describe('GET /api/v1/reports/donations-by-school', () => {
             rows: [{
                 cct:             'school-1',
                 school_name:     'Escuela Juárez',
+                region:          'Norte',
+                school:          'Plantel 1',
+                level:           'Primaria',
+                mode:            'SEP-General',
+                shift:           'Matutino',
+                location:        'Centro',
+                category:        'Estatal',
+                goal:            '50000',
                 total_monetary:  '30000',
                 total_donations: '5',
                 pending:         '2',
@@ -219,9 +227,20 @@ describe('GET /api/v1/reports/export', () => {
     it('exports donations-by-school as CSV', async () => {
         pool.query.mockResolvedValueOnce({
             rows: [{
-                cct: 'school-1', school_name: 'Escuela',
+                cct: 'school-1', 
+                school_name: 'Escuela',
+                region: 'Norte',
+                school: 'Plantel 1',
+                level: 'Primaria',
+                mode: 'SEP-General',
+                shift: 'Matutino',
+                location: 'Centro',
+                category: 'Estatal',
+                goal: '50000',
                 total_monetary: '30000',
-                total_donations: '3', pending: '1', completed: '2'
+                total_donations: '3', 
+                pending: '1', 
+                completed: '2'
             }]
         });
 
@@ -279,9 +298,20 @@ describe('GET /api/v1/reports/export', () => {
     it('CSV values with commas are quoted', async () => {
         pool.query.mockResolvedValueOnce({
             rows: [{
-                cct: 'school-1', school_name: 'Escuela, Del Valle',
+                cct: 'school-1', 
+                school_name: 'Escuela, Del Valle',
+                region: 'Norte',
+                school: 'Plantel 1',
+                level: 'Primaria',
+                mode: 'SEP-General',
+                shift: 'Matutino',
+                location: 'Centro',
+                category: 'Estatal',
+                goal: '50000',
                 total_monetary: '0',
-                total_donations: '0', pending: '0', completed: '0'
+                total_donations: '0', 
+                pending: '0', 
+                completed: '0'
             }]
         });
 
