@@ -20,6 +20,7 @@ import DeleteIcon from '@mui/icons-material/Delete';
 import CheckCircleIcon from '@mui/icons-material/CheckCircle';
 import ErrorIcon from '@mui/icons-material/Error';
 import DescriptionIcon from '@mui/icons-material/Description';
+import { uploadXlsx, downloadXlsx } from '@/lib/xlsxService';
 
 interface UploadedFile {
   id: string;
@@ -66,15 +67,14 @@ export default function GestionExcelPage() {
     const validExtensions = ['.xlsx', '.xls'];
     const hasValidType = validTypes.includes(file.type);
     const hasValidExtension = validExtensions.some(ext => file.name.toLowerCase().endsWith(ext));
-    
+
     return hasValidType || hasValidExtension;
   };
 
-  // Upload file to API
+  // Upload file using xlsxService
   const uploadFile = async (file: File) => {
     const fileId = `${Date.now()}-${file.name}`;
-    
-    // Add file to list with uploading status
+
     const newFile: UploadedFile = {
       id: fileId,
       name: file.name,
@@ -82,37 +82,25 @@ export default function GestionExcelPage() {
       status: 'uploading',
       progress: 0,
     };
-    
+
     setUploadedFiles(prev => [...prev, newFile]);
 
+    // Simulate progress while upload is in flight
+    const progressInterval = setInterval(() => {
+      setUploadedFiles(prev =>
+        prev.map(f =>
+          f.id === fileId && f.progress < 90
+            ? { ...f, progress: f.progress + 10 }
+            : f
+        )
+      );
+    }, 200);
+
     try {
-      const formData = new FormData();
-      formData.append('file', file);
-
-      // Simulate progress (since fetch doesn't support progress events)
-      // You can use XMLHttpRequest for real progress tracking
-      const progressInterval = setInterval(() => {
-        setUploadedFiles(prev =>
-          prev.map(f =>
-            f.id === fileId && f.progress < 90
-              ? { ...f, progress: f.progress + 10 }
-              : f
-          )
-        );
-      }, 200);
-
-      const response = await fetch('/api/v1/xlsx/upload', {
-        method: 'POST',
-        body: formData,
-      });
+      await uploadXlsx(file);
 
       clearInterval(progressInterval);
 
-      if (!response.ok) {
-        throw new Error(`Error al subir archivo: ${response.statusText}`);
-      }
-
-      // Mark as complete
       setUploadedFiles(prev =>
         prev.map(f =>
           f.id === fileId
@@ -126,12 +114,12 @@ export default function GestionExcelPage() {
         message: `Archivo "${file.name}" subido exitosamente`,
       });
 
-      // Auto-hide success message after 5 seconds
       setTimeout(() => setAlert(null), 5000);
 
     } catch (error: any) {
+      clearInterval(progressInterval);
       console.error('Upload error:', error);
-      
+
       setUploadedFiles(prev =>
         prev.map(f =>
           f.id === fileId
@@ -186,55 +174,29 @@ export default function GestionExcelPage() {
     }
 
     excelFiles.forEach(file => uploadFile(file));
-    
+
     // Reset input
     e.target.value = '';
   };
 
-  // Handle download
+  // Handle download using xlsxService
   const handleDownload = async () => {
     setIsDownloading(true);
-    setAlert({
-      type: 'info',
-      message: 'Preparando descarga...',
-    });
+    setAlert({ type: 'info', message: 'Preparando descarga...' });
 
     try {
-      const response = await fetch('/api/v1/xlsx/download', {
-        method: 'GET',
-      });
+      const blob = await downloadXlsx();
 
-      if (!response.ok) {
-        throw new Error(`Error al descargar: ${response.statusText}`);
-      }
-
-      // Get filename from Content-Disposition header or use default
-      const contentDisposition = response.headers.get('Content-Disposition');
-      let filename = 'datos.xlsx';
-      
-      if (contentDisposition) {
-        const filenameMatch = contentDisposition.match(/filename="?(.+)"?/);
-        if (filenameMatch) {
-          filename = filenameMatch[1];
-        }
-      }
-
-      // Create blob and download
-      const blob = await response.blob();
       const url = window.URL.createObjectURL(blob);
       const a = document.createElement('a');
       a.href = url;
-      a.download = filename;
+      a.download = 'datos.xlsx';
       document.body.appendChild(a);
       a.click();
       window.URL.revokeObjectURL(url);
       document.body.removeChild(a);
 
-      setAlert({
-        type: 'success',
-        message: 'Archivo descargado exitosamente',
-      });
-
+      setAlert({ type: 'success', message: 'Archivo descargado exitosamente' });
       setTimeout(() => setAlert(null), 5000);
 
     } catch (error: any) {
@@ -259,7 +221,7 @@ export default function GestionExcelPage() {
     const k = 1024;
     const sizes = ['Bytes', 'KB', 'MB', 'GB'];
     const i = Math.floor(Math.log(bytes) / Math.log(k));
-    return Math.round(bytes / Math.pow(k, i) * 100) / 100 + ' ' + sizes[i];
+    return Math.round((bytes / Math.pow(k, i)) * 100) / 100 + ' ' + sizes[i];
   };
 
   return (
@@ -308,12 +270,8 @@ export default function GestionExcelPage() {
               fontWeight: 600,
               paddingX: 3,
               paddingY: 1.5,
-              '&:hover': {
-                backgroundColor: '#1E293B',
-              },
-              '&:disabled': {
-                backgroundColor: '#9ca3af',
-              },
+              '&:hover': { backgroundColor: '#1E293B' },
+              '&:disabled': { backgroundColor: '#9ca3af' },
             }}
           >
             {isDownloading ? 'Descargando...' : 'Descargar Excel'}
@@ -388,9 +346,7 @@ export default function GestionExcelPage() {
                   key={file.id}
                   sx={{
                     borderBottom: '1px solid #e5e7eb',
-                    '&:last-child': {
-                      borderBottom: 'none',
-                    },
+                    '&:last-child': { borderBottom: 'none' },
                   }}
                 >
                   <Box sx={{ marginRight: 2 }}>
@@ -407,9 +363,7 @@ export default function GestionExcelPage() {
 
                   <ListItemText
                     primary={
-                      <Typography sx={{ fontWeight: 600 }}>
-                        {file.name}
-                      </Typography>
+                      <Typography sx={{ fontWeight: 600 }}>{file.name}</Typography>
                     }
                     secondary={
                       <Box>
