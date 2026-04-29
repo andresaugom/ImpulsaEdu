@@ -8,8 +8,11 @@ describe('Database Triggers & Constraints Integration', () => {
     afterAll(async () => { if(client) client.release(); await pool.end(); });
 
     it('should auto-update the updated_at timestamp when a school is modified', async () => {
-        // Insert a school
-        await client.query("INSERT INTO schools (cct, name) VALUES ('TRIG123', 'Trigger Test School')");
+        // Insert a school with ALL strictly required fields to avoid NOT NULL constraint errors
+        await client.query(`
+            INSERT INTO schools (region, school, name, level, cct, mode, shift, address, location, category, goal) 
+            VALUES ('Centro', 'Plantel Test', 'Trigger Test School', 'Primaria', 'TRIG123', 'SEP-General', 'Matutino', 'Calle 123', 'Ciudad', 'Estatal', 100)
+        `);
 
         // Wait a brief moment to ensure time difference
         await new Promise(resolve => setTimeout(resolve, 100));
@@ -26,18 +29,18 @@ describe('Database Triggers & Constraints Integration', () => {
     });
 
     it('cascading deletes wipe orphaned needs', async () => {
-        // Insert school and grab its UUID with all strictly required NOT NULL fields
+        // Insert school - Changed 'Presencial' to 'SEP-General' to match ENUM school_mode
         const schoolRes = await client.query(`
             INSERT INTO schools (region, school, name, level, cct, mode, shift, address, location, category, goal) 
-            VALUES ('North', 'DelSch', 'DeleteMe', 'Primaria', 'DEL1', 'Presencial', 'Matutino', 'A', 'B', 'Estatal', 100) 
+            VALUES ('North', 'DelSch', 'DeleteMe', 'Primaria', 'DEL1', 'SEP-General', 'Matutino', 'A', 'B', 'Estatal', 100) 
             RETURNING id
         `);
         const schoolUuid = schoolRes.rows[0].id;
 
-        // Insert need attached to that school's UUID
+        // Insert need - Added 'category' and 'subcategory' which are NOT NULL in your schema
         await client.query(
-            "INSERT INTO schools_needs (school_id, item_name, amount) VALUES ($1, 'Computers', 5000)",
-            [schoolUuid]
+            "INSERT INTO schools_needs (school_id, category, subcategory, item_name, amount) VALUES ($1, $2, $3, $4, $5)",
+            [schoolUuid, 'Tecnología', 'Hardware', 'Computers', 5000]
         );
 
         // Delete school
