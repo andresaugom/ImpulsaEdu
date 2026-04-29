@@ -31,16 +31,16 @@ spec:
               value: "/api/v1"
             - name: NEXT_PUBLIC_AUTH_URL
               value: "/auth"
-            - name: NEXT_PUBLIC_APP_API_URL
+            - name: APP_API_URL
               valueFrom:
                 configMapKeyRef:
                   name: impulsa-config
-                  key: NEXT_PUBLIC_APP_API_URL
-            - name: NEXT_PUBLIC_AUTH_API_URL
+                  key: APP_API_URL
+            - name: AUTH_API_URL
               valueFrom:
                 configMapKeyRef:
                   name: impulsa-config
-                  key: NEXT_PUBLIC_AUTH_API_URL
+                  key: AUTH_API_URL
           resources:
             requests:
               cpu: 100m
