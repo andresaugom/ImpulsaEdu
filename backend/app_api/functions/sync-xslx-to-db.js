@@ -46,7 +46,6 @@ async function syncExcelToDB(filePath) {
         const schoolsToInsert = schoolsExcelData.filter(item => item.CCT && !dbSchoolsMap.has(item.CCT));
         const schoolsToUpdate = schoolsExcelData.filter(item => item.CCT && dbSchoolsMap.has(item.CCT));
         
-        // Correct deletion logic: only delete schools if their cct is found but not present in the new excel logic.
         const schoolsToDelete = dbSchools.filter(item => {
             return item.cct && !excelSchoolsMap.has(item.cct);
         });
@@ -116,13 +115,17 @@ async function syncExcelToDB(filePath) {
             if (!schoolId) continue;
 
             const quantity = parseInt(item.Cantidad) || 1;
-            const amount = 100.00;
+            // Intentar usar el monto del excel, si no, 100.00 por defecto
+            const amount = parseFloat(item.Monto) || 100.00;
 
+            // CORRECCIÓN: Inclusión de category y subcategory para evitar el error de restricción NOT NULL
             await client.query(
-                `INSERT INTO schools_needs(school_id, item_name, quantity, unit, amount) 
-                 VALUES($1, $2, $3, $4, $5)`,
+                `INSERT INTO schools_needs(school_id, category, subcategory, item_name, quantity, unit, amount) 
+                 VALUES($1, $2, $3, $4, $5, $6, $7)`,
                 [
                     schoolId, 
+                    item.Categoría || 'General',      // Mapeo desde el Excel
+                    item.Subcategoría || 'General',   // Mapeo desde el Excel
                     item.Propuesta || 'Unknown Item', 
                     quantity, 
                     item.Unidad || 'Pza', 
@@ -139,7 +142,7 @@ async function syncExcelToDB(filePath) {
             needs: { inserted: needsInserted, updated: 0, deleted: 'all_recreated' }
         };
     } catch (error) {
-        await client.query('ROLLBACK');
+        if (client) await client.query('ROLLBACK');
         console.error("Error during sync:", error);
         throw error; 
     } finally {
