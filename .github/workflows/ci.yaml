@@ -10,8 +10,8 @@ on:
   workflow_dispatch: # Allows you to run it manually from the Actions tab
 
 env:
-  # These are "test-only" credentials for the temporary runner database
-  DB_HOST: 127.0.0.1  # Using IP instead of localhost prevents IPv6 resolution errors
+  # Global defaults for the runner
+  DB_HOST: 127.0.0.1
   DB_PORT: "5432"
   DB_NAME: test
   DB_USER: test
@@ -66,8 +66,13 @@ jobs:
       - name: Run tests
         run: npm test
         env:
+          # Explicitly injecting credentials to ensure Node/Jest picks them up
+          DB_HOST: 127.0.0.1
+          DB_PORT: 5432
+          DB_NAME: test
+          DB_USER: test
+          DB_PASSWORD: test
           JWT_SECRET: test-secret-for-ci
-          # These pull from your GitHub Settings -> Secrets
           AZURE_STORAGE_CONNECTION_STRING: ${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}
           AZURE_STORAGE_CONTAINER_NAME: ${{ secrets.AZURE_STORAGE_CONTAINER_NAME }}
 
