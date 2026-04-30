@@ -41,11 +41,16 @@ async function initDatabase(config) {
                 password_hash TEXT NOT NULL,
                 created_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
                 updated_at TIMESTAMPTZ NOT NULL DEFAULT NOW(),
-                deleted_at TIMESTAMPTZ,
-                created_by UUID,
-                updated_by UUID,
-                deleted_by UUID
+                deleted_at TIMESTAMPTZ
             );
+        `);
+
+        // Self-referential FK columns — ADD COLUMN IF NOT EXISTS is a no-op when
+        // the column already exists, so this is safe on every startup.
+        await client.query(`
+            ALTER TABLE users ADD COLUMN IF NOT EXISTS created_by UUID REFERENCES users(id);
+            ALTER TABLE users ADD COLUMN IF NOT EXISTS updated_by UUID REFERENCES users(id);
+            ALTER TABLE users ADD COLUMN IF NOT EXISTS deleted_by UUID REFERENCES users(id);
         `);
 
         await client.query(`

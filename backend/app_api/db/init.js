@@ -33,7 +33,7 @@ async function initDatabase(config) {
             `DO $$ BEGIN CREATE TYPE school_mode AS ENUM ('SEP-Multigrado','SEP-General','CONAFE', 'Particular', 'Otro'); EXCEPTION WHEN duplicate_object THEN null; END $$`,
             `DO $$ BEGIN CREATE TYPE school_shift AS ENUM ('Matutino','Vespertino','Mixto'); EXCEPTION WHEN duplicate_object THEN null; END $$`,
             `DO $$ BEGIN CREATE TYPE school_category AS ENUM ('Estatal','Federal','Federalizado'); EXCEPTION WHEN duplicate_object THEN null; END $$`,
-            `DO $$ BEGIN CREATE TYPE school_need_status AS ENUM ('Cubierto', 'Aun no cubierto'); EXCEPTION WHEN duplicate_object THEN null; END $$`,
+            `DO $$ BEGIN CREATE TYPE school_need_status AS ENUM ('Cubierto', 'Aun no cubierto', 'Cubierto parcialmente'); EXCEPTION WHEN duplicate_object THEN null; END $$`,
             `DO $$ BEGIN CREATE TYPE entity_type AS ENUM ('donor','donation','school'); EXCEPTION WHEN duplicate_object THEN null; END $$`,
             `DO $$ BEGIN CREATE TYPE audit_action AS ENUM ('create','update','archive','state_change'); EXCEPTION WHEN duplicate_object THEN null; END $$`,
         ];
