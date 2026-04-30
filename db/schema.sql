@@ -2,17 +2,17 @@
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 -- ENUMS
-CREATE TYPE IF NOT EXISTS user_role AS ENUM ('staff', 'admin');
-CREATE TYPE IF NOT EXISTS donor_type AS ENUM ('Fisica', 'Moral');
-CREATE TYPE IF NOT EXISTS donation_status AS ENUM ('Registrado','Aprobado','Entregando','Entregado','Finalizado','Cancelado');
-CREATE TYPE IF NOT EXISTS donation_type AS ENUM ('Material','Monetaria');
-CREATE TYPE IF NOT EXISTS school_level AS ENUM ('Preescolar','Primaria','Secundaria','Preparatoria','Universidad');
-CREATE TYPE IF NOT EXISTS school_mode AS ENUM ('SEP-Multigrado','SEP-General','CONAFE', 'Particular', 'Otro');
-CREATE TYPE IF NOT EXISTS school_shift AS ENUM ('Matutino','Vespertino','Mixto');
-CREATE TYPE IF NOT EXISTS school_category AS ENUM ('Estatal','Federal','Federalizado');
-CREATE TYPE IF NOT EXISTS school_need_status AS ENUM ('Cubierto', 'Aun no cubierto', 'Cubierto parcialmente');
-CREATE TYPE IF NOT EXISTS entity_type AS ENUM ('donor','donation','school');
-CREATE TYPE IF NOT EXISTS audit_action AS ENUM ('create','update','archive','state_change');
+DO $$ BEGIN CREATE TYPE user_role AS ENUM ('staff', 'admin'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE TYPE donor_type AS ENUM ('Fisica', 'Moral'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE TYPE donation_status AS ENUM ('Registrado','Aprobado','Entregando','Entregado','Finalizado','Cancelado'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE TYPE donation_type AS ENUM ('Material','Monetaria'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE TYPE school_level AS ENUM ('Preescolar','Primaria','Secundaria','Preparatoria','Universidad'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE TYPE school_mode AS ENUM ('SEP-Multigrado','SEP-General','CONAFE', 'Particular', 'Otro'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE TYPE school_shift AS ENUM ('Matutino','Vespertino','Mixto'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE TYPE school_category AS ENUM ('Estatal','Federal','Federalizado'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE TYPE school_need_status AS ENUM ('Cubierto', 'Aun no cubierto', 'Cubierto parcialmente'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE TYPE entity_type AS ENUM ('donor','donation','school'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
+DO $$ BEGIN CREATE TYPE audit_action AS ENUM ('create','update','archive','state_change'); EXCEPTION WHEN duplicate_object THEN NULL; END $$;
 
 -- USERS
 CREATE TABLE IF NOT EXISTS users (
