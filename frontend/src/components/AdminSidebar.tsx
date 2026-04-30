@@ -3,9 +3,10 @@ import {
     HomeOutlined,
     InventoryOutlined,
     SettingsOutlined,
-    AccountCircle,
     SchoolOutlined,
-    VolunteerActivismOutlined
+    VolunteerActivismOutlined,
+    UploadFileOutlined,
+    ListAltOutlined,
   } from '@mui/icons-material';
   import {
     Box,
@@ -23,10 +24,11 @@ import {
   const navItems = [
     { icon: HomeOutlined, text: 'Panel', href: '/' },
     { icon: SchoolOutlined, text: 'Gestión de Escuelas', href: '/escuelas' },
+    { icon: ListAltOutlined, text: 'Necesidades', href: '/necesidades' },
     { icon: InventoryOutlined, text: 'Donaciones', href: '/donaciones' },
     { icon: VolunteerActivismOutlined, text: 'Gestión de Donantes', href: '/donantes' },
+    { icon: UploadFileOutlined, text: 'Carga Masiva', href: '/carga' },
     { icon: SettingsOutlined, text: 'Preferencias', href: '/preferencias' },
-    { icon: AccountCircle, text: 'Login', href: '/login' },
   ];
   
   const AdminSidebar = () => {

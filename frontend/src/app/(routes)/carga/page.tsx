@@ -2,7 +2,7 @@
 
 import GestionExcelPage from "@/components/upload/UploadPage"
 
-export default function PagePreferencias() {
+export default function PageCarga() {
   return(
     <>
       <GestionExcelPage />
