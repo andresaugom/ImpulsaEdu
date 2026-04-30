@@ -1,54 +1,43 @@
 import argparse
 import os
-import re
 import tempfile
-import shutil
+import zipfile
 from pathlib import Path
 
-import gdown
 from azure.storage.blob import BlobServiceClient
 from dotenv import load_dotenv
 
 load_dotenv()
 
 CONTAINER_NAME = "schools"
-IMGS_FILE = Path(__file__).parent / "imgs.txt"
+IMGS_DIR = Path(__file__).parent / "imgs"
 
 
-def parse_imgs_file(path: Path) -> list[tuple[str, str]]:
-    lines = [l.strip() for l in path.read_text().splitlines() if l.strip()]
+def get_zip_pairs(cct: str | None = None) -> list[tuple[str, Path]]:
+    """Return (cct, zip_path) pairs from the imgs directory."""
+    if cct:
+        zip_path = IMGS_DIR / f"{cct}.zip"
+        if not zip_path.exists():
+            raise FileNotFoundError(f"No zip file found for CCT '{cct}' at {zip_path}")
+        return [(cct, zip_path)]
+
     pairs = []
-    for i in range(0, len(lines) - 1, 2):
-        cct = lines[i]
-        url = lines[i + 1]
-        pairs.append((cct, url))
+    for zip_path in sorted(IMGS_DIR.glob("*.zip")):
+        pairs.append((zip_path.stem, zip_path))
     return pairs
 
 
-def extract_folder_id(url: str) -> str:
-    match = re.search(r"/folders/([a-zA-Z0-9_-]+)", url)
-    if not match:
-        raise ValueError(f"Could not extract folder ID from URL: {url}")
-    return match.group(1)
-
-
-def download_folder(folder_id: str, dest: str) -> list[Path]:
-    gdown.download_folder(
-        id=folder_id,
-        output=dest,
-        quiet=False,
-        use_cookies=False,
-    )
-    files = sorted(
-        p for p in Path(dest).rglob("*") if p.is_file()
-    )
+def extract_files(zip_path: Path, dest: str) -> list[Path]:
+    """Extract all files from zip into dest, return sorted file paths."""
+    with zipfile.ZipFile(zip_path, "r") as zf:
+        zf.extractall(dest)
+    files = sorted(p for p in Path(dest).rglob("*") if p.is_file())
     return files
 
 
 def upload_files(blob_service: BlobServiceClient, cct: str, files: list[Path]):
     container_client = blob_service.get_container_client(CONTAINER_NAME)
 
-    # Ensure container exists
     try:
         container_client.create_container()
     except Exception:
@@ -63,13 +52,11 @@ def upload_files(blob_service: BlobServiceClient, cct: str, files: list[Path]):
 
 
 def main():
-    parser = argparse.ArgumentParser(description="Upload school images to Azure Blob Storage.")
-    parser.add_argument("--cct", help="School CCT identifier")
-    parser.add_argument("--url", help="Google Drive folder URL for the school images")
+    parser = argparse.ArgumentParser(
+        description="Upload school images from local zip files to Azure Blob Storage."
+    )
+    parser.add_argument("--cct", help="Process only this CCT (zip file must be imgs/{CCT}.zip)")
     args = parser.parse_args()
-
-    if bool(args.cct) != bool(args.url):
-        parser.error("--cct and --url must be provided together")
 
     connection_string = os.environ.get("AZURE_STORAGE_CONNECTION_STRING")
     if not connection_string:
@@ -77,26 +64,24 @@ def main():
 
     blob_service = BlobServiceClient.from_connection_string(connection_string)
 
-    if args.cct and args.url:
-        pairs = [(args.cct, args.url)]
-    else:
-        pairs = parse_imgs_file(IMGS_FILE)
+    try:
+        pairs = get_zip_pairs(args.cct)
+    except FileNotFoundError as e:
+        parser.error(str(e))
 
-    print(f"Found {len(pairs)} schools to process.\n")
+    print(f"Found {len(pairs)} school(s) to process.\n")
 
-    for cct, url in pairs:
-        print(f"[{cct}] Downloading from {url}")
-        folder_id = extract_folder_id(url)
-
+    for cct, zip_path in pairs:
+        print(f"[{cct}] Extracting from {zip_path.name}")
         with tempfile.TemporaryDirectory() as tmpdir:
             try:
-                files = download_folder(folder_id, tmpdir)
+                files = extract_files(zip_path, tmpdir)
             except Exception as e:
-                print(f"  ERROR downloading folder for {cct}: {e}")
+                print(f"  ERROR extracting zip for {cct}: {e}")
                 continue
 
             if not files:
-                print(f"  WARNING: No files found for {cct}, skipping.")
+                print(f"  WARNING: No files found in {zip_path.name}, skipping.")
                 continue
 
             print(f"  Found {len(files)} file(s). Uploading...")

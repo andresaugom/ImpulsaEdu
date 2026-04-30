@@ -67,6 +67,11 @@ spec:
                 secretKeyRef:
                   name: impulsa-secrets
                   key: JWT_SECRET
+            - name: AZURE_STORAGE_CONNECTION_STRING
+              valueFrom:
+                secretKeyRef:
+                  name: impulsa-secrets
+                  key: AZURE_STORAGE_CONNECTION_STRING
           resources:
             requests:
               cpu: 100m
