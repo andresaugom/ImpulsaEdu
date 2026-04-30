@@ -1,30 +1,48 @@
 
 'use client';
-import { AppBar, Toolbar, Typography, Box, IconButton, Button, Stack } from '@mui/material';
+import { AppBar, Toolbar, Typography, Box, IconButton, Menu, MenuItem as MuiMenuItem, ListItemIcon, ListItemText } from '@mui/material';
 import Image from 'next/image';
 import {
   AccountCircle,
   Logout,
+  ManageAccounts,
 } from '@mui/icons-material';
 
 import { useRouter } from 'next/navigation';
+import { useState } from 'react';
+import { logout } from '@/lib/authService';
 
 const ImpulsaLogo = '/ImpulsaEduLogoRevised.png';
 
 const Header = () => {
   const router = useRouter();
+  const [anchorEl, setAnchorEl] = useState<null | HTMLElement>(null);
 
+  const handleOpenMenu = (event: React.MouseEvent<HTMLElement>) => {
+    setAnchorEl(event.currentTarget);
+  };
 
-  const goSettings = () => {
-    router.push('/ajustes');
-  }
-  
+  const handleCloseMenu = () => {
+    setAnchorEl(null);
+  };
+
+  const handleManageAccount = () => {
+    handleCloseMenu();
+    router.push('/preferencias');
+  };
+
+  const handleLogout = async () => {
+    handleCloseMenu();
+    await logout();
+    router.push('/login');
+  };
+
   return (
     <AppBar
       position="fixed"
       sx={{
         backgroundColor: '#ffffff',
-        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)', 
+        boxShadow: '0 2px 8px rgba(0, 0, 0, 0.08)',
         zIndex: (theme) => theme.zIndex.drawer + 1,
       }}
     >
@@ -36,7 +54,6 @@ const Header = () => {
           minHeight: '96px',
         }}
       >
-
         <Box
           sx={{
             position: 'absolute',
@@ -68,7 +85,6 @@ const Header = () => {
           ImpulsaEdu
         </Typography>
 
-
         <Box
           sx={{
             position: 'absolute',
@@ -77,43 +93,35 @@ const Header = () => {
             transform: 'translateY(-50%)',
           }}
         >
-          <Stack direction="row" spacing={1} alignItems="center">
-            <Button
-              variant="contained"
-              size="small"
-              startIcon={<Logout />}
-              sx={{
-                textTransform: 'none',
-                fontWeight: 500,
-                fontSize: '0.875rem',
-                paddingX: 2,
-                paddingY: 1,
-                backgroundColor: '#009933',
-                color: 'white',
-                boxShadow: '0 1px 2px rgba(0, 0, 0, 0.05)',
-                '&:hover': {
-                  backgroundColor: '#006622',
-                  boxShadow: '0 4px 6px rgba(0, 0, 0, 0.1)',
-                },
-              }}
-            >
-              Cerrar sesión
-            </Button>
+          <IconButton
+            aria-label="Cuenta"
+            onClick={handleOpenMenu}
+            sx={{
+              color: '#009933',
+              padding: 0.5,
+              '&:hover': { backgroundColor: 'rgba(0, 153, 51, 0.08)' },
+            }}
+          >
+            <AccountCircle sx={{ fontSize: 40 }} />
+          </IconButton>
 
-            <IconButton
-              aria-label="Profile"
-              onClick={goSettings}
-              sx={{
-                color: '#009933',
-                padding: 0.5,
-                '&:hover': {
-                  backgroundColor: 'transparent',
-                },
-              }}
-            >
-              <AccountCircle fontSize="large" />
-            </IconButton>
-          </Stack>
+          <Menu
+            anchorEl={anchorEl}
+            open={Boolean(anchorEl)}
+            onClose={handleCloseMenu}
+            anchorOrigin={{ vertical: 'bottom', horizontal: 'right' }}
+            transformOrigin={{ vertical: 'top', horizontal: 'right' }}
+            slotProps={{ paper: { elevation: 3, sx: { mt: 1, minWidth: 200 } } }}
+          >
+            <MuiMenuItem onClick={handleManageAccount}>
+              <ListItemIcon><ManageAccounts fontSize="small" /></ListItemIcon>
+              <ListItemText>Administrar cuenta</ListItemText>
+            </MuiMenuItem>
+            <MuiMenuItem onClick={handleLogout}>
+              <ListItemIcon><Logout fontSize="small" /></ListItemIcon>
+              <ListItemText>Cerrar sesión</ListItemText>
+            </MuiMenuItem>
+          </Menu>
         </Box>
       </Toolbar>
     </AppBar>
