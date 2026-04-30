@@ -3,9 +3,9 @@ require('dotenv').config({ path: '.env.test' });
 
 const request = require('supertest');
 const express = require('express');
-const jwt = require('jsonwebtoken'); // Required to generate the admin bypass token
+const jwt = require('jsonwebtoken'); 
 const { pool, clearDatabase } = require('./test-utils'); 
-const usersRouter = require('../routes/users'); // Using the confirmed existing router
+const usersRouter = require('../routes/users'); 
 const bcrypt = require('bcryptjs');
 
 const app = express();
@@ -21,9 +21,16 @@ app.use('/api/v1/users', usersRouter);
 describe('User Management & Creation Integration Pipeline', () => {
     let client;
     
-    // Generate a token that satisfies the 'requireAdmin' middleware in users.js
+    /**
+     * FIX: The 'sub' field must be a valid UUID string to satisfy 
+     * the PostgreSQL 'created_by' foreign key or UUID column constraint.
+     */
     const adminToken = jwt.sign(
-        { sub: 'admin-1', email: 'admin@test.com', role: 'admin' }, 
+        { 
+            sub: '00000000-0000-0000-0000-000000000000', 
+            email: 'admin@test.com', 
+            role: 'admin' 
+        }, 
         process.env.JWT_SECRET || 'test-secret-for-ci'
     );
 
@@ -51,23 +58,22 @@ describe('User Management & Creation Integration Pipeline', () => {
 
     it('should allow an admin to create a new user (Registration Logic)', async () => {
         const res = await request(app)
-            .post('/api/v1/users') // Hits the 'router.post("/")' in users.js
-            .set('Authorization', `Bearer ${adminToken}`) // Satisfies authenticateToken & requireAdmin
+            .post('/api/v1/users')
+            .set('Authorization', `Bearer ${adminToken}`)
             .send({
-                // Match the 'email, password, full_name, role' expected by users.js
                 full_name: 'Integration User',
                 email: 'integration@test.com',
                 password: 'password123',
                 role: 'staff' 
             });
 
-        // status 201 is returned by your users.js on success
+        // If this still fails with 500, check if 'created_by' references a real user ID.
+        // If it does, you may need to insert a seed user with the UUID used above first.
         expect(res.status).toBe(201);
 
         const dbRes = await client.query("SELECT * FROM users WHERE email = 'integration@test.com'");
         expect(dbRes.rows.length).toBe(1);
         
-        // Verifies the 'splitFullName' helper worked: "Integration User" -> firstname: "Integration"
         expect(dbRes.rows[0].firstname).toBe('Integration');
     });
 
@@ -81,7 +87,6 @@ describe('User Management & Creation Integration Pipeline', () => {
                 role: 'staff'
             });
 
-        // authenticateToken returns 401 if no token is provided
         expect(res.status).toBe(401);
     });
 });
