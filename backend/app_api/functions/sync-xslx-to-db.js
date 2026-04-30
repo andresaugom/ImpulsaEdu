@@ -117,17 +117,14 @@ async function syncExcelToDB(filePath) {
 
             const quantity = parseInt(item.Cantidad) || 1;
             const amount = 100.00;
+            const category = item.Categoria || 'Sin categoría';
+            const itemName = item.Propuesta || 'Unknown Item';
+            const unit = item.Unidad || 'Pza';
 
             await client.query(
-                `INSERT INTO schools_needs(school_id, item_name, quantity, unit, amount) 
-                 VALUES($1, $2, $3, $4, $5)`,
-                [
-                    schoolId, 
-                    item.Propuesta || 'Unknown Item', 
-                    quantity, 
-                    item.Unidad || 'Pza', 
-                    amount
-                ]
+                `INSERT INTO schools_needs(school_id, category, item_name, quantity, unit, amount) 
+                 VALUES($1, $2, $3, $4, $5, $6)`,
+                [schoolId, category, itemName, quantity, unit, amount]
             );
             needsInserted++;
         }
