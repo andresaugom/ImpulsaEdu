@@ -1,3 +1,4 @@
+import argparse
 import os
 import re
 import tempfile
@@ -62,12 +63,24 @@ def upload_files(blob_service: BlobServiceClient, cct: str, files: list[Path]):
 
 
 def main():
+    parser = argparse.ArgumentParser(description="Upload school images to Azure Blob Storage.")
+    parser.add_argument("--cct", help="School CCT identifier")
+    parser.add_argument("--url", help="Google Drive folder URL for the school images")
+    args = parser.parse_args()
+
+    if bool(args.cct) != bool(args.url):
+        parser.error("--cct and --url must be provided together")
+
     connection_string = os.environ.get("AZURE_STORAGE_CONNECTION_STRING")
     if not connection_string:
         raise EnvironmentError("AZURE_STORAGE_CONNECTION_STRING is not set")
 
     blob_service = BlobServiceClient.from_connection_string(connection_string)
-    pairs = parse_imgs_file(IMGS_FILE)
+
+    if args.cct and args.url:
+        pairs = [(args.cct, args.url)]
+    else:
+        pairs = parse_imgs_file(IMGS_FILE)
 
     print(f"Found {len(pairs)} schools to process.\n")
 
