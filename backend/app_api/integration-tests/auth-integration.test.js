@@ -3,21 +3,29 @@ require('dotenv').config({ path: '.env.test' });
 
 const request = require('supertest');
 const express = require('express');
+const jwt = require('jsonwebtoken'); // Required to generate the admin bypass token
 const { pool, clearDatabase } = require('./test-utils'); 
+const usersRouter = require('../routes/users'); // Using the confirmed existing router
 const bcrypt = require('bcryptjs');
-
-// FIX 1: Import the AUTH router, not the users router
-// In ImpulsaEdu, auth routes (login/register) are separate from user management (CRUD)
-const authRouter = require('../routes/auth'); 
 
 const app = express();
 app.use(express.json());
 
-// FIX 2: Mount the authRouter to the correct base path
-app.use('/api/v1/auth', authRouter);
+/**
+ * MOUNTING LOGIC
+ * Since users.js handles user creation at its root POST route,
+ * we mount it to /api/v1/users.
+ */
+app.use('/api/v1/users', usersRouter);
 
-describe('Auth & Users Integration Pipeline', () => {
+describe('User Management & Creation Integration Pipeline', () => {
     let client;
+    
+    // Generate a token that satisfies the 'requireAdmin' middleware in users.js
+    const adminToken = jwt.sign(
+        { sub: 'admin-1', email: 'admin@test.com', role: 'admin' }, 
+        process.env.JWT_SECRET || 'test-secret-for-ci'
+    );
 
     beforeAll(async () => {
         try {
@@ -41,44 +49,39 @@ describe('Auth & Users Integration Pipeline', () => {
         await pool.end();
     });
 
-    it('should register a new user in the real database', async () => {
+    it('should allow an admin to create a new user (Registration Logic)', async () => {
         const res = await request(app)
-            .post('/api/v1/auth/register')
+            .post('/api/v1/users') // Hits the 'router.post("/")' in users.js
+            .set('Authorization', `Bearer ${adminToken}`) // Satisfies authenticateToken & requireAdmin
             .send({
-                // FIX 3: Your backend uses splitFullName helper, 
-                // so we send 'full_name' to match your schema logic
+                // Match the 'email, password, full_name, role' expected by users.js
                 full_name: 'Integration User',
                 email: 'integration@test.com',
                 password: 'password123',
                 role: 'staff' 
             });
 
+        // status 201 is returned by your users.js on success
         expect(res.status).toBe(201);
 
         const dbRes = await client.query("SELECT * FROM users WHERE email = 'integration@test.com'");
         expect(dbRes.rows.length).toBe(1);
-        // Based on your splitFullName helper, 'Integration' becomes firstname
+        
+        // Verifies the 'splitFullName' helper worked: "Integration User" -> firstname: "Integration"
         expect(dbRes.rows[0].firstname).toBe('Integration');
     });
 
-    it('should authenticate an existing user via the real database', async () => {
-        const hash = await bcrypt.hash('secret123', 10);
-        
-        // Insert a mock user directly into the DB to test the Login endpoint
-        await client.query(
-            `INSERT INTO users (firstname, lastname, email, password_hash, role) 
-             VALUES ('Login', 'Test', 'login@test.com', $1, 'staff')`,
-            [hash]
-        );
-
+    it('should fail to create a user if the requester is not an admin', async () => {
         const res = await request(app)
-            .post('/api/v1/auth/login')
+            .post('/api/v1/users')
             .send({
-                email: 'login@test.com',
-                password: 'secret123'
+                full_name: 'Unauthorized User',
+                email: 'fail@test.com',
+                password: 'password123',
+                role: 'staff'
             });
 
-        expect(res.status).toBe(200);
-        expect(res.body).toHaveProperty('token');
+        // authenticateToken returns 401 if no token is provided
+        expect(res.status).toBe(401);
     });
 });
