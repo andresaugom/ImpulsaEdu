@@ -118,13 +118,17 @@ async function syncExcelToDB(filePath) {
             const quantity = parseInt(item.Cantidad) || 1;
             const amount = 100.00;
             const category = item.Categoria || 'Sin categoría';
+            
+            // Fix: Satisfy NOT NULL constraint by providing subcategory
+            const subcategory = item.Subcategoria || 'General';
+            
             const itemName = item.Propuesta || 'Unknown Item';
             const unit = item.Unidad || 'Pza';
 
             await client.query(
-                `INSERT INTO schools_needs(school_id, category, item_name, quantity, unit, amount) 
-                 VALUES($1, $2, $3, $4, $5, $6)`,
-                [schoolId, category, itemName, quantity, unit, amount]
+                `INSERT INTO schools_needs(school_id, category, subcategory, item_name, quantity, unit, amount) 
+                 VALUES($1, $2, $3, $4, $5, $6, $7)`,
+                [schoolId, category, subcategory, itemName, quantity, unit, amount]
             );
             needsInserted++;
         }

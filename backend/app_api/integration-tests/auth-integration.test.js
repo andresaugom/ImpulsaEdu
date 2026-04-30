@@ -1,27 +1,45 @@
 const request = require('supertest');
 const express = require('express');
+// Ensure environment variables are loaded if you use a .env file locally
+require('dotenv').config(); 
+
 const { pool, clearDatabase } = require('./test-utils');
 const usersRouter = require('../routes/users');
 const bcrypt = require('bcryptjs');
 
 const app = express();
 app.use(express.json());
-// Mount correctly at /api/v1/auth
 app.use('/api/v1/auth', usersRouter);
 
 describe('Auth & Users Integration Pipeline', () => {
     let client;
 
     beforeAll(async () => {
-        client = await pool.connect();
+        try {
+            // Log connection info in CI if it fails (Hidden in production)
+            if (process.env.GITHUB_ACTIONS) {
+                console.log(`Connecting to DB at ${process.env.DB_HOST} as ${process.env.DB_USER}`);
+            }
+            client = await pool.connect();
+        } catch (err) {
+            console.error("Failed to connect to the pool. Check DB_USER and DB_PASSWORD env vars.");
+            throw err;
+        }
     });
 
     beforeEach(async () => {
-        await clearDatabase(client);
+        // Ensure client exists before clearing
+        if (client) {
+            await clearDatabase(client);
+        }
     });
 
     afterAll(async () => {
-        if (client) client.release();
+        if (client) {
+            client.release();
+        }
+        // Only end the pool if this is the only test file using it, 
+        // otherwise Jest might fail on subsequent suites.
         await pool.end();
     });
 
@@ -33,7 +51,7 @@ describe('Auth & Users Integration Pipeline', () => {
                 lastname: 'User',
                 email: 'integration@test.com',
                 password: 'password123',
-                role: 'staff' // using the ENUM
+                role: 'staff' 
             });
 
         expect(res.status).toBe(201);

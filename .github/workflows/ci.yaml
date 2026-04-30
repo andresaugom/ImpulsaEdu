@@ -3,7 +3,8 @@ name: CI
 
 on:
   push:
-    # Trigger on any push to any branch
+    branches:
+      - '**'        # Trigger on every push to any branch
   pull_request:
     branches:
       - main
@@ -59,9 +60,11 @@ jobs:
       - name: Install psql client
         run: sudo apt-get update && sudo apt-get install -y postgresql-client
 
-      - name: Start database and run migration
-        # Uses the env variables defined at the top
-        run: psql -h $DB_HOST -U $DB_USER -d $DB_NAME -v ON_ERROR_STOP=1 -f ../../db/schema.sql
+      - name: Start database and run migrations
+        # Runs both schema and setup to ensure the DB is ready for integration tests
+        run: |
+          psql -h $DB_HOST -U $DB_USER -d $DB_NAME -v ON_ERROR_STOP=1 -f ../../db/schema.sql
+          psql -h $DB_HOST -U $DB_USER -d $DB_NAME -v ON_ERROR_STOP=1 -f ../../db/setup.sql
 
       - name: Run tests
         run: npm test
