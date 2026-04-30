@@ -42,11 +42,13 @@ describe('User Management & Creation Integration Pipeline', () => {
             // 1. Wipe the database
             await clearDatabase(client);
             
-            // 2. SEED THE ADMIN USER
-            // This satisfies the Foreign Key constraint "users_created_by_fkey"
+            // 2. SEED THE ADMIN USER (Safely)
+            // Added "ON CONFLICT (id) DO NOTHING" to prevent duplicate key errors 
+            // during rapid or parallel test execution.
             await client.query(
                 `INSERT INTO users (id, firstname, lastname, email, password_hash, role) 
-                 VALUES ($1, 'Admin', 'Test', 'admin@test.com', 'no-password', 'admin')`,
+                 VALUES ($1, 'Admin', 'Test', 'admin@test.com', 'no-password', 'admin')
+                 ON CONFLICT (id) DO NOTHING`,
                 [ADMIN_ID]
             );
         }
@@ -70,7 +72,6 @@ describe('User Management & Creation Integration Pipeline', () => {
                 role: 'staff' 
             });
 
-        // This should now return 201 because the 'created_by' ID exists in the DB
         expect(res.status).toBe(201);
 
         const dbRes = await client.query("SELECT * FROM users WHERE email = 'integration@test.com'");
