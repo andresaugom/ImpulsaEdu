@@ -170,6 +170,3 @@ CREATE TABLE IF NOT EXISTS audit_logs (
   new_value JSONB,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
-Insert columna
-IInsert 2 columnas
-IIIns
