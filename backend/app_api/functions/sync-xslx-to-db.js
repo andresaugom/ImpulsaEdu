@@ -46,7 +46,7 @@ async function syncExcelToDB(filePath) {
         const schoolsToInsert = schoolsExcelData.filter(item => item.CCT && !dbSchoolsMap.has(item.CCT));
         const schoolsToUpdate = schoolsExcelData.filter(item => item.CCT && dbSchoolsMap.has(item.CCT));
         
-        // Correct deletion logic: only delete schools if their cct is found but not present in the new excel logic.
+        // Correct deletion logic
         const schoolsToDelete = dbSchools.filter(item => {
             return item.cct && !excelSchoolsMap.has(item.cct);
         });
@@ -118,13 +118,15 @@ async function syncExcelToDB(filePath) {
             const quantity = parseInt(item.Cantidad) || 1;
             const amount = 100.00;
             const category = item.Categoria || 'Sin categoría';
+            // FIX: Added subcategory to avoid NOT NULL constraint violation
+            const subcategory = item.Subcategoria || 'General'; 
             const itemName = item.Propuesta || 'Unknown Item';
             const unit = item.Unidad || 'Pza';
 
             await client.query(
-                `INSERT INTO schools_needs(school_id, category, item_name, quantity, unit, amount) 
-                 VALUES($1, $2, $3, $4, $5, $6)`,
-                [schoolId, category, itemName, quantity, unit, amount]
+                `INSERT INTO schools_needs(school_id, category, subcategory, item_name, quantity, unit, amount) 
+                 VALUES($1, $2, $3, $4, $5, $6, $7)`,
+                [schoolId, category, subcategory, itemName, quantity, unit, amount]
             );
             needsInserted++;
         }
