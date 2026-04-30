@@ -10,7 +10,7 @@ CREATE TYPE IF NOT EXISTS school_level AS ENUM ('Preescolar','Primaria','Secunda
 CREATE TYPE IF NOT EXISTS school_mode AS ENUM ('SEP-Multigrado','SEP-General','CONAFE', 'Particular', 'Otro');
 CREATE TYPE IF NOT EXISTS school_shift AS ENUM ('Matutino','Vespertino','Mixto');
 CREATE TYPE IF NOT EXISTS school_category AS ENUM ('Estatal','Federal','Federalizado');
-CREATE TYPE IF NOT EXISTS school_need_status AS ENUM ('Cubierto', 'Aun no cubierto');
+CREATE TYPE IF NOT EXISTS school_need_status AS ENUM ('Cubierto', 'Aun no cubierto', 'Cubierto parcialmente');
 CREATE TYPE IF NOT EXISTS entity_type AS ENUM ('donor','donation','school');
 CREATE TYPE IF NOT EXISTS audit_action AS ENUM ('create','update','archive','state_change');
 

@@ -36,12 +36,15 @@ import {
   Alert,
 } from '@mui/material';
 import { useState, useEffect, useCallback } from 'react';
+import { useRouter } from 'next/navigation';
 import {
   ApiSchool,
   fetchSchools,
   createSchool,
   updateSchool,
   archiveSchool,
+  unarchiveSchool,
+  deleteSchool,
 } from '@/lib/schoolsService';
 import { ApiError } from '@/lib/apiClient';
 
@@ -63,6 +66,7 @@ const emptyForm = {
 };
 
 export default function EscuelasPage() {
+  const router = useRouter();
   // ── Data & async state ──────────────────────────────────────────────────────
   const [schools, setSchools] = useState<ApiSchool[]>([]);
   const [loading, setLoading] = useState(true);
@@ -73,6 +77,11 @@ export default function EscuelasPage() {
   // ── Filter state ────────────────────────────────────────────────────────────
   const [searchQuery, setSearchQuery] = useState('');
   const [regionFilter, setRegionFilter] = useState('');
+  const [showArchived, setShowArchived] = useState(false);
+
+  // ── Confirm delete dialog state ─────────────────────────────────────────────
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
   // ── Dialog state ────────────────────────────────────────────────────────────
   const [openDialog, setOpenDialog] = useState(false);
@@ -85,7 +94,7 @@ export default function EscuelasPage() {
     setLoading(true);
     setError(null);
     try {
-      const filters: Record<string, unknown> = { status: 'active' };
+      const filters: Record<string, unknown> = { status: showArchived ? 'archived' : 'active' };
       if (regionFilter) filters.region = regionFilter;
 
       const result = await fetchSchools(filters);
@@ -99,7 +108,7 @@ export default function EscuelasPage() {
     } finally {
       setLoading(false);
     }
-  }, [regionFilter]);
+  }, [regionFilter, showArchived]);
 
   useEffect(() => {
     loadSchools();
@@ -212,6 +221,37 @@ export default function EscuelasPage() {
     }
   };
 
+  // ── Unarchive school ────────────────────────────────────────────────────────
+
+  const handleUnarchive = async (school: ApiSchool) => {
+    try {
+      await unarchiveSchool(school.id);
+      setSchools((prev) => prev.filter((s) => s.id !== school.id));
+    } catch {
+      setError('No se pudo restaurar la escuela. Inténtalo de nuevo.');
+    }
+  };
+
+  // ── Permanently delete school ───────────────────────────────────────────────
+
+  const handleDeleteConfirm = (id: string) => {
+    setPendingDeleteId(id);
+    setConfirmDeleteOpen(true);
+  };
+
+  const handleDeleteExecute = async () => {
+    if (!pendingDeleteId) return;
+    try {
+      await deleteSchool(pendingDeleteId);
+      setSchools((prev) => prev.filter((s) => s.id !== pendingDeleteId));
+    } catch {
+      setError('No se pudo eliminar la escuela. Inténtalo de nuevo.');
+    } finally {
+      setConfirmDeleteOpen(false);
+      setPendingDeleteId(null);
+    }
+  };
+
   // ── Client-side search filter ───────────────────────────────────────────────
 
   const filteredSchools = schools.filter((school) => {
@@ -263,8 +303,8 @@ export default function EscuelasPage() {
 
       {/* Search and Filters */}
       <Paper sx={{ padding: 2, marginBottom: 3, boxShadow: '0 1px 3px rgba(0, 0, 0, 0.1)' }}>
-        <Grid container spacing={2}>
-          <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+        <Grid container spacing={2} alignItems="center">
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <TextField
               label="Nombre de la Escuela"
               placeholder="Buscar escuelas..."
@@ -275,7 +315,7 @@ export default function EscuelasPage() {
               onChange={(e) => setSearchQuery(e.target.value)}
             />
           </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <Select
               value={regionFilter}
               onChange={(e) => setRegionFilter(e.target.value)}
@@ -290,7 +330,19 @@ export default function EscuelasPage() {
               <MenuItem value="Zapopan">Zapopan</MenuItem>
             </Select>
           </Grid>
-          <Grid size={{ xs: 12, sm: 6, md: 4 }}>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
+            <Button
+              variant={showArchived ? 'contained' : 'outlined'}
+              color="warning"
+              size="small"
+              fullWidth
+              sx={{ textTransform: 'none' }}
+              onClick={() => setShowArchived((v) => !v)}
+            >
+              {showArchived ? 'Ver activas' : 'Ver archivadas'}
+            </Button>
+          </Grid>
+          <Grid size={{ xs: 12, sm: 6, md: 3 }}>
             <Box sx={{ display: 'flex', gap: 1 }}>
               <Button
                 variant="contained"
@@ -405,26 +457,59 @@ export default function EscuelasPage() {
                       />
                     </TableCell>
                     <TableCell>
-                      <Box sx={{ display: 'flex', gap: 1 }}>
-                        <Button
-                          size="small"
-                          variant="outlined"
-                          color="primary"
-                          onClick={() => handleOpenDialog(school)}
-                          sx={{ textTransform: 'none' }}
-                        >
-                          Editar
-                        </Button>
-                        {school.status === 'active' && (
-                          <Button
-                            size="small"
-                            variant="outlined"
-                            color="error"
-                            onClick={() => handleArchive(school)}
-                            sx={{ textTransform: 'none' }}
-                          >
-                            Archivar
-                          </Button>
+                      <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                        {!showArchived && (
+                          <>
+                            <Button
+                              size="small"
+                              variant="outlined"
+                              color="primary"
+                              onClick={() => handleOpenDialog(school)}
+                              sx={{ textTransform: 'none' }}
+                            >
+                              Editar
+                            </Button>
+                            <Button
+                              size="small"
+                              variant="outlined"
+                              color="info"
+                              onClick={() => router.push(`/necesidades?school_id=${school.id}`)}
+                              sx={{ textTransform: 'none' }}
+                            >
+                              Necesidades
+                            </Button>
+                            <Button
+                              size="small"
+                              variant="outlined"
+                              color="warning"
+                              onClick={() => handleArchive(school)}
+                              sx={{ textTransform: 'none' }}
+                            >
+                              Archivar
+                            </Button>
+                          </>
+                        )}
+                        {showArchived && (
+                          <>
+                            <Button
+                              size="small"
+                              variant="outlined"
+                              color="success"
+                              onClick={() => handleUnarchive(school)}
+                              sx={{ textTransform: 'none' }}
+                            >
+                              Restaurar
+                            </Button>
+                            <Button
+                              size="small"
+                              variant="outlined"
+                              color="error"
+                              onClick={() => handleDeleteConfirm(school.id)}
+                              sx={{ textTransform: 'none' }}
+                            >
+                              Eliminar
+                            </Button>
+                          </>
                         )}
                       </Box>
                     </TableCell>
@@ -572,6 +657,24 @@ export default function EscuelasPage() {
             disabled={saving}
           >
             {saving ? <CircularProgress size={20} color="inherit" /> : 'Guardar'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Confirm Permanent Delete Dialog */}
+      <Dialog open={confirmDeleteOpen} onClose={() => setConfirmDeleteOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ fontWeight: 700 }}>¿Eliminar permanentemente?</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Esta acción es irreversible. La escuela será eliminada de forma permanente.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setConfirmDeleteOpen(false)} variant="outlined">
+            Cancelar
+          </Button>
+          <Button onClick={handleDeleteExecute} variant="contained" color="error">
+            Eliminar
           </Button>
         </DialogActions>
       </Dialog>

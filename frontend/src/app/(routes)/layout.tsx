@@ -1,24 +1,33 @@
 'use client';
-import { CssBaseline, ThemeProvider } from '@mui/material';
+import { CssBaseline, ThemeProvider, Box, CircularProgress } from '@mui/material';
 import theme from '@/app/themes/MainTheme';
 import Header from '@/components/Header';
 import Footer from '@/components/Footer';
 import AdminSidebar from '@/components/AdminSidebar';
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
+import { isAuthenticated } from '@/lib/authService';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
-  const [isMobile, setIsMobile] = useState(false);
+  const router = useRouter();
+  const [authChecked] = useState(() => isAuthenticated());
 
   useEffect(() => {
-    const handleResize = () => {
-      setIsMobile(window.innerWidth < 768);
-    };
-    handleResize();
-    window.addEventListener('resize', handleResize);
-    return () => window.removeEventListener('resize', handleResize);
-  }, []);
+    if (!isAuthenticated()) {
+      router.replace('/login');
+    }
+  }, [router]);
 
-  console.log('isMobile:', isMobile);
+  if (!authChecked) {
+    return (
+      <ThemeProvider theme={theme}>
+        <CssBaseline />
+        <Box sx={{ display: 'flex', justifyContent: 'center', alignItems: 'center', minHeight: '100vh' }}>
+          <CircularProgress />
+        </Box>
+      </ThemeProvider>
+    );
+  }
 
   return (
     <ThemeProvider theme={theme}>

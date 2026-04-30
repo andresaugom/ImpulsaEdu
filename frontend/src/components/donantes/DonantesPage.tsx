@@ -39,6 +39,8 @@ import {
   createDonor,
   updateDonor,
   deactivateDonor,
+  activateDonor,
+  deleteDonor,
 } from '@/lib/donorsService';
 import { ApiError } from '@/lib/apiClient';
 
@@ -65,6 +67,10 @@ export default function DonantesPage() {
     email: '',
     phone: '',
   });
+
+  // ── Confirm delete dialog state ─────────────────────────────────────────────
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
   // ── Load donors from API ────────────────────────────────────────────────────
 
@@ -172,6 +178,37 @@ export default function DonantesPage() {
       );
     } catch {
       setError('No se pudo desactivar al donante. Inténtalo de nuevo.');
+    }
+  };
+
+  // ── Activate donor ──────────────────────────────────────────────────────────
+
+  const handleActivate = async (donor: Donor) => {
+    try {
+      await activateDonor(donor.id);
+      setDonors((prev) => prev.filter((d) => d.id !== donor.id));
+    } catch {
+      setError('No se pudo activar al donante. Inténtalo de nuevo.');
+    }
+  };
+
+  // ── Permanently delete donor ────────────────────────────────────────────────
+
+  const handleDeleteConfirm = (id: string) => {
+    setPendingDeleteId(id);
+    setConfirmDeleteOpen(true);
+  };
+
+  const handleDeleteExecute = async () => {
+    if (!pendingDeleteId) return;
+    try {
+      await deleteDonor(pendingDeleteId);
+      setDonors((prev) => prev.filter((d) => d.id !== pendingDeleteId));
+    } catch {
+      setError('No se pudo eliminar al donante. Inténtalo de nuevo.');
+    } finally {
+      setConfirmDeleteOpen(false);
+      setPendingDeleteId(null);
     }
   };
 
@@ -358,26 +395,50 @@ export default function DonantesPage() {
                         />
                       </TableCell>
                       <TableCell>
-                        <Box sx={{ display: 'flex', gap: 1 }}>
-                          <Button
-                            size="small"
-                            variant="outlined"
-                            color="primary"
-                            onClick={() => handleOpenDialog(donor)}
-                            sx={{ textTransform: 'none' }}
-                          >
-                            Editar
-                          </Button>
+                        <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
                           {donor.status === 'active' && (
-                            <Button
-                              size="small"
-                              variant="outlined"
-                              color="error"
-                              onClick={() => handleDeactivate(donor)}
-                              sx={{ textTransform: 'none' }}
-                            >
-                              Desactivar
-                            </Button>
+                            <>
+                              <Button
+                                size="small"
+                                variant="outlined"
+                                color="primary"
+                                onClick={() => handleOpenDialog(donor)}
+                                sx={{ textTransform: 'none' }}
+                              >
+                                Editar
+                              </Button>
+                              <Button
+                                size="small"
+                                variant="outlined"
+                                color="warning"
+                                onClick={() => handleDeactivate(donor)}
+                                sx={{ textTransform: 'none' }}
+                              >
+                                Desactivar
+                              </Button>
+                            </>
+                          )}
+                          {donor.status === 'inactive' && (
+                            <>
+                              <Button
+                                size="small"
+                                variant="outlined"
+                                color="success"
+                                onClick={() => handleActivate(donor)}
+                                sx={{ textTransform: 'none' }}
+                              >
+                                Activar
+                              </Button>
+                              <Button
+                                size="small"
+                                variant="outlined"
+                                color="error"
+                                onClick={() => handleDeleteConfirm(donor.id)}
+                                sx={{ textTransform: 'none' }}
+                              >
+                                Eliminar
+                              </Button>
+                            </>
                           )}
                         </Box>
                       </TableCell>
@@ -462,6 +523,24 @@ export default function DonantesPage() {
             disabled={saving}
           >
             {saving ? <CircularProgress size={20} color="inherit" /> : 'Guardar'}
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Confirm Permanent Delete Dialog */}
+      <Dialog open={confirmDeleteOpen} onClose={() => setConfirmDeleteOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ fontWeight: 700 }}>¿Eliminar permanentemente?</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Esta acción es irreversible. El donante será eliminado de forma permanente.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setConfirmDeleteOpen(false)} variant="outlined">
+            Cancelar
+          </Button>
+          <Button onClick={handleDeleteExecute} variant="contained" color="error">
+            Eliminar
           </Button>
         </DialogActions>
       </Dialog>

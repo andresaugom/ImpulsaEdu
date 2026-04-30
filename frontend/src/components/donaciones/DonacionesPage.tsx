@@ -21,10 +21,15 @@ import {
   Typography,
   CircularProgress,
   Alert,
+  List,
+  ListItem,
+  ListItemText,
+  Divider,
 } from '@mui/material';
 import { useState, useEffect } from 'react';
 import {
   ApiDonationSummary,
+  ApiDonationDetail,
   DonationStatus,
   DonationType,
   fetchDonations,
@@ -32,6 +37,9 @@ import {
   createDonation,
   updateDonation,
   updateDonationStatus,
+  archiveDonation,
+  unarchiveDonation,
+  deleteDonation,
   CreateDonationPayload,
   UpdateDonationPayload,
 } from '../../lib/donationsService';
@@ -53,6 +61,11 @@ export default function DonacionesPage() {
   const [dialogMode, setDialogMode] = useState<DialogMode>('create');
   const [editingId, setEditingId] = useState<string | null>(null);
   const [dialogError, setDialogError] = useState<string | null>(null);
+  const [showArchived, setShowArchived] = useState(false);
+
+  // ── Confirm delete dialog state ─────────────────────────────────────────────
+  const [confirmDeleteOpen, setConfirmDeleteOpen] = useState(false);
+  const [pendingDeleteId, setPendingDeleteId] = useState<string | null>(null);
 
   const [createForm, setCreateForm] = useState({
     donor_id: '',
@@ -68,16 +81,22 @@ export default function DonacionesPage() {
 
   const [statusForm, setStatusForm] = useState<DonationStatus>('Aprobado');
 
+  // ── Items popup state ──────────────────────────────────────────────────────
+  const [itemsDialogOpen, setItemsDialogOpen] = useState(false);
+  const [itemsLoading, setItemsLoading] = useState(false);
+  const [itemsDonation, setItemsDonation] = useState<ApiDonationDetail | null>(null);
+
   useEffect(() => {
     loadDonations();
     loadSelectOptions();
-  }, []);
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [showArchived]);
 
   async function loadDonations() {
     try {
       setLoading(true);
       setError(null);
-      const { items } = await fetchDonations({ per_page: 100 });
+      const { items } = await fetchDonations({ per_page: 100, is_archived: showArchived });
       setDonations(items);
     } catch {
       setError('Error al cargar las donaciones.');
@@ -170,6 +189,56 @@ export default function DonacionesPage() {
     }
   };
 
+  const handleArchiveDonation = async (donation: ApiDonationSummary) => {
+    try {
+      await archiveDonation(donation.id);
+      setDonations((prev) => prev.filter((d) => d.id !== donation.id));
+    } catch {
+      setError('No se pudo archivar la donación. Inténtalo de nuevo.');
+    }
+  };
+
+  const handleUnarchiveDonation = async (donation: ApiDonationSummary) => {
+    try {
+      await unarchiveDonation(donation.id);
+      setDonations((prev) => prev.filter((d) => d.id !== donation.id));
+    } catch {
+      setError('No se pudo restaurar la donación. Inténtalo de nuevo.');
+    }
+  };
+
+  const handleDonationDeleteConfirm = (id: string) => {
+    setPendingDeleteId(id);
+    setConfirmDeleteOpen(true);
+  };
+
+  const handleDonationDeleteExecute = async () => {
+    if (!pendingDeleteId) return;
+    try {
+      await deleteDonation(pendingDeleteId);
+      setDonations((prev) => prev.filter((d) => d.id !== pendingDeleteId));
+    } catch {
+      setError('No se pudo eliminar la donación. Inténtalo de nuevo.');
+    } finally {
+      setConfirmDeleteOpen(false);
+      setPendingDeleteId(null);
+    }
+  };
+
+  const handleOpenItems = async (donation: ApiDonationSummary) => {
+    setItemsDonation(null);
+    setItemsLoading(true);
+    setItemsDialogOpen(true);
+    try {
+      const detail = await getDonation(donation.id);
+      setItemsDonation(detail);
+    } catch {
+      setItemsDonation(null);
+    } finally {
+      setItemsLoading(false);
+    }
+  };
+
   const isTerminal = (status: DonationStatus) =>
     status === 'Finalizado' || status === 'Cancelado';
 
@@ -189,14 +258,26 @@ export default function DonacionesPage() {
         <Typography variant="h4" sx={{ fontWeight: 700 }}>
           Donaciones
         </Typography>
-        <Button
-          variant="contained"
-          color="primary"
-          onClick={handleOpenCreate}
-          sx={{ textTransform: 'none' }}
-        >
-          + Nueva Donación
-        </Button>
+        <Box sx={{ display: 'flex', gap: 1 }}>
+          <Button
+            variant={showArchived ? 'contained' : 'outlined'}
+            color="warning"
+            onClick={() => setShowArchived((v) => !v)}
+            sx={{ textTransform: 'none' }}
+          >
+            {showArchived ? 'Ver activas' : 'Ver archivadas'}
+          </Button>
+          {!showArchived && (
+            <Button
+              variant="contained"
+              color="primary"
+              onClick={handleOpenCreate}
+              sx={{ textTransform: 'none' }}
+            >
+              + Nueva Donación
+            </Button>
+          )}
+        </Box>
       </Box>
 
       {error && <Alert severity="error" sx={{ mb: 2 }}>{error}</Alert>}
@@ -285,26 +366,70 @@ export default function DonacionesPage() {
                       />
                     </TableCell>
                     <TableCell>
-                      <Box sx={{ display: 'flex', gap: 1 }}>
-                        <Button
-                          size="small"
-                          variant="outlined"
-                          color="primary"
-                          onClick={() => handleOpenEdit(donation)}
-                          sx={{ textTransform: 'none' }}
-                        >
-                          Editar
-                        </Button>
-                        <Button
-                          size="small"
-                          variant="outlined"
-                          color="warning"
-                          onClick={() => handleOpenStatus(donation)}
-                          disabled={isTerminal(donation.status)}
-                          sx={{ textTransform: 'none' }}
-                        >
-                          Estado
-                        </Button>
+                        <Box sx={{ display: 'flex', gap: 1, flexWrap: 'wrap' }}>
+                        {!showArchived && (
+                          <>
+                            <Button
+                              size="small"
+                              variant="outlined"
+                              color="primary"
+                              onClick={() => handleOpenEdit(donation)}
+                              sx={{ textTransform: 'none' }}
+                            >
+                              Editar
+                            </Button>
+                            <Button
+                              size="small"
+                              variant="outlined"
+                              color="warning"
+                              onClick={() => handleOpenStatus(donation)}
+                              disabled={isTerminal(donation.status)}
+                              sx={{ textTransform: 'none' }}
+                            >
+                              Estado
+                            </Button>
+                            <Button
+                              size="small"
+                              variant="outlined"
+                              color="secondary"
+                              onClick={() => handleOpenItems(donation)}
+                              sx={{ textTransform: 'none' }}
+                            >
+                              Ítems
+                            </Button>
+                            <Button
+                              size="small"
+                              variant="outlined"
+                              color="error"
+                              onClick={() => handleArchiveDonation(donation)}
+                              sx={{ textTransform: 'none' }}
+                            >
+                              Archivar
+                            </Button>
+                          </>
+                        )}
+                        {showArchived && (
+                          <>
+                            <Button
+                              size="small"
+                              variant="outlined"
+                              color="success"
+                              onClick={() => handleUnarchiveDonation(donation)}
+                              sx={{ textTransform: 'none' }}
+                            >
+                              Restaurar
+                            </Button>
+                            <Button
+                              size="small"
+                              variant="outlined"
+                              color="error"
+                              onClick={() => handleDonationDeleteConfirm(donation.id)}
+                              sx={{ textTransform: 'none' }}
+                            >
+                              Eliminar
+                            </Button>
+                          </>
+                        )}
                       </Box>
                     </TableCell>
                   </TableRow>
@@ -392,6 +517,74 @@ export default function DonacionesPage() {
           </Button>
           <Button onClick={handleSave} variant="contained" color="primary">
             Guardar
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Items Popup Dialog */}
+      <Dialog open={itemsDialogOpen} onClose={() => setItemsDialogOpen(false)} maxWidth="sm" fullWidth>
+        <DialogTitle sx={{ fontWeight: 700, fontSize: '18px' }}>
+          Ítems de la Donación
+          {itemsDonation && (
+            <Typography variant="body2" color="text.secondary" sx={{ mt: 0.5 }}>
+              {itemsDonation.donor.name} → {itemsDonation.school.name}
+            </Typography>
+          )}
+        </DialogTitle>
+        <DialogContent>
+          {itemsLoading ? (
+            <Box sx={{ display: 'flex', justifyContent: 'center', py: 3 }}>
+              <CircularProgress />
+            </Box>
+          ) : !itemsDonation ? (
+            <Alert severity="error">No se pudo cargar el detalle de la donación.</Alert>
+          ) : itemsDonation.items.length === 0 ? (
+            <Typography color="text.secondary" sx={{ py: 2, textAlign: 'center' }}>
+              Sin ítems registrados para esta donación.
+            </Typography>
+          ) : (
+            <List disablePadding>
+              {itemsDonation.items.map((item, idx) => (
+                <Box key={item.id ?? idx}>
+                  {idx > 0 && <Divider />}
+                  <ListItem sx={{ px: 0 }}>
+                    <ListItemText
+                      primary={item.item_name}
+                      secondary={
+                        <>
+                          {item.quantity != null && `Cantidad: ${item.quantity}`}
+                          {item.quantity != null && item.amount != null && ' · '}
+                          {item.amount != null && `Monto: $${item.amount.toLocaleString('es-MX', { minimumFractionDigits: 2 })}`}
+                        </>
+                      }
+                    />
+                  </ListItem>
+                </Box>
+              ))}
+            </List>
+          )}
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setItemsDialogOpen(false)} variant="outlined">
+            Cerrar
+          </Button>
+        </DialogActions>
+      </Dialog>
+
+      {/* Confirm Permanent Delete Dialog */}
+      <Dialog open={confirmDeleteOpen} onClose={() => setConfirmDeleteOpen(false)} maxWidth="xs" fullWidth>
+        <DialogTitle sx={{ fontWeight: 700 }}>¿Eliminar permanentemente?</DialogTitle>
+        <DialogContent>
+          <Typography>
+            Esta acción es irreversible. La donación será eliminada de forma permanente.
+          </Typography>
+        </DialogContent>
+        <DialogActions>
+          <Button onClick={() => setConfirmDeleteOpen(false)} variant="outlined">
+            Cancelar
+          </Button>
+          <Button onClick={handleDonationDeleteExecute} variant="contained" color="error">
+            Eliminar
           </Button>
         </DialogActions>
       </Dialog>

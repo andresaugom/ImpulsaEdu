@@ -282,4 +282,43 @@ router.patch('/:id/deactivate', authenticateToken, async (req, res) => {
     }
 });
 
+// ── PATCH /api/v1/donors/:id/activate  (staff+) ──────────────────────────────
+
+router.patch('/:id/activate', authenticateToken, async (req, res) => {
+    try {
+        const result = await pool.query(
+            `UPDATE donors
+             SET deleted_at = NULL, deleted_by = NULL, updated_at = NOW(), updated_by = $1
+             WHERE id = $2 AND deleted_at IS NOT NULL
+             RETURNING id`,
+            [req.user.sub, req.params.id]
+        );
+        if (result.rowCount === 0) {
+            return res.status(404).json(errBody('NOT_FOUND', 'Donor not found or already active'));
+        }
+        res.json({ message: 'Donor activated' });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json(errBody('SERVER_ERROR', 'Internal server error'));
+    }
+});
+
+// ── DELETE /api/v1/donors/:id  (staff+) ──────────────────────────────────────
+
+router.delete('/:id', authenticateToken, async (req, res) => {
+    try {
+        const result = await pool.query(
+            'DELETE FROM donors WHERE id = $1 RETURNING id',
+            [req.params.id]
+        );
+        if (result.rowCount === 0) {
+            return res.status(404).json(errBody('NOT_FOUND', 'Donor not found'));
+        }
+        res.json({ message: 'Donor permanently deleted' });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json(errBody('SERVER_ERROR', 'Internal server error'));
+    }
+});
+
 module.exports = router;
