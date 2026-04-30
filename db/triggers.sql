@@ -56,14 +56,41 @@ EXECUTE FUNCTION update_updated_at_column_after();
 -- Update the goal and progress amounts on a school based on the donations and needs
 CREATE OR REPLACE FUNCTION update_school_progress()
 RETURNS TRIGGER AS $$
+DECLARE
+    v_school_id UUID;
 BEGIN
+    -- When triggered from donation_items, look up school_id via the parent donation
+    IF TG_TABLE_NAME = 'donation_items' THEN
+        IF TG_OP = 'DELETE' THEN
+            SELECT school_id INTO v_school_id FROM donations WHERE id = OLD.donation_id;
+        ELSE
+            SELECT school_id INTO v_school_id FROM donations WHERE id = NEW.donation_id;
+        END IF;
+    ELSE
+        -- triggered from donations
+        IF TG_OP = 'DELETE' THEN
+            v_school_id := OLD.school_id;
+        ELSE
+            v_school_id := NEW.school_id;
+        END IF;
+    END IF;
+
+    IF v_school_id IS NULL THEN
+        RETURN NULL;
+    END IF;
+
     UPDATE schools
-    SET progress = COALESCE(SUM(di.amount), 0)
-    FROM donation_items di
-    JOIN donations d ON di.donation_id = d.id
-    WHERE d.school_id = COALESCE(NEW.school_id, OLD.school_id)
-    AND d.status IN ('Aprobado', 'Entregando', 'Entregado', 'Finalizado')
-    AND d.deleted_at IS NULL;
+    SET progress = COALESCE((
+        SELECT SUM(di.amount)
+        FROM donation_items di
+        JOIN donations d ON di.donation_id = d.id
+        WHERE d.school_id = v_school_id
+          AND d.status IN ('Aprobado', 'Entregando', 'Entregado', 'Finalizado')
+          AND d.deleted_at IS NULL
+          AND di.deleted_at IS NULL
+    ), 0)
+    WHERE id = v_school_id;
+
     RETURN NULL;
 END;
 $$ LANGUAGE 'plpgsql';
@@ -103,7 +130,8 @@ BEGIN
         -- Check if it's a state change or archive
         IF OLD.deleted_at IS DISTINCT FROM NEW.deleted_at AND NEW.deleted_at IS NOT NULL THEN
             v_action := 'archive';
-        ELSIF OLD.status IS DISTINCT FROM NEW.status THEN
+        ELSIF (TG_TABLE_NAME IN ('donations', 'schools_needs')) AND
+              OLD.status IS DISTINCT FROM NEW.status THEN
             v_action := 'state_change';
         ELSE
             v_action := 'update';
