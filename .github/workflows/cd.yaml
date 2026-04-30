@@ -6,7 +6,7 @@
 #
 # Required GitHub Actions secrets:
 #   AZURE_CREDENTIALS, ACR_NAME, ACR_LOGIN_SERVER, AZURE_RESOURCE_GROUP, AKS_CLUSTER_NAME,
-#   DB_PASSWORD, JWT_SECRET
+#   DB_PASSWORD, JWT_SECRET, AZURE_STORAGE_CONNECTION_STRING
 
 name: CD — main
 
@@ -82,6 +82,7 @@ jobs:
             -n "$NAMESPACE" \
             --from-literal=DB_PASSWORD="${{ secrets.DB_PASSWORD }}" \
             --from-literal=JWT_SECRET="${{ secrets.JWT_SECRET }}" \
+            --from-literal=AZURE_STORAGE_CONNECTION_STRING="${{ secrets.AZURE_STORAGE_CONNECTION_STRING }}" \
             --dry-run=client -o yaml | kubectl apply -f -
 
       # ── Apply database init ConfigMap ─────────────────────────────────────
