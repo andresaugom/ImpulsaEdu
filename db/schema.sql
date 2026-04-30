@@ -2,17 +2,17 @@
 CREATE EXTENSION IF NOT EXISTS "pgcrypto";
 
 -- ENUMS
-CREATE TYPE IF NOT EXISTS user_role AS ENUM ('staff', 'admin');
-CREATE TYPE IF NOT EXISTS donor_type AS ENUM ('Fisica', 'Moral');
-CREATE TYPE IF NOT EXISTS donation_status AS ENUM ('Registrado','Aprobado','Entregando','Entregado','Finalizado','Cancelado');
-CREATE TYPE IF NOT EXISTS donation_type AS ENUM ('Material','Monetaria');
-CREATE TYPE IF NOT EXISTS school_level AS ENUM ('Preescolar','Primaria','Secundaria','Preparatoria','Universidad');
-CREATE TYPE IF NOT EXISTS school_mode AS ENUM ('SEP-Multigrado','SEP-General','CONAFE', 'Particular', 'Otro');
-CREATE TYPE IF NOT EXISTS school_shift AS ENUM ('Matutino','Vespertino','Mixto');
-CREATE TYPE IF NOT EXISTS school_category AS ENUM ('Estatal','Federal','Federalizado');
-CREATE TYPE IF NOT EXISTS school_need_status AS ENUM ('Cubierto', 'Aun no cubierto');
-CREATE TYPE IF NOT EXISTS entity_type AS ENUM ('donor','donation','school');
-CREATE TYPE IF NOT EXISTS audit_action AS ENUM ('create','update','archive','state_change');
+CREATE TYPE user_role AS ENUM ('staff', 'admin');
+CREATE TYPE donor_type AS ENUM ('Fisica', 'Moral');
+CREATE TYPE donation_status AS ENUM ('Registrado','Aprobado','Entregando','Entregado','Finalizado','Cancelado');
+CREATE TYPE donation_type AS ENUM ('Material','Monetaria');
+CREATE TYPE school_level AS ENUM ('Preescolar','Primaria','Secundaria','Preparatoria','Universidad');
+CREATE TYPE school_mode AS ENUM ('SEP-Multigrado','SEP-General','CONAFE', 'Particular', 'Otro');
+CREATE TYPE school_shift AS ENUM ('Matutino','Vespertino','Mixto');
+CREATE TYPE school_category AS ENUM ('Estatal','Federal','Federalizado');
+CREATE TYPE school_need_status AS ENUM ('Cubierto', 'Aun no cubierto');
+CREATE TYPE entity_type AS ENUM ('donor','donation','school');
+CREATE TYPE audit_action AS ENUM ('create','update','archive','state_change');
 
 -- USERS
 CREATE TABLE IF NOT EXISTS users (
@@ -170,3 +170,6 @@ CREATE TABLE IF NOT EXISTS audit_logs (
   new_value JSONB,
   created_at TIMESTAMPTZ NOT NULL DEFAULT NOW()
 );
+Insert columna
+IInsert 2 columnas
+IIIns

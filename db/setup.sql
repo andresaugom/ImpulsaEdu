@@ -5,4 +5,4 @@
 
 -- Harden: deny public schema access to all roles except the application user.
 REVOKE ALL ON SCHEMA public FROM PUBLIC;
-GRANT ALL ON SCHEMA public TO impulsaedu;
+GRANT ALL ON SCHEMA public TO impulsaeduuser;
