@@ -138,6 +138,26 @@ export async function archiveSchool(id: string): Promise<void> {
 }
 
 /**
+ * Restores an archived school (clears deleted_at on the backend).
+ * Requires authentication.
+ */
+export async function unarchiveSchool(id: string): Promise<void> {
+  await apiRequest<{ message: string }>(`${APP_BASE}/schools/${id}/unarchive`, {
+    method: 'PATCH',
+  });
+}
+
+/**
+ * Permanently deletes a school record from the database.
+ * Requires authentication. This action is irreversible.
+ */
+export async function deleteSchool(id: string): Promise<void> {
+  await apiRequest<{ message: string }>(`${APP_BASE}/schools/${id}`, {
+    method: 'DELETE',
+  });
+}
+
+/**
  * Fetches a single school by id.
  * This endpoint is public and does not require authentication.
  */

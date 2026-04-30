@@ -22,9 +22,9 @@ import {
   useTheme,
   useMediaQuery,
 } from '@mui/material';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { login } from '@/lib/authService';
+import { login, isAuthenticated } from '@/lib/authService';
 import { ApiError } from '@/lib/apiClient';
 
 export default function LoginPage() {
@@ -37,6 +37,12 @@ export default function LoginPage() {
   const theme = useTheme();
   const isMobile = useMediaQuery(theme.breakpoints.down('sm'));
   const router = useRouter();
+
+  useEffect(() => {
+    if (isAuthenticated()) {
+      router.replace('/');
+    }
+  }, [router]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();

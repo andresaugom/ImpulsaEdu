@@ -73,6 +73,7 @@ export interface DonationFilters {
   donor_id?: string;
   status?: DonationStatus;
   donation_type?: DonationType;
+  is_archived?: boolean;
   page?: number;
   per_page?: number;
 }
@@ -118,6 +119,7 @@ export async function fetchDonations(filters: DonationFilters = {}): Promise<{
   if (filters.donor_id)     params.set('donor_id',     filters.donor_id);
   if (filters.status)       params.set('status',       filters.status);
   if (filters.donation_type) params.set('donation_type', filters.donation_type);
+  if (filters.is_archived !== undefined) params.set('is_archived', String(filters.is_archived));
   if (filters.page)         params.set('page',         String(filters.page));
   if (filters.per_page)     params.set('per_page',     String(filters.per_page));
 
@@ -184,4 +186,34 @@ export async function updateDonationStatus(
       body: JSON.stringify(payload),
     }
   );
+}
+
+/**
+ * Archives a donation (soft delete).
+ * Requires authentication.
+ */
+export async function archiveDonation(id: string): Promise<void> {
+  await apiRequest<{ message: string }>(`${APP_BASE}/donations/${id}/archive`, {
+    method: 'PATCH',
+  });
+}
+
+/**
+ * Restores an archived donation.
+ * Requires authentication.
+ */
+export async function unarchiveDonation(id: string): Promise<void> {
+  await apiRequest<{ message: string }>(`${APP_BASE}/donations/${id}/unarchive`, {
+    method: 'PATCH',
+  });
+}
+
+/**
+ * Permanently deletes a donation record from the database.
+ * Requires authentication. This action is irreversible.
+ */
+export async function deleteDonation(id: string): Promise<void> {
+  await apiRequest<{ message: string }>(`${APP_BASE}/donations/${id}`, {
+    method: 'DELETE',
+  });
 }

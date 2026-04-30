@@ -7,6 +7,23 @@ const { errBody } = require('../utils/errors');
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
 
+function formatNeed(row) {
+    return {
+        id:           row.id,
+        school_id:    row.school_id,
+        school_name:  row.school_name || null,
+        category:     row.category,
+        subcategory:  row.subcategory,
+        item_name:    row.item_name,
+        quantity:     row.quantity,
+        unit:         row.unit || null,
+        amount:       parseFloat(row.amount),
+        status:       row.status,
+        description:  row.description || null,
+        created_at:   row.created_at,
+    };
+}
+
 function formatSchool(row) {
     const goal     = parseFloat(row.goal) || 0;
     const progress = parseFloat(row.progress) || 0;
@@ -33,6 +50,100 @@ function formatSchool(row) {
 }
 
 const REQUIRED_FIELDS = ['region', 'school', 'name', 'level', 'cct', 'mode', 'shift', 'address', 'location', 'category', 'goal'];
+
+// ── GET /api/v1/schools/needs  (public) ──────────────────────────────────────
+// Must be registered BEFORE /:id routes to avoid param capture.
+
+router.get('/needs', async (req, res) => {
+    const { school_id, status, category } = req.query;
+    const perPage = Math.min(parseInt(req.query.per_page) || 50, 100);
+    const page    = Math.max(parseInt(req.query.page)     || 1, 1);
+    const offset  = (page - 1) * perPage;
+
+    const conditions = ['sn.deleted_at IS NULL'];
+    const params     = [];
+    let   i          = 1;
+
+    if (school_id) { conditions.push(`sn.school_id = $${i++}`); params.push(school_id); }
+    if (status)    { conditions.push(`sn.status    = $${i++}`); params.push(status); }
+    if (category)  { conditions.push(`sn.category  = $${i++}`); params.push(category); }
+
+    const where = `WHERE ${conditions.join(' AND ')}`;
+
+    try {
+        const [countRes, dataRes] = await Promise.all([
+            pool.query(
+                `SELECT COUNT(*) FROM schools_needs sn ${where}`,
+                params
+            ),
+            pool.query(
+                `SELECT sn.*, s.name AS school_name
+                 FROM   schools_needs sn
+                 JOIN   schools s ON s.id = sn.school_id
+                 ${where}
+                 ORDER BY s.name, sn.category, sn.item_name
+                 LIMIT $${i} OFFSET $${i + 1}`,
+                [...params, perPage, offset]
+            )
+        ]);
+
+        res.json({
+            items:    dataRes.rows.map(formatNeed),
+            total:    parseInt(countRes.rows[0].count),
+            page,
+            per_page: perPage
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json(errBody('SERVER_ERROR', 'Internal server error'));
+    }
+});
+
+// ── GET /api/v1/schools/:id/needs  (public) ──────────────────────────────────
+
+router.get('/:id/needs', async (req, res) => {
+    const { status, category } = req.query;
+    const perPage = Math.min(parseInt(req.query.per_page) || 50, 100);
+    const page    = Math.max(parseInt(req.query.page)     || 1, 1);
+    const offset  = (page - 1) * perPage;
+
+    const conditions = ['sn.school_id = $1', 'sn.deleted_at IS NULL'];
+    const params     = [req.params.id];
+    let   i          = 2;
+
+    if (status)   { conditions.push(`sn.status   = $${i++}`); params.push(status); }
+    if (category) { conditions.push(`sn.category = $${i++}`); params.push(category); }
+
+    const where = `WHERE ${conditions.join(' AND ')}`;
+
+    try {
+        const [countRes, dataRes] = await Promise.all([
+            pool.query(
+                `SELECT COUNT(*) FROM schools_needs sn ${where}`,
+                params
+            ),
+            pool.query(
+                `SELECT sn.*, s.name AS school_name
+                 FROM   schools_needs sn
+                 JOIN   schools s ON s.id = sn.school_id
+                 ${where}
+                 ORDER BY sn.category, sn.item_name
+                 LIMIT $${i} OFFSET $${i + 1}`,
+                [...params, perPage, offset]
+            )
+        ]);
+
+        res.json({
+            items:    dataRes.rows.map(formatNeed),
+            total:    parseInt(countRes.rows[0].count),
+            page,
+            per_page: perPage
+        });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json(errBody('SERVER_ERROR', 'Internal server error'));
+    }
+});
 
 // ── GET /api/v1/schools  (public) ─────────────────────────────────────────────
 
@@ -205,6 +316,45 @@ router.patch('/:id/archive', authenticateToken, async (req, res) => {
             return res.status(404).json(errBody('NOT_FOUND', 'School not found'));
         }
         res.json({ message: 'School archived' });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json(errBody('SERVER_ERROR', 'Internal server error'));
+    }
+});
+
+// ── PATCH /api/v1/schools/:id/unarchive  (staff+) ────────────────────────────
+
+router.patch('/:id/unarchive', authenticateToken, async (req, res) => {
+    try {
+        const result = await pool.query(
+            `UPDATE schools
+             SET deleted_at = NULL, deleted_by = NULL, updated_at = NOW(), updated_by = $1
+             WHERE id = $2 AND deleted_at IS NOT NULL
+             RETURNING id`,
+            [req.user.sub, req.params.id]
+        );
+        if (result.rowCount === 0) {
+            return res.status(404).json(errBody('NOT_FOUND', 'School not found or not archived'));
+        }
+        res.json({ message: 'School unarchived' });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json(errBody('SERVER_ERROR', 'Internal server error'));
+    }
+});
+
+// ── DELETE /api/v1/schools/:id  (staff+) ─────────────────────────────────────
+
+router.delete('/:id', authenticateToken, async (req, res) => {
+    try {
+        const result = await pool.query(
+            'DELETE FROM schools WHERE id = $1 RETURNING id',
+            [req.params.id]
+        );
+        if (result.rowCount === 0) {
+            return res.status(404).json(errBody('NOT_FOUND', 'School not found'));
+        }
+        res.json({ message: 'School permanently deleted' });
     } catch (err) {
         console.error(err);
         res.status(500).json(errBody('SERVER_ERROR', 'Internal server error'));

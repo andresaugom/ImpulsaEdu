@@ -73,7 +73,7 @@ const DETAIL_SELECT = `
 // ── GET /api/v1/donations  (staff+) ──────────────────────────────────────────
 
 router.get('/', authenticateToken, async (req, res) => {
-    const { school_id, donor_id, status, donation_type } = req.query;
+    const { school_id, donor_id, status, donation_type, is_archived } = req.query;
     const parsedPerPage = Number.parseInt(req.query.per_page, 10);
     const parsedPage    = Number.parseInt(req.query.page, 10);
     const perPage = Number.isNaN(parsedPerPage)
@@ -83,6 +83,10 @@ router.get('/', authenticateToken, async (req, res) => {
         ? 1
         : Math.max(parsedPage, 1);
     const offset = (page - 1) * perPage;
+
+    const archivedClause = is_archived === 'true'
+        ? 'dn.deleted_at IS NOT NULL'
+        : 'dn.deleted_at IS NULL';
 
     const conditions = [];
     const params     = [];
@@ -95,14 +99,25 @@ router.get('/', authenticateToken, async (req, res) => {
 
     const extraWhere = conditions.length ? `AND ${conditions.join(' AND ')}` : '';
 
+    const summarySelect = `
+        SELECT dn.id, dn.donor_id, d.name AS donor_name,
+               dn.school_id, s.name AS school_name,
+               dn.donation_type, dn.amount, dn.status,
+               dn.description, dn.created_at
+        FROM   donations dn
+        JOIN   donors  d ON d.id = dn.donor_id
+        JOIN   schools s ON s.id = dn.school_id
+        WHERE  ${archivedClause}
+    `;
+
     try {
         const [countRes, dataRes] = await Promise.all([
             pool.query(
-                `SELECT COUNT(*) FROM donations dn WHERE dn.deleted_at IS NULL ${extraWhere}`,
+                `SELECT COUNT(*) FROM donations dn WHERE ${archivedClause} ${extraWhere}`,
                 params
             ),
             pool.query(
-                `${SUMMARY_SELECT} ${extraWhere} ORDER BY dn.created_at DESC LIMIT $${i} OFFSET $${i + 1}`,
+                `${summarySelect} ${extraWhere} ORDER BY dn.created_at DESC LIMIT $${i} OFFSET $${i + 1}`,
                 [...params, perPage, offset]
             )
         ]);
@@ -321,6 +336,66 @@ router.patch('/:id/status', authenticateToken, async (req, res) => {
         );
 
         res.json({ id: updated.rows[0].id, status: updated.rows[0].status });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json(errBody('SERVER_ERROR', 'Internal server error'));
+    }
+});
+
+// ── PATCH /api/v1/donations/:id/archive  (staff+) ────────────────────────────
+
+router.patch('/:id/archive', authenticateToken, async (req, res) => {
+    try {
+        const result = await pool.query(
+            `UPDATE donations
+             SET deleted_at = NOW(), deleted_by = $1, updated_at = NOW(), updated_by = $1
+             WHERE id = $2 AND deleted_at IS NULL
+             RETURNING id`,
+            [req.user.sub, req.params.id]
+        );
+        if (result.rowCount === 0) {
+            return res.status(404).json(errBody('NOT_FOUND', 'Donation not found'));
+        }
+        res.json({ message: 'Donation archived' });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json(errBody('SERVER_ERROR', 'Internal server error'));
+    }
+});
+
+// ── PATCH /api/v1/donations/:id/unarchive  (staff+) ──────────────────────────
+
+router.patch('/:id/unarchive', authenticateToken, async (req, res) => {
+    try {
+        const result = await pool.query(
+            `UPDATE donations
+             SET deleted_at = NULL, deleted_by = NULL, updated_at = NOW(), updated_by = $1
+             WHERE id = $2 AND deleted_at IS NOT NULL
+             RETURNING id`,
+            [req.user.sub, req.params.id]
+        );
+        if (result.rowCount === 0) {
+            return res.status(404).json(errBody('NOT_FOUND', 'Donation not found or not archived'));
+        }
+        res.json({ message: 'Donation unarchived' });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json(errBody('SERVER_ERROR', 'Internal server error'));
+    }
+});
+
+// ── DELETE /api/v1/donations/:id  (staff+) ───────────────────────────────────
+
+router.delete('/:id', authenticateToken, async (req, res) => {
+    try {
+        const result = await pool.query(
+            'DELETE FROM donations WHERE id = $1 RETURNING id',
+            [req.params.id]
+        );
+        if (result.rowCount === 0) {
+            return res.status(404).json(errBody('NOT_FOUND', 'Donation not found'));
+        }
+        res.json({ message: 'Donation permanently deleted' });
     } catch (err) {
         console.error(err);
         res.status(500).json(errBody('SERVER_ERROR', 'Internal server error'));

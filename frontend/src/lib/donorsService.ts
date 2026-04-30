@@ -150,6 +150,26 @@ export async function deactivateDonor(id: string): Promise<void> {
 }
 
 /**
+ * Restores a deactivated donor (clears deleted_at on the backend).
+ * Requires authentication.
+ */
+export async function activateDonor(id: string): Promise<void> {
+  await apiRequest<{ message: string }>(`${APP_BASE}/donors/${id}/activate`, {
+    method: 'PATCH',
+  });
+}
+
+/**
+ * Permanently deletes a donor record from the database.
+ * Requires authentication. This action is irreversible.
+ */
+export async function deleteDonor(id: string): Promise<void> {
+  await apiRequest<{ message: string }>(`${APP_BASE}/donors/${id}`, {
+    method: 'DELETE',
+  });
+}
+
+/**
  * Fetches a single donor by id including the full donation history.
  * Requires authentication.
  */
