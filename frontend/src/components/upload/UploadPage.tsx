@@ -116,9 +116,11 @@ export default function GestionExcelPage() {
 
       setTimeout(() => setAlert(null), 5000);
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       clearInterval(progressInterval);
       console.error('Upload error:', error);
+
+      const uploadErrorMessage = error instanceof Error ? error.message : 'Error desconocido';
 
       setUploadedFiles(prev =>
         prev.map(f =>
@@ -127,7 +129,7 @@ export default function GestionExcelPage() {
                 ...f,
                 status: 'error',
                 progress: 0,
-                errorMessage: error.message || 'Error desconocido',
+                errorMessage: uploadErrorMessage,
               }
             : f
         )
@@ -135,7 +137,7 @@ export default function GestionExcelPage() {
 
       setAlert({
         type: 'error',
-        message: `Error al subir "${file.name}": ${error.message}`,
+        message: `Error al subir "${file.name}": ${uploadErrorMessage}`,
       });
     }
   };
@@ -199,11 +201,11 @@ export default function GestionExcelPage() {
       setAlert({ type: 'success', message: 'Archivo descargado exitosamente' });
       setTimeout(() => setAlert(null), 5000);
 
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Download error:', error);
       setAlert({
         type: 'error',
-        message: `Error al descargar: ${error.message}`,
+        message: `Error al descargar: ${error instanceof Error ? error.message : 'Error desconocido'}`,
       });
     } finally {
       setIsDownloading(false);

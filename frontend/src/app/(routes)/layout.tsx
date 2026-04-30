@@ -10,13 +10,11 @@ import { isAuthenticated } from '@/lib/authService';
 
 export default function AdminLayout({ children }: { children: React.ReactNode }) {
   const router = useRouter();
-  const [authChecked, setAuthChecked] = useState(false);
+  const [authChecked] = useState(() => isAuthenticated());
 
   useEffect(() => {
     if (!isAuthenticated()) {
       router.replace('/login');
-    } else {
-      setAuthChecked(true);
     }
   }, [router]);
 
