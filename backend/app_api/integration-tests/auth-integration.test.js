@@ -1,4 +1,3 @@
-// 1. MUST LOAD DOTENV FIRST
 require('dotenv').config({ path: '.env.test' }); 
 
 const request = require('supertest');
@@ -11,23 +10,18 @@ const bcrypt = require('bcryptjs');
 const app = express();
 app.use(express.json());
 
-/**
- * MOUNTING LOGIC
- * Since users.js handles user creation at its root POST route,
- * we mount it to /api/v1/users.
- */
+// Mounting to users as confirmed by your project structure
 app.use('/api/v1/users', usersRouter);
 
 describe('User Management & Creation Integration Pipeline', () => {
     let client;
     
-    /**
-     * FIX: The 'sub' field must be a valid UUID string to satisfy 
-     * the PostgreSQL 'created_by' foreign key or UUID column constraint.
-     */
+    // We define a constant UUID to use for both the token and the DB record
+    const ADMIN_ID = '00000000-0000-0000-0000-000000000000';
+    
     const adminToken = jwt.sign(
         { 
-            sub: '00000000-0000-0000-0000-000000000000', 
+            sub: ADMIN_ID, 
             email: 'admin@test.com', 
             role: 'admin' 
         }, 
@@ -45,7 +39,16 @@ describe('User Management & Creation Integration Pipeline', () => {
 
     beforeEach(async () => {
         if (client) {
+            // 1. Wipe the database
             await clearDatabase(client);
+            
+            // 2. SEED THE ADMIN USER
+            // This satisfies the Foreign Key constraint "users_created_by_fkey"
+            await client.query(
+                `INSERT INTO users (id, firstname, lastname, email, password_hash, role) 
+                 VALUES ($1, 'Admin', 'Test', 'admin@test.com', 'no-password', 'admin')`,
+                [ADMIN_ID]
+            );
         }
     });
 
@@ -67,13 +70,11 @@ describe('User Management & Creation Integration Pipeline', () => {
                 role: 'staff' 
             });
 
-        // If this still fails with 500, check if 'created_by' references a real user ID.
-        // If it does, you may need to insert a seed user with the UUID used above first.
+        // This should now return 201 because the 'created_by' ID exists in the DB
         expect(res.status).toBe(201);
 
         const dbRes = await client.query("SELECT * FROM users WHERE email = 'integration@test.com'");
         expect(dbRes.rows.length).toBe(1);
-        
         expect(dbRes.rows[0].firstname).toBe('Integration');
     });
 
